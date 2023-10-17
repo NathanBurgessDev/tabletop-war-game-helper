@@ -1,0 +1,44 @@
+rfid-based:
+  type: periodical
+  title: An RFID-based Infrastructure for Automatically Determining the Position and Orientation of Game Objects in Tabletop Games
+  author: ["Steve Hinske","Marc Langheinrich"]
+  page-total: 21
+  date: 2007-06-05
+  url: https://vs.inf.ethz.ch/publ/papers/hinske-pg07-rfidtabletop.pdf
+
+40k-rules:
+  type: article
+  title: Warhammer 40k Core Rules
+  author: Games Workshop
+  date: 2022-06-02
+  page-total: 60
+  url: https://www.warhammer-community.com/wp-content/uploads/2023/06/dLZIlatQJ3qOkGP7.pdf
+
+kt-lite-rules:
+  type: article
+  title: Kill Team Lite Rules
+  author: Games Workshop
+  date: 2022-08-16
+  page-total: 3
+  url: https://www.warhammer-community.com/wp-content/uploads/2022/08/ekD0GG2pTHlYba0G.pdf
+
+gw-size:
+  type: article
+  title: Games Workshop Investor Relations Statement
+  author: ["Games Workshop"]
+  date: 2023-10-17
+  url: https://investor.games-workshop.com/our-history
+
+openCV:
+  type: repository
+  title: The OpenCV Library
+  author: Bradski, G.
+  journal: Dr. Dobb's Journal of Software Tools
+  date: 2000
+  url: https://github.com/opencv/opencv
+
+ar-tags:
+  type: article
+  title: AR Tags and their Applications in Computer Vision Tasks
+  author: Ku Wee Kiat
+  url: https://nusit.nus.edu.sg/technus/ar-tags-and-their-applications-in-computer-vision-tasks/
