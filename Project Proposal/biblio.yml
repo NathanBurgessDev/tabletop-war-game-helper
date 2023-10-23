@@ -6,6 +6,14 @@ rfid-based:
   date: 2007-06-05
   url: https://vs.inf.ethz.ch/publ/papers/hinske-pg07-rfidtabletop.pdf
 
+rfid-tracking:
+  type: periodical
+  title: TrackT Accurate tracking of RFID tags with mm-level accuracy using first-order taylor series approximation
+  author: ["Zhongqin Wang","Ning Ye","Reza Malekian","Fu Xiao","Ruchuan Wang"]
+  journal: Ad Hoc Networks
+  date: 2016-12-15
+  url: https://www.sciencedirect.com/science/article/pii/S1570870516302736
+
 40k-rules:
   type: article
   title: Warhammer 40k Core Rules

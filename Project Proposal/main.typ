@@ -52,6 +52,8 @@ Previous attempts at digitising the state of a tabletop wargame have been made u
 
 This approach works well to calculate the rough position of larger models with multiple RFID tags but smaller models with only one tag can prove difficult. This is because, using consumer grade electronics, finding the signal strength from an RFID tag to a receiver is often not supported or is inconsistent due to reflections, interference etc #cite("rfid-based"). As a result, the only information you can gather is whether a tag is in range of a receiver. Using this method with a single tag you can only find the rough area of a model by comparing the overlapping ranges of multiple recievers #cite("rfid-based").
 
+There are other approaches to mm-level tracking of RFID tags #cite("rfid-tracking") but these are very complicated to implement and require specialist equipment.
+
 == Project Overview
 
 _Kill Team_, being a smaller scale game, only makes use of the smaller models. So an RFID approach would not be useful in tracking its exact location. This is needed to calculate the distance it can move and what other models are visible.
@@ -166,9 +168,8 @@ I have allocated time for my interim report to be earlier than the deadline due 
     })
 
     taskgroup(title: [*Development: Computer Vision*], {
-      task("Ring Detection", (3, 5), style: (stroke: 2pt + gray))
-      task("Terrain Detection", (5, 7), style: (stroke: 2pt + gray))
-      task("Board Generation", (7, 8), style: (stroke: 2pt + gray))
+      task("Ring Detection", (3, 6), style: (stroke: 2pt + gray))
+      task("Terrain Detection", (6, 8), style: (stroke: 2pt + gray))
     })
 
     taskgroup(title: [*Development: Game Logic*], {
