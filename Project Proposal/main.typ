@@ -42,7 +42,7 @@
 == Introduction
 Tabletop Wargaming is a popular hobby but, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop wargames can be complex and difficult to learn. This can be daunting for new players putting them off the hobby as well as causing arguments between seasoned players over different rules interpretations.
 
-The most popular wargaming systems are produced by _Games Workshop_ #cite("gw-size"). One of their more popular systems, _Warhammer 40k_, has a core rulebook of 60 pages #cite("40k-rules") and the simplified version of another game system, _Kill Team_, is a rather dense three page spread #cite("kt-lite-rules").
+The most popular wargaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rulebook of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread #cite("kt-lite-rules").
 
 Video games help on-board new players by having the rules of the game enforced by the game itself. This project aims to bring this experience to tabletop wargaming, specifically the _Kill Team Lite_ #cite("kt-lite-rules")  system. This is because the _Kill Team Lite_ rules are publically available from _Games Workshop's_ website and it is designed to be played on a smaller scale to other wargames, making it a good candidate for a proof of concept.
 
@@ -52,7 +52,7 @@ Previous attempts at digitising the state of a tabletop wargame have been made u
 
 This approach works well to calculate the rough position of larger models with multiple RFID tags but smaller models with only one tag can prove difficult. This is because, using consumer grade electronics, finding the signal strength from an RFID tag to a receiver is often not supported or is inconsistent due to reflections, interference etc #cite("rfid-based"). As a result, the only information you can gather is whether a tag is in range of a receiver. Using this method with a single tag you can only find the rough area of a model by comparing the overlapping ranges of multiple recievers #cite("rfid-based").
 
-There are other approaches to mm-level tracking of RFID tags #cite("rfid-tracking") but these are very complicated to implement and require specialist equipment.
+There are other approaches to mm-level tracking of RFID tags #cite("rfid-tracking") but these are outside the scope of this project to implement and require specialist equipment.
 
 == Project Overview
 
@@ -82,7 +82,7 @@ This project can be broken down into two main parts:
 
 == Computer Vision
 
-#set enum(numbering: "1.a)")
+#set enum(numbering: "1.a")
 + Detect the high contrast rings on the bases of the models to find the center point of the model.
   + Determine which ring belongs to which model.
 + Detect the AR tags on the terrain pieces.

@@ -50,3 +50,9 @@ ar-tags:
   title: AR Tags and their Applications in Computer Vision Tasks
   author: Ku Wee Kiat
   url: https://nusit.nus.edu.sg/technus/ar-tags-and-their-applications-in-computer-vision-tasks/
+
+RSSI: 
+  type: article
+  title:  Robust and Accurate Indoor Localization Using Learning-Based Fusion of Wi-Fi RTT and RSSI
+  authors: [Hamada Rizk,  Ahmed Elmogy, Hirozumi Yamaguch]
+  
