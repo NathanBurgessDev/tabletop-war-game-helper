@@ -129,5 +129,50 @@ ARKit:
 
 
 yolo:
-  type: article
+  type: repository
+  title: YOLOv4 / Scaled-YOLOv4 / YOLO - Neural Networks for Object Detection (Windows and Linux version of Darknet) 
   url: {value: https://github.com/AlexeyAB/darknet, date: 2023-12-28}
+
+sci-kit:
+  type: article
+  title: scikit-learn Blob Detection
+  url: {value: https://scikit-image.org/docs/stable/auto_examples/features_detection/plot_blob.html, date: 2023-12-29}
+
+pyqt:
+  type: article
+  title: PyQt
+  author: Riverbank Computing Limited
+  url: {value: https://riverbankcomputing.com/software/pyqt/intro, date: 2023-12-31}
+
+openCV:
+  type: repository
+  title: The OpenCV Library
+  author: Bradski, G.
+  journal: Dr. Dobb's Journal of Software Tools
+  date: 2000
+  url: {value: https://github.com/opencv/opencv, date: 2023-12-12}
+
+gallowdark:
+  type: article
+  title: Killzone Gallowdark
+  author: "Games Workshop"
+  url: {value: https://www.warhammer.com/en-GB/shop/killzone-gallowdark-2023, date: 2023-12-12}
+
+hough-circles:
+  type: repository
+  title: Hough Circle Transform
+  author: Bradski, G.
+  url: {value: https://docs.opencv.org/4.x/da/d53/tutorial_py_houghcircles.html, date: 2023-12-27}
+
+one-page:
+  type: article
+  title: Firefight
+  author: One Page Rules
+  url: {value: https://www.onepagerules.com/games/grimdark-future-firefight, date: 2023-12-31}
+
+
+gallowdark-image:
+  type: article
+  title: "Kill Team: Into the Dark – What’s in the Box?"
+  author: Warhammer Community
+  url: {value: https://www.warhammer-community.com/2022/08/04/kill-team-into-the-dark-whats-in-the-box/, date: 2023-12-31} 
