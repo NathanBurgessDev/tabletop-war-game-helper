@@ -2,9 +2,9 @@ import cv2 as cv
 import numpy as np
 
 
-# Returns a list of all yellow circles found within the image, 
-# In the format (center, radius)
-def findPiece(img):
+# Returns a list of all yellow circles of the correct radius
+# In the format arr[(center, radius)]
+def findPieces(img):
     
     # Old bad way of doing colour finding - not using HSV space
     # yellowLower = (0, 200, 200)
@@ -33,7 +33,8 @@ def findPiece(img):
     
     circleList = []
     for circle in circles[0, :]:
-        circleList.append((circle[0],circle[1],circle[2]))
+        if circle[2] > 30 and circle[2] < 200:
+            circleList.append((circle[0],circle[1],circle[2]))
         
     # print("circle list" + str(circleList))
     

@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-import findPiece
+import findPieces
 import math
 
 def identifyAllPieces():
@@ -9,41 +9,68 @@ def identifyAllPieces():
     
     image = cv.imread(filePath)
     
-    circles = findPiece.findPiece(image)
+    circles = findPieces.findPieces(image)
+    print(circles)
     
     # For testing please change this later ty ty
-    center = (circles[0][0], circles[0][1])
+    # center = (circles[0][0], circles[0][1])
     
-    radius = circles[0][2] * 2
+    # radius = circles[0][2] * 2
     
-    cropped = image[center[1]-radius:center[1]+radius, center[0]-radius:center[0]+radius]
+    # cropped = image[center[1]-radius:center[1]+radius, center[0]-radius:center[0]+radius]
     
     
     redFrame = findRed(image)
 
     redCenterPoints = findRedContourCentroids(redFrame)
     
-
+    
+    modelIdData = []
+    
+    for circle in circles:
+        modelIdData.append(identifyPiece((circle[0],circle[1]), circle[2],redCenterPoints, image))
+        
+    for dataPoints in modelIdData:
+        # cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
+        for point in dataPoints:
+            cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
+            
+    # print(modelIdData)
+        
+    
+    
     # Find the red Center point closest to the center of the circle
-    redCenterPoints.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
-    print(redCenterPoints)
-    print(center)
+    # redCenterPoints.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
+    # print(redCenterPoints)
+    # print(center)
     
  
-    identifiedCircle, rotate = identifyCircle(redCenterPoints, center, radius, image)
     
     
-    cv.imshow("red",redFrame)
-    rotate = cv.resize(rotate, (int(rotate.shape[1]/2), int(rotate.shape[0]/2)))
-    cv.imshow("rotate",rotate)
-    # cv.imshow("img",image)
+    
+    # cv.imshow("red",redFrame)
+    resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
+    cv.imshow("img",resized)
     # cv.imshow("cropped",cropped)
+    
+    
+    
+    # cv.imshow("rotate",rotate)
 
 
     k = cv.waitKey(0)
     
     
-# def identifyPiece(center, radius, image):
+def identifyPiece(center, radius, centroids, image):
+    
+    centroids.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
+    
+    identifiedCircleData = identifyCircle(centroids, center, radius, image)
+    
+
+    
+    return identifiedCircleData
+    pass
     
 
 
@@ -83,9 +110,9 @@ def findRedContourCentroids(img):
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
             print(f"Red Box {i} : cx={cx}, cy={cy}") 
-            cv.circle(img, (cx, cy), 1, (0, 255, 0), 3)
+            # cv.circle(img, (cx, cy), 1, (0, 255, 0), 3)
             redCenterPoints.append((cx, cy))
-            cv.drawContours(img, [c], -1, (255, 255, 255), 5)
+            # cv.drawContours(img, [c], -1, (255, 255, 255), 5)
     except:
         print(":3")
         pass
@@ -101,8 +128,8 @@ def identifyCircle(redCenterPoints, center, radius, image):
         for i in range(0, 90, 18):
             newPosX =x * math.cos(math.radians(i)) - y * math.sin(math.radians(i))
             newPosY =x * math.sin(math.radians(i)) + y * math.cos(math.radians(i))
-            cv.circle(image, (int(newPosX) + center[0], int(newPosY)+center[1]), 1, (0, 255, 0), 3)
+            # cv.circle(image, (int(newPosX) + center[0], int(newPosY)+center[1]), 1, (0, 255, 0), 3)
             data.append((int(newPosX) + center[0], int(newPosY)+center[1]))
-    return data, image
+    return data
 
 identifyAllPieces()
