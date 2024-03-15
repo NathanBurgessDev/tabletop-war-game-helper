@@ -15,6 +15,7 @@ def findPieces(img):
     
     # grayFrame = cv.inRange(img, lower, upper)
     
+    
     grayFrame = findYellow(img)
     
     blurFrame = cv.GaussianBlur(grayFrame, (17, 17), 0)
@@ -25,8 +26,8 @@ def findPieces(img):
     circles = cv.HoughCircles(edges, cv.HOUGH_GRADIENT,
                               dp = 1.0,
                               minDist=100,
-                              minRadius=30, maxRadius=400,
-                              param1=100, param2=30,)
+                              minRadius=30, maxRadius=130,
+                              param1=100, param2 = 20,)
     
     circles = np.uint16(np.around(circles))
     
@@ -35,9 +36,16 @@ def findPieces(img):
     for circle in circles[0, :]:
         if circle[2] > 30 and circle[2] < 200:
             circleList.append((circle[0],circle[1],circle[2]))
+            # cv.circle(img,(circle[0],circle[1]),1,(0,100,100),3)
+            # cv.circle(img,(circle[0],circle[1]),circle[2],(255,0,255),3)
         
+        
+    
     # print("circle list" + str(circleList))
     
+    # cv.imshow("circles", img)
+    
+    # cv.waitKey(0)
     
     return circleList
 
@@ -49,13 +57,16 @@ def findYellow(rgbimage):
     hsv_image = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
 
     # Define the range of yellow color in HSV
-    lower_yellow = np.array([20, 50, 100])
+    lower_yellow = np.array([24, 76, 128])
+    # lower_yellow = np.array([20,50,100])
     upper_yellow = np.array([40, 255, 255])
 
     # Threshold the HSV image to get only yellow color
     yellow_mask = cv.inRange(hsv_image, lower_yellow, upper_yellow)
     
+    
+    # cv.imshow("yellow",yellow_mask)
     return yellow_mask
 
 
-# findPiece("Identification/attempt1.png")
+# findPieces(cv.imread("Identification/paperTestPinkCover.jpg"))

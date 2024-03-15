@@ -13,7 +13,7 @@ for i in range (0,20):
 labels_gender = ['Man','Woman','Man','Woman','Man','Woman','Man','Woman']
 sizes_gender = [1]
 weight_gender = [189,315,270,212,125,145,200,80]
-colors = ['#ff0000', '#ffffff', '#000000', '#ffffff','#000000']
+colors = ['#FF10F0', '#FFFFFF', '#000000', '#FFFFFF','#000000']
 colors_gender = ['#FFFF00']
  
 # Plot
