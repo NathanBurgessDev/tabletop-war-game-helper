@@ -3,7 +3,7 @@ import numpy as np
 import findPieces
 import math
 
-# The board is brown - composite colour
+# The board is brown - composite colour - very annoying
 
 NUM_SEGMENTS = 4
 NUM_ENCODING = 5
@@ -36,7 +36,7 @@ def identifyAllPieces():
     redFrame = findPink(image)
 
 #   
-    kernal = np.ones((7,7), "uint8")
+    kernal = np.ones((3,3), "uint8")
     
     #I have no Idea why dilating makes this work but it does
     dilatedRedFrame = cv.dilate(redFrame,kernal )
@@ -69,11 +69,14 @@ def identifyAllPieces():
     
     imageDisplay = image.copy()    
     
+    blur = cv.GaussianBlur(image, (7, 7), 0)
+    hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
+    
     for dataPoints in decodedCircles:
         # cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
         print("NEXT ENCODING")
         finalEncodingList= []
-        finalEncodingList = getFullEncoding(image, dataPoints)
+        finalEncodingList = getFullEncoding(hsvImage, dataPoints)
         # cv.circle(imageDisplay, (point[0], point[1]), 1, (0, 255, 0), 3)
         print(finalEncodingList)
     # print(modelIdData)
@@ -88,10 +91,6 @@ def identifyAllPieces():
     # print(redCenterPoints)
     # print(center)
     
- 
-    
-    
-    
     # cv.imshow("red",redFrame)
     resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
     # cv.imshow("img",resized)
@@ -104,10 +103,6 @@ def identifyAllPieces():
 
     k = cv.waitKey(0)
     
-
-
-
-
 # Takes a center and a radius and a list of red center points
 # Takes the 4 closest red center points 
 # // TODO (make this work for a certain radius as a limit)
@@ -126,10 +121,19 @@ def getCentersOfCircleBitContours(center, radius, centroids, image):
     return circleBitCoordinates
 
 
-def getFullEncoding(rgbImage, data):
-    blur = cv.GaussianBlur(rgbImage, (7, 7), 0)
-    hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
-    
+# Removed converting to hsv from this loop
+# Saved a significant amount of time
+# After
+# real    0m0.671s
+# user    0m1.390s
+# sys     0m1.306s
+
+# Before:
+# real    0m1.191s
+# user    0m2.973s
+# sys     0m2.844s
+
+def getFullEncoding(hsvImage, data):
     encoding = []
     # data.pop(0)
     for point in data:
@@ -140,13 +144,37 @@ def getFullEncoding(rgbImage, data):
     
 
 
+def hsvPointInRange(hsvPoint, lower, upper):
+    return (hsvPoint[0] >= lower[0] and hsvPoint[0] <= upper[0] and hsvPoint[1] >= lower[1] and hsvPoint[1] <= upper[1] and hsvPoint[2] >= lower[2] and hsvPoint[2] <= upper[2])
+
+# Doing this constant in range check is very very slow
+# This needs to be re-written
+
+# With print statements
+
+# Before:
+# real    0m2.290s
+# user    0m3.089s
+# sys     0m1.195s
+
+# After:
+# real    0m0.678s
+# user    0m1.374s
+# sys     0m1.293s
 def getEncodingAtPoint(hsvImage, point):
+    
+    
+    hsvPoint = hsvImage[point[1], point[0]]
+    
     
     
     # Encoding 1 boundaries - currently Black
     # Made a slider program to test values
     lower1 = np.array([0, 0, 80])
     upper1 = np.array([179, 255, 255])
+    
+    
+    # blackMask = hsvPointInRange(hsvPoint, lower1, upper1)
     
     # 81 works well
     # 90 is too high
@@ -156,30 +184,36 @@ def getEncodingAtPoint(hsvImage, point):
     lower2 = np.array([0,46,0])
     upper2 = np.array([179, 255, 255])
     
-    blackMask = cv.inRange(hsvImage, lower1, upper1)
+    # blackMask = cv.inRange(hsvImage, lower1, upper1)
 
-    blackMask = cv.bitwise_not(blackMask)
+    # blackMask = cv.bitwise_not(blackMask)
     
-    whiteMask = cv.inRange(hsvImage, lower2, upper2)
+    # whiteMask = cv.inRange(hsvImage, lower2, upper2)
     
-    whiteMask = cv.bitwise_not(whiteMask)
+    # whiteMask = cv.bitwise_not(whiteMask)
     
-    lowBit = (blackMask[point[1], point[0]])
-    highBit = (whiteMask[point[1], point[0]])
+    # lowBit = (blackMask[point[1], point[0]])
+    # highBit = (whiteMask[point[1], point[0]])
     
-    whiteMask = cv.resize(whiteMask, (int(whiteMask.shape[1]/2), int(whiteMask.shape[0]/4)))
+    # whiteMask = cv.resize(whiteMask, (int(whiteMask.shape[1]/2), int(whiteMask.shape[0]/4)))
     # cv.imshow("black",whiteMask)
-    if (lowBit == 255):
-        return 1
-    if (highBit == 255):
-        return 2
     
+    
+    # if (lowBit == 255):
+    #     return 1
+    # if (highBit == 255):
+    #     return 2
+    
+    if (not hsvPointInRange(hsvPoint, lower1, upper1)):
+        return 1
+    if (not hsvPointInRange(hsvPoint, lower2, upper2)):
+        return 2    
     # 0 is for something not correctly identified
     else:
         return 0
     
     # cv.imshow("black",blackMask)
-    return (blackMask[point[1], point[0]])
+    # return (blackMask[point[1], point[0]])
     
 
 
@@ -235,18 +269,13 @@ def findRedContourCentroids(img):
             M = cv.moments(c)
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
-            print(f"Red Box {i} : cx={cx}, cy={cy}") 
+            # print(f"Red Box {i} : cx={cx}, cy={cy}") 
             # cv.circle(img, (cx, cy), 1, (0, 255, 0), 3)
             redCenterPoints.append((cx, cy))
             cv.drawContours(img, [c], -1, (255, 255, 255), 5)
     except:
         print(":3")
         pass
-    
-    
-
-
-    
     return redCenterPoints
 
 
