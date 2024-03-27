@@ -45,21 +45,59 @@ def identifyAllPieces():
     decodedCircles = []
     
     
+    blur = cv.GaussianBlur(image, (7, 7), 0)
+    hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
+    
     # For each circle take the 4 closest red center points within a certain radius
     # For each red center point check the colour of the contours to the right
     # For each red center point check the colour of the contours to the left
     # Perform some error checking
+    
+    # We need some kind of error checking to make sure our encodings are correct
+    # We will read to the right of a centroid
+    # If there is a 0 returned in this we will compare the left read and the right read
+    # If we can find a complete encoding by combining the two we will do so
     for circle in circles:
         contourCentersAsQuarters = getCentersOfCircleBitContours((circle[0],circle[1]), circle[2],redCenterPoints, image)
-
         
-        quarterEncodingList = []
-        for quarter in contourCentersAsQuarters:
+        right = contourCentersAsQuarters[0]
+        left = contourCentersAsQuarters[1]
+        
+       
+        quarterEncodingListRight = []
+        for quarter in right:
             # for point in quarter:
-            #     cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
-            encodingsInQuarter = getFullEncoding(image, quarter)
-            quarterEncodingList.append(encodingsInQuarter)
-        print(quarterEncodingList)
+                # cv.circle(image, (point[0], point[1]), 1, (0, 0, 255), 3)
+            encodingsInQuarter = getFullEncoding(hsvImage, quarter)
+            quarterEncodingListRight.append(encodingsInQuarter)
+        # print(quarterEncodingListRight)
+        
+       
+        quarterEncodingListLeft = []
+        for quarter in left:
+           
+            encodingsInQuarter = getFullEncoding(hsvImage, quarter)
+            quarterEncodingListLeft.append(encodingsInQuarter)
+        # print(quarterEncodingListLeft)
+        
+        # for quarter in left:
+        #     for point in quarter:
+        #         cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
+        
+        correlatedQuarters = zip(quarterEncodingListRight,quarterEncodingListLeft)
+        quartersTuple = tuple(correlatedQuarters)
+        
+        # Perform some error checking
+        # We have read to the left and right of each red center point
+        # To make sure we have the correct encoding we will need to check each quarter for any missing encodings
+        quarterConcensus = []
+        for quarter in quartersTuple:
+            checkForErrorsInQuarter(quarter)
+                
+
+        print("NEXT CIRCLE")
+        
+        
         
             
         
@@ -69,16 +107,15 @@ def identifyAllPieces():
     
     imageDisplay = image.copy()    
     
-    blur = cv.GaussianBlur(image, (7, 7), 0)
-    hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
+
     
-    for dataPoints in decodedCircles:
-        # cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
-        print("NEXT ENCODING")
-        finalEncodingList= []
-        finalEncodingList = getFullEncoding(hsvImage, dataPoints)
-        # cv.circle(imageDisplay, (point[0], point[1]), 1, (0, 255, 0), 3)
-        print(finalEncodingList)
+    # for dataPoints in decodedCircles:
+    #     # cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
+    #     print("NEXT ENCODING")
+    #     finalEncodingList= []
+    #     finalEncodingList = getFullEncoding(hsvImage, dataPoints)
+    #     # cv.circle(imageDisplay, (point[0], point[1]), 1, (0, 255, 0), 3)
+    #     print(finalEncodingList)
     # print(modelIdData)
         
     for dataPoints in decodedCircles:
@@ -90,6 +127,10 @@ def identifyAllPieces():
     # redCenterPoints.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
     # print(redCenterPoints)
     # print(center)
+    
+ 
+    
+    
     
     # cv.imshow("red",redFrame)
     resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
@@ -103,6 +144,108 @@ def identifyAllPieces():
 
     k = cv.waitKey(0)
     
+
+# The first bit of error checking we need to do is to see if any of the encoding bits are missing
+
+# Will return a list of potential encodings for the provided quarter
+# more "robust" encodings will be returned twice, as to influence the voting
+def checkForErrorsInQuarter(quarter):
+    right = quarter[0]
+    left = quarter[1]
+    bothFailed = False
+    # I have no idea why .reverse() does not work here
+    
+    # Check if there is a missing encoding in both
+    # Need to see if we can combine encodings to get a full encoding
+    # If both contain 0 we can not bother checking the rest
+    rebuiltEncodingList = [[]]
+    if (0 in left and 0 in right):
+        bothFailed = True
+        print("both contain 0")
+        
+        # See if we can combine the two
+        # To do this we need to check which bits are missing on which encoding
+        for i in range(0, len(left)):
+            if (list(reversed(left))[i] == 0 and right[i] != 0):
+                print("left missing encoding")
+                for encoding in rebuiltEncodingList:
+                    encoding.append(right[i])
+                
+            elif (list(reversed(left))[i] != 0 and right[i] == 0):
+                print("right missing encoding")
+                for encoding in rebuiltEncodingList:
+                    encoding.append(list(reversed(left))[i])
+                    
+            elif (list(reversed(left))[i] == 0 and right[i] == 0):
+                print("both missing encoding")
+                for encoding in rebuiltEncodingList:
+                    encoding.append(0)
+                    
+            # We now need to check if the two encodings are the same
+            else:
+                # If this is the case then this bit has been misread somehow
+                # We will need to check the other quarters to see which one they match
+                # We will now need to return the potential encodings with both possible
+                # interpretations of that decoded bit
+                if (list(reversed(left))[i] != right[i]):
+                    print("left and right do not match")
+                    copyOfRebuiltEncodingList = rebuiltEncodingList.copy()
+                    
+                    for encoding in rebuiltEncodingList:
+                        encoding.append(right[i])
+                        
+                    for encoding in copyOfRebuiltEncodingList:
+                        encoding.append(list(reversed(left))[i])
+                    
+                    rebuiltEncodingList = rebuiltEncodingList + copyOfRebuiltEncodingList
+                    
+                    
+                # If they are the same we can just add one to the list
+                else:
+                    for encoding in rebuiltEncodingList:
+                        encoding.append(right[i])
+                        
+            return rebuiltEncodingList
+
+
+    
+    # In this case one of the encodings is complete
+    if (not bothFailed):
+        
+        # If there is a missing encoding in the left
+        # See if the right is fine
+        
+        # If the left has the 0 then the right must have a full encoding
+        if 0 in left:
+            rebuiltEncodingList.append(right)
+            return rebuiltEncodingList
+        
+        # If the right has the 0 then the left must have a full necoding
+        elif 0 in right:
+            rebuiltEncodingList.append(list(reversed(left)))
+
+            return rebuiltEncodingList
+
+        # If left and right do not match and there is no 0 in either
+        # They have been read "correctly" but something has been misread
+        
+        # An alternaative approach could be to treat bits that are different as 0
+        # and then return all the possible encodings
+        
+        # We will insert both into the concensus list
+        # So the final choice can be voted on by the most common decoding   
+        elif (list(reversed(left)) != right):
+            print("left and right do not match")
+            
+        # In this case both encodings match with no errors
+        else:
+            rebuiltEncodingList.append(right)
+            rebuiltEncodingList.append(list(reversed(left)))
+            
+    return rebuiltEncodingList
+    
+
+
 # Takes a center and a radius and a list of red center points
 # Takes the 4 closest red center points 
 # // TODO (make this work for a certain radius as a limit)
@@ -116,9 +259,11 @@ def getCentersOfCircleBitContours(center, radius, centroids, image):
         if (distance < radius + 50):
             correctCentroids.append(centroid)
         
-    circleBitCoordinates = getRightContoursPositions(correctCentroids, center, radius, image)
+    circleBitCoordinatesRight = getRightContoursPositions(correctCentroids, center, radius, image)
     
-    return circleBitCoordinates
+    circleBitCoordinatesLeft = getLeftContoursPositions(correctCentroids, center)
+    
+    return (circleBitCoordinatesRight, circleBitCoordinatesLeft)
 
 
 # Removed converting to hsv from this loop
@@ -135,10 +280,11 @@ def getCentersOfCircleBitContours(center, radius, centroids, image):
 
 def getFullEncoding(hsvImage, data):
     encoding = []
-    # data.pop(0)
+    # Remove the first point used to find where to start reading
+    data.pop(0)
     for point in data:
         encoding.append(getEncodingAtPoint(hsvImage, point))
-        
+    
     return encoding
     
     
@@ -254,6 +400,7 @@ def findPink(rgbImage):
     # cv.waitKey(0)
     return pinkMask
 
+# An improvement would be to check the rough shape of the contours as to not get the wrong ones
 def findRedContourCentroids(img):
     
     cnts = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -276,6 +423,11 @@ def findRedContourCentroids(img):
     except:
         print(":3")
         pass
+    
+    
+
+
+    
     return redCenterPoints
 
 
@@ -295,5 +447,22 @@ def getRightContoursPositions(redCenterPoints, center, radius, image):
             quarter.append((int(newPosX) + center[0], int(newPosY)+center[1]))
         data.append(quarter)
     return data
+
+def getLeftContoursPositions(redCenterPoints, center):
+    data = []
+    for x, y in redCenterPoints:
+        quarter = []
+        # print(f"Red Box : x={x}, y={y}")
+        x = x - center[0]
+        y = y - center[1]
+        for i in range(0,-int(360 / NUM_SEGMENTS), -int(int(360 / NUM_SEGMENTS) / NUM_ENCODING)):
+      
+            newPosX =x * math.cos(math.radians(i)) - y * math.sin(math.radians(i))
+            newPosY =x * math.sin(math.radians(i)) + y * math.cos(math.radians(i))
+            # cv.circle(image, (int(newPosX) + center[0], int(newPosY)+center[1]), 1, (0, 255, 0), 3)
+            quarter.append((int(newPosX) + center[0], int(newPosY)+center[1]))
+        data.append(quarter)
+    return data
+
 
 identifyAllPieces()
