@@ -57,6 +57,8 @@ def identifyAllPieces():
     # We will read to the right of a centroid
     # If there is a 0 returned in this we will compare the left read and the right read
     # If we can find a complete encoding by combining the two we will do so
+    # This is done by checking each bit and taking the most common one
+    encodingList = []
     for circle in circles:
         contourCentersAsQuarters = getCentersOfCircleBitContours((circle[0],circle[1]), circle[2],redCenterPoints, image)
         
@@ -90,14 +92,16 @@ def identifyAllPieces():
         # Perform some error checking
         # We have read to the left and right of each red center point
         # To make sure we have the correct encoding we will need to check each quarter for any missing encodings
-        quarterConcensus = []
-        for quarter in quartersTuple:
-            checkForErrorsInQuarter(quarter)
-                
-
+        
+        encoding = checkForErrorsForBit(groupEncodingBits(quartersTuple))
+        
+        finalEncoding = ModelEncoding(encoding, (circle[0],circle[1]), circle[2])
+        
+        print ("Final Encoding = ", encoding)
+        encodingList.append(finalEncoding)
         print("NEXT CIRCLE")
         
-        
+   
         
             
         
@@ -145,10 +149,49 @@ def identifyAllPieces():
     k = cv.waitKey(0)
     
 
+# We need to group the bits together by their positions on the encoding
+# I.e all the first positions bits together from the left and right read
+# for example 1 2 3 4 , 1 2 3 4, 1 2 2 3, 1 2 3 4
+# would become: 1,1,1,1, 2,2,2,2, 3,3,2,3 ,4,4,3,4
+# For some reason this took a long time to write
+# I wasted a lot of time on the checkForErrorsInQuarter function which was a bad way of doing this
+# Then ended up with the 2 for loops the wrong way round
+# This was not a good day of development
+def groupEncodingBits(quartersTuple):
+    groupedBits = []
+    for i in range (0, len(quartersTuple[0][0])):
+        bitArray = []
+        for quarter in quartersTuple:
+            bitArray.append(quarter[0][i])
+            bitArray.append(list(reversed(quarter[1]))[i])
+        groupedBits.append(bitArray)
+    return groupedBits
+            
+        
+# Takes in our grouped bits by position
+# Returns the most common encoding for each position to be used as a final encoding
+# Will need some exceptions to be thrown if there is no clear winner
+def checkForErrorsForBit(groupedBits):
+    finalEncoding = []
+    for group in groupedBits:
+        ones = group.count(1)
+        twos = group.count(2)
+        if ones > twos:
+            finalEncoding.append(1)
+        else:
+            finalEncoding.append(2)
+    return finalEncoding
+
+
+# This is an unfathomobly stupid way of doing this
+# I should just check the [i] of each bit for each quarter and see if they are the same
+# and pick hte most common one
+
 # The first bit of error checking we need to do is to see if any of the encoding bits are missing
 
 # Will return a list of potential encodings for the provided quarter
 # more "robust" encodings will be returned twice, as to influence the voting
+# @DeprecationWarning("This methodology was not a good approach, although it is left here for reference")
 def checkForErrorsInQuarter(quarter):
     right = quarter[0]
     left = quarter[1]
@@ -160,6 +203,7 @@ def checkForErrorsInQuarter(quarter):
     # If both contain 0 we can not bother checking the rest
     rebuiltEncodingList = [[]]
     if (0 in left and 0 in right):
+        rebuiltEncodingList.append([])
         bothFailed = True
         print("both contain 0")
         
@@ -307,6 +351,7 @@ def hsvPointInRange(hsvPoint, lower, upper):
 # real    0m0.678s
 # user    0m1.374s
 # sys     0m1.293s
+
 def getEncodingAtPoint(hsvImage, point):
     
     
