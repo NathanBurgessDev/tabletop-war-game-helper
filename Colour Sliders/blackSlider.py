@@ -5,7 +5,7 @@ def nothing(x):
     pass
 
 # Create a black image, a window
-img = cv2.imread("Identification/paperTestPinkCover.jpg")
+img = cv2.imread("Identification/paperTestCorners.jpg")
 cv2.namedWindow('image')
 
 # create trackbars for color change
@@ -32,14 +32,14 @@ while(1):
     mask = cv2.inRange(cv2.cvtColor(img, cv2.COLOR_BGR2HSV), lower_black, upper_black)
     
     
-    # mask = cv2.bitwise_not(mask)
+    mask = cv2.bitwise_not(mask)
     
     # Apply the mask to the original image
     # result = cv2.bitwise_and(img, img, mask=mask)
 
     # Display the resulting image
-    resized = cv2.resize(mask, (int(mask.shape[1]/2), int(mask.shape[0]/4)))
-    cv2.imshow('image', resized)
+    # resized = cv2.resize(mask, (int(mask.shape[1]/2), int(mask.shape[0]/4)))
+    cv2.imshow('image', mask)
     k = cv2.waitKey(1) & 0xFF
     if k == 27:
         break

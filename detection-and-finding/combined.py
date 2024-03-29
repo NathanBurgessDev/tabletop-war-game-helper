@@ -18,7 +18,7 @@ class ModelEncoding:
 
 def identifyAllPieces():
     
-    filePath = "Identification/paperTestPinkCover.jpg"
+    filePath = "Identification/paperTestCorners.jpg"
     
     image = cv.imread(filePath)
     
@@ -92,11 +92,12 @@ def identifyAllPieces():
         # Perform some error checking
         # We have read to the left and right of each red center point
         # To make sure we have the correct encoding we will need to check each quarter for any missing encodings
+        print(quartersTuple)
         
         encoding = checkForErrorsForBit(groupEncodingBits(quartersTuple))
         
         finalEncoding = ModelEncoding(encoding, (circle[0],circle[1]), circle[2])
-        
+       
         print ("Final Encoding = ", encoding)
         encodingList.append(finalEncoding)
         print("NEXT CIRCLE")
@@ -365,7 +366,9 @@ def getEncodingAtPoint(hsvImage, point):
     upper1 = np.array([179, 255, 255])
     
     
-    # blackMask = hsvPointInRange(hsvPoint, lower1, upper1)
+    # blackMask = cv.inRange(hsvImage, lower1, upper1)
+    # blackMask = cv.bitwise_not(blackMask)
+    # cv.imshow("black",blackMask)
     
     # 81 works well
     # 90 is too high
@@ -375,13 +378,11 @@ def getEncodingAtPoint(hsvImage, point):
     lower2 = np.array([0,46,0])
     upper2 = np.array([179, 255, 255])
     
-    # blackMask = cv.inRange(hsvImage, lower1, upper1)
-
-    # blackMask = cv.bitwise_not(blackMask)
-    
     # whiteMask = cv.inRange(hsvImage, lower2, upper2)
     
     # whiteMask = cv.bitwise_not(whiteMask)
+    # cv.imshow("white",whiteMask)
+    # cv.waitKey(0)
     
     # lowBit = (blackMask[point[1], point[0]])
     # highBit = (whiteMask[point[1], point[0]])
@@ -509,5 +510,5 @@ def getLeftContoursPositions(redCenterPoints, center):
         data.append(quarter)
     return data
 
-
-identifyAllPieces()
+if __name__ == "__main__":
+    identifyAllPieces()
