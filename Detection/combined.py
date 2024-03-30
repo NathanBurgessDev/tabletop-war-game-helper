@@ -1,7 +1,12 @@
 import cv2 as cv
 import numpy as np
-import findPieces
+from Detection.findPieces import findPieces
 import math
+
+from pathlib import Path
+import sys
+from Homogrophy.TopDownView import getTopDownView
+
 
 # The board is brown - composite colour - very annoying
 
@@ -22,7 +27,13 @@ def identifyAllPieces():
     
     image = cv.imread(filePath)
     
-    circles = findPieces.findPieces(image)
+    image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
+    # cv.imshow("image", image)
+    image = getTopDownView(image)
+    
+    imageSize = image.shape
+    
+    circles = findPieces(image)
     print(circles)
     
     # For testing please change this later ty ty
@@ -35,7 +46,6 @@ def identifyAllPieces():
     
     redFrame = findPink(image)
 
-#   
     kernal = np.ones((3,3), "uint8")
     
     #I have no Idea why dilating makes this work but it does
@@ -94,6 +104,10 @@ def identifyAllPieces():
         # To make sure we have the correct encoding we will need to check each quarter for any missing encodings
         print(quartersTuple)
         
+        if (len(quartersTuple) <= 0):
+            print("Encoding Is empty")
+            continue
+        
         encoding = checkForErrorsForBit(groupEncodingBits(quartersTuple))
         
         finalEncoding = ModelEncoding(encoding, (circle[0],circle[1]), circle[2])
@@ -101,6 +115,8 @@ def identifyAllPieces():
         print ("Final Encoding = ", encoding)
         encodingList.append(finalEncoding)
         print("NEXT CIRCLE")
+    
+    return (encodingList, imageSize)
         
    
         
@@ -110,7 +126,7 @@ def identifyAllPieces():
         
     
     
-    imageDisplay = image.copy()    
+    # imageDisplay = image.copy()    
     
 
     
@@ -123,9 +139,9 @@ def identifyAllPieces():
     #     print(finalEncodingList)
     # print(modelIdData)
         
-    for dataPoints in decodedCircles:
-        for point in dataPoints:
-            cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
+    # for dataPoints in decodedCircles:
+    #     for point in dataPoints:
+    #         cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
     
     
     # Find the red Center point closest to the center of the circle
@@ -138,7 +154,7 @@ def identifyAllPieces():
     
     
     # cv.imshow("red",redFrame)
-    resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
+    # resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
     # cv.imshow("img",resized)
     # cv.imshow("cropped",cropped)
     
@@ -147,7 +163,7 @@ def identifyAllPieces():
     # cv.imshow("rotate",rotate)
 
 
-    k = cv.waitKey(0)
+    # k = cv.waitKey(0)
     
 
 # We need to group the bits together by their positions on the encoding

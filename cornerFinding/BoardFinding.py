@@ -18,9 +18,12 @@ def getCornerPos(event, x, y, flags, param):
     #     print(x, y)
     if event == cv.EVENT_LBUTTONDOWN:
         cornerPos.append((x, y))
-        cv.circle(img,(x,y),0,(255,0,0),-1)
 
 def getFourCornersCoordinates(image: ndarray):
+    global cornerClicks
+    global cornerPos
+    cornerClicks = 0
+    cornerPos = []
    
     cv.namedWindow("Image")
     cv.setMouseCallback("Image", getCornerPos)
@@ -28,19 +31,17 @@ def getFourCornersCoordinates(image: ndarray):
         cv.imshow("Image", image)
         k = cv.waitKey(20) & 0xFF
         if len(cornerPos) == 4:
+            cv.destroyWindow("Image")
             return cornerPos
         if k ==27:
             break
-    cv.destroyAllWindows()
+    # cv.destroyAllWindows()
         
 
 
 
 if __name__ == "__main__":
-    global cornerClicks
-    global cornerPos
-    cornerClicks = 0
-    cornerPos = []
+    
     img = cv.imread("Identification/paperTestCorners.jpg")
     print(getFourCornersCoordinates(img))
     
