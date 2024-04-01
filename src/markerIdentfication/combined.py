@@ -195,7 +195,7 @@ def checkForErrorsForBit(groupedBits):
     for group in groupedBits:
         ones = group.count(1)
         twos = group.count(2)
-        if ones > twos:
+        if ones >= twos:
             finalEncoding.append(1)
         else:
             finalEncoding.append(2)

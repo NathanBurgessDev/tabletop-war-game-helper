@@ -9,6 +9,7 @@ import path
 direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import identifyAllPieces
+from modelEncodings.encodingsInUse import Operative, OperativeList, setupOperatives
 
 # Initialize Pygame
 pygame.init()
@@ -50,7 +51,7 @@ def translateToBoardSize(circleCenter, imageSize):
 
 
 # Main function
-def main():
+def startMainInterface():
     # Set up the screen
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Game Board")
@@ -58,7 +59,7 @@ def main():
     # Initialize game board rectangle
     game_board_rect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT, ) ## 0,0 for the game board is (SCREEN_WIDTH - BOARD_WIDTH) // 2, 50
 
-
+    operativeList = setupOperatives()
     
 
 
@@ -69,7 +70,6 @@ def main():
 
     # Main loop
     while True:
-        # print("event happening")
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -90,7 +90,7 @@ def main():
         pygame.display.flip()
 
 if __name__ == "__main__":
-    main()
+    startMainInterface()
 
 
 
@@ -112,3 +112,24 @@ if __name__ == "__main__":
 # Drawing based on team
 # GetCircleData should simply update a current dictionary of circles in use
 # So when a circle can't be found we still display the last known position.
+
+
+# 01/04/24
+# Restructured the repository to be cleaner and more readable
+# Struggled with python file paths - had to use the absolute path - required some re-sturcturing and time
+# Added a new class Operative to store the data of the models
+# Added a new class OperativeList to store a list of Operative objects
+# Made it convert the encodings to a readable ID
+# Still need to work on updating the list and displaying it with the new data
+# TODO - Write about the circles sizes, if the circle is too big it will mis-edentify and be wierd
+# Also write about circle detection sometimes getting hte inside of the circle and not the outside and how this causes problems with getting radius
+# Woke up at like 5pm today - BST is not fun
+
+# Once we are drawing the circles based on the encoding we need to do a few main things:
+# 1. Get Video Feed working
+# 2. Get selection of operatives working
+# 2.1 storing the game state in a 2D array to show operative positions and terrain
+# 3. Get movement of operatives working
+# 4. Next turn button
+# 5. Get RayCasting working (primative terrain) 
+# 6. Terrain
