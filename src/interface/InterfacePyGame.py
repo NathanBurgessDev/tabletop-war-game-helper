@@ -80,24 +80,16 @@ def startMainInterface():
     filePath = "testImages/paperTestCorners.jpg"
     
     image = cv.imread(filePath)
-    
     image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-    
     modelFinder = ModelFinder(image)
-    
-    
-
     gameBoardData = modelFinder.identifyModels(image, modelFinder.cornerPoints)
-    # print(gameBoardData)
-    
-    
-    # circles = identifyAllPieces()
+  
 
     imageSize = gameBoardData[1]
-    
     gameBoard = GameBoard(imageSize)
     
-    operativeList.updateEncodingListPositions(gameBoardData[0])
+    if (gameBoardData[0] != None):
+        operativeList.updateEncodingListPositions(gameBoardData[0])
 
     # Main loop
     while True:
@@ -176,7 +168,7 @@ if __name__ == "__main__":
 # Droidcam may only be SD output not HD
 # Irun is only for ubuntu 
 # Droidcam: v4l2loopback-dc fails to compile on kernels 6.8+
-# Patched 2 weeks ago - supposbly merged to main branch but doesnt seem to be working
+# Patched 2 weeks ago - supposobly merged to main branch but doesnt seem to be working
 # Continunity Camera
 # Logitech webcam now works with good framerate - however only 1080p :(
 # sudo modprobe v4l2loopback fixed the problem - kernal update
@@ -185,4 +177,16 @@ if __name__ == "__main__":
 # Where ? is the number of the camera, we would pass /dev/video0 for the default camera
 # for some reason video1 always fails and video2 is our "other" camera
 # droidcam will take over video2 though webcam can sometimes take over video0
+
 # Spent some time refactoring the code to let calibration be more easily done, storing the corner points in an object so we can use them for each image (part of getting video working)
+# Made the program much more OOP - GameBoard, Operative, OperativeList, and soon to be GameState
+# We call an initial calibration on startup to get the corner points of the board
+# After this we store the corner points in the GameBoard object and use them to translate the video feed
+# Next steps are to get the video feed working and then to get the selection of operatives working
+# Now in the loop we draw a list of the operative on the board in OperativeList
+# We update OperativeList with the operatives we found in the image
+# This way if we miss a circle we can still display the last known position
+
+# From here we need to get the video feed working 
+# selection of operatives
+# store the game state in a 2D array i.e - size of game board, each position is a number representing the space the operative is taking up, 255 for empty and 254 for terrain (Should probably use some enums)

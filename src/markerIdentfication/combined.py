@@ -30,7 +30,7 @@ class ModelFinder:
     def identifyModels(self,image, pts):
         return identifyAllPieces(image,pts)
 
-def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int]]:
+def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,int]]:
     
     
     # cv.imshow("image", image)
@@ -49,15 +49,19 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int]]:
     # cropped = image[center[1]-radius:center[1]+radius, center[0]-radius:center[0]+radius]
     
     
-    redFrame = findPink(image)
+    pinkFrame = findPink(image)
 
     kernal = np.ones((3,3), "uint8")
     
     #I have no Idea why dilating makes this work but it does
-    dilatedRedFrame = cv.dilate(redFrame,kernal )
-    redCenterPoints = findRedContourCentroids(dilatedRedFrame)
+    dilatedRedFrame = cv.dilate(pinkFrame,kernal)
+    try:
+        redCenterPoints = findRedContourCentroids(dilatedRedFrame)
+    except:
+        print("No pink center points found")
+        return (None, imageSize)
     
-    decodedCircles = []
+  
     
     
     blur = cv.GaussianBlur(image, (7, 7), 0)
@@ -75,7 +79,11 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int]]:
     # This is done by checking each bit and taking the most common one
     encodingList = []
     for circle in circles:
-        contourCentersAsQuarters = getCentersOfCircleBitContours((circle[0],circle[1]), circle[2],redCenterPoints, image)
+        try:
+            contourCentersAsQuarters = getCentersOfCircleBitContours((circle[0],circle[1]), circle[2],redCenterPoints, image)
+        except:
+            print("Problem getting contourCenters - Probably no pink centroids near enough")
+            continue
         
         right = contourCentersAsQuarters[0]
         left = contourCentersAsQuarters[1]
