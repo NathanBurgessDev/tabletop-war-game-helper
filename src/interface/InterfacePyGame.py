@@ -107,7 +107,7 @@ def startMainInterface():
         # Center of the game board
         pygame.draw.circle(screen, BLUE,(((SCREEN_WIDTH - BOARD_WIDTH) // 2) + (BOARD_WIDTH // 2),(BOARD_HEIGHT // 2) + 50), 10)
 
-
+    
 
         # Draw operatives on the game board        
         for operative in operativeList.encodings:
@@ -190,3 +190,5 @@ if __name__ == "__main__":
 # From here we need to get the video feed working 
 # selection of operatives
 # store the game state in a 2D array i.e - size of game board, each position is a number representing the space the operative is taking up, 255 for empty and 254 for terrain (Should probably use some enums)
+# Added some error checking to the circle detection
+# If we find an encoding we're not using, we dont have anything to update - helps reduce false positives
