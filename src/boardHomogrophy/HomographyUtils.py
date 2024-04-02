@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+from numpy import ndarray
 
 def order_points(pts):
 	# initialzie a list of coordinates that will be ordered
@@ -22,7 +23,7 @@ def order_points(pts):
 	return rect
 
 
-def four_point_transform(image, pts):
+def four_point_transform(image, pts) -> ndarray:
 	# obtain a consistent order of the points and unpack them
 	# individually
 	rect = order_points(pts)

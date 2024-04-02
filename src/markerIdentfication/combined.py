@@ -6,8 +6,10 @@ import sys
 
 direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
+
 from markerDetection.findPieces import findPieces
-from boardHomogrophy.TopDownView import getTopDownView
+from boardHomogrophy.TopDownView import getTopDownView, calibrateTopDownView
+# from numpy import _Shape
 
 
 # The board is brown - composite colour - very annoying
@@ -15,23 +17,24 @@ from boardHomogrophy.TopDownView import getTopDownView
 NUM_SEGMENTS = 4
 NUM_ENCODING = 5
 
-# First bit - Team (1 or 2)
+
 class ModelEncoding:
     def __init__(self, encoding, circleCenter, circleRadius):
         self.circleCenter = circleCenter
         self.encoding = encoding
         self.circleRadius = circleRadius
+        
+class ModelFinder:
+    def __init__(self, calibrateImage):
+        self.cornerPoints = calibrateTopDownView(calibrateImage) # top left, top right, bottom left, bottom right
+    def identifyModels(self,image, pts):
+        return identifyAllPieces(image,pts)
 
-
-def identifyAllPieces():
+def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int]]:
     
-    filePath = "testImages/paperTestCorners.jpg"
     
-    image = cv.imread(filePath)
-    
-    image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
     # cv.imshow("image", image)
-    image = getTopDownView(image)
+    image = getTopDownView(img,pts)
     
     imageSize = image.shape
     
