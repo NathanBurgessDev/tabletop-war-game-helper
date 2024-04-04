@@ -15,13 +15,17 @@ from modelEncodings.encodingsInUse import Operative, OperativeList
 # Initialize Pygame
 pygame.init()
 
+# Scaling
+SCREEN_SCALE = 4
+BOARD_SCALE = 3
+
 # Screen dimensions
-SCREEN_WIDTH = 559 * 4
-SCREEN_HEIGHT = 381 * 4
+SCREEN_WIDTH = 559 * SCREEN_SCALE
+SCREEN_HEIGHT = 381 * SCREEN_SCALE
 
 # Game board dimensions
-BOARD_WIDTH = 559 * 3 # 1677
-BOARD_HEIGHT = 381 * 3 # 1143
+BOARD_WIDTH = 559 * BOARD_SCALE # 1677
+BOARD_HEIGHT = 381 * BOARD_SCALE # 1143
 
 # Colors
 WHITE = (255, 255, 255)
@@ -32,93 +36,127 @@ GRAY = (128, 128, 128)
 
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
-CIRCLE_RADIUS = 14 * 3
+CIRCLE_RADIUS = 14 * BOARD_SCALE
 
 class GameBoard:
-    def __init__(self,imageSize ):
-        self.imageSize = imageSize
-
-    # Function to draw circles on the game board
-    # def draw_circles(self, screen, circles, imageSize):
-    #     for circle in circles:
-    #         pygame.draw.circle(screen, RED, translateToBoardSize(circle.circleCenter,imageSize), CIRCLE_RADIUS)
+    gameBoardRect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT)
+    
+    def __init__(self,screen,imageSize = (0,0)):
+        if (imageSize == (0,0)):
+            self.setTestMode()
+            self.screen = screen
+        else:
+            self.imageSize = imageSize
+            self.screen = screen
             
     def drawOperative(self, screen, operative: Operative,):
-        pygame.draw.circle(screen, operative.getColourRGB(), self.translateToBoardSize(operative.position), operative.radius * 3)
+        pygame.draw.circle(screen, operative.getColourRGB(), self.translatePointToBoardSize(operative.position), operative.radius * BOARD_SCALE)
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
-        screen.blit(text, self.translateToBoardSize(operative.position))
+        screen.blit(text, self.translateCircleToBoardSize(operative.position))
 
     # This took a while to get working
     # We need to translate the circle center from the size of the image to the size of the baord
     # To do this we need to use a scale factor to translate the circle center and then move it to be relative to the 0,0 of the board display
     # As opposed to the 0,0 of the screen
     # Spent a while on this cause imageSize is in the format (height, width) and I was using it as (width, height)
-    def translateToBoardSize(self, circleCenter):
-        newCenterWidth = (circleCenter[0] * (BOARD_WIDTH / self.imageSize[1])) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
-        newCenterHeight = (circleCenter[1] * (BOARD_HEIGHT / self.imageSize[0])) + 50
+    def translatePointToBoardSize(self, point: tuple[int,int]) -> tuple[int,int]:
+        newCenterWidth = (point[0] * (BOARD_WIDTH / self.imageSize[1])) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
+        newCenterHeight = (point[1] * (BOARD_HEIGHT / self.imageSize[0])) + 50
         return (newCenterWidth, newCenterHeight)
-
-
-
-# Main function
-def startMainInterface():
-    # Set up the screen
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Game Board")
-
-    # Initialize game board rectangle
-    game_board_rect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT, ) ## 0,0 for the game board is (SCREEN_WIDTH - BOARD_WIDTH) // 2, 50
     
-    # Creates our list of operatives with the ID's in use
-    operativeList = OperativeList()
-    
-    
-    
-    # Calibrate the top down view (currently just using an image for testing)
-    filePath = "testImages/paperTestCorners.jpg"
-    
-    image = cv.imread(filePath)
-    image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-    modelFinder = ModelFinder(image)
-    gameBoardData = modelFinder.identifyModels(image, modelFinder.cornerPoints)
-  
-
-    imageSize = gameBoardData[1]
-    gameBoard = GameBoard(imageSize)
-    
-    if (gameBoardData[0] != None):
-        operativeList.updateEncodingListPositions(gameBoardData[0])
-
-    # Main loop
-    while True:
-        # Event handling
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        # Clear the screen
-        screen.fill(GRAY)
-
-        # Draw the game board rectangle
-        pygame.draw.rect(screen, BLACK, game_board_rect)
+    def setTestMode(self):
+        self.imageSize = (381 * BOARD_SCALE,559 * BOARD_SCALE)
+        
+    def drawGameBoard(self):
+        pygame.draw.rect(self.screen, BLACK, self.gameBoardRect)
         # Center of the game board
-        pygame.draw.circle(screen, BLUE,(((SCREEN_WIDTH - BOARD_WIDTH) // 2) + (BOARD_WIDTH // 2),(BOARD_HEIGHT // 2) + 50), 10)
+        pygame.draw.circle(self.screen, BLUE,(((SCREEN_WIDTH - BOARD_WIDTH) // 2) + (BOARD_WIDTH // 2),(BOARD_HEIGHT // 2) + 50), 10)
+        
 
+
+
+
+class MainGame:
+    def __init__(self, operativeList: OperativeList, testing: bool):
+        self.operativeList = operativeList
+        self.testingFlag = testing
+        self.setupScreen()
+        if (testing):
+            self.setupModelFinderTesting()
+            self.setupGameBoardTesting()
+        else:
+            self.setupModelFinder()
+            self.setupGameBoard()
+        self.gameLoop()
+        
+    def setupModelFinder(self):
+        filePath = "testImages/paperTestCorners.jpg"
+        
+        image = cv.imread(filePath)
+        image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
+        
+        self.modelFinder = ModelFinder(image)
+        gameBoardData = self.modelFinder.identifyModels(image, self.modelFinder.cornerPoints)
+        self.imageSize = gameBoardData[1]
+        
+    def setupModelFinderTesting(self):
+        pass
+            
     
+    def setupScreen(self):
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        pygame.display.set_caption("Game Board")
+        
+    def setupGameBoard(self):
+        self.gameBoard = GameBoard(screen=self.screen,imageSize=self.imageSize)
+        
+    def setupGameBoardTesting(self):
+        self.gameBoard = GameBoard(screen=self.screen)
+        
+        
+    def gameLoop(self):
+        
+        # Testing purposes we do an inital update
+        if (not self.testingFlag):
+        
+            filePath = "testImages/paperTestCorners.jpg"
+            
+            image = cv.imread(filePath)
+            image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
+            
+            gameBoardData = self.modelFinder.identifyModels(image,self.modelFinder.cornerPoints)
+            
+            if (gameBoardData[0] != None):
+                operativeList.updateEncodingListPositions(gameBoardData[0])
+            
+        while True:
+            # Event handling
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
 
-        # Draw operatives on the game board        
-        for operative in operativeList.encodings:
-            gameBoard.drawOperative(screen, operative)
 
-        # Update the display
-        pygame.display.flip()
+            # Clear the screen
+            self.screen.fill(GRAY)
+
+            # Draw the game board
+            self.gameBoard.drawGameBoard()
+
+            # Draw operatives on the game board        
+            for operative in self.operativeList.encodings:
+                self.gameBoard.drawOperative(self.screen, operative)
+
+            # Update the display
+            pygame.display.flip()
+        
+        
 
 if __name__ == "__main__":
-    startMainInterface()
-
+    operativeList = OperativeList()
+    game = MainGame(operativeList,True)
 
 
 # 30/03/24
@@ -155,10 +193,10 @@ if __name__ == "__main__":
 # Once we are drawing the circles based on the encoding we need to do a few main things:
 # 1. Get Video Feed working
 # 2. Get selection of operatives working
-# 2.1 storing the game state in a 2D array to show operative positions and terrain
+# 2.1 storing the game state in a 2D array to show operative positions and terrain - probably do not need to do this
 # 3. Get movement of operatives working
 # 4. Next turn button
-# 5. Get RayCasting working (primative terrain) 
+# 5. Get RayCasting working (primative terrain)  - Prioritising this as it is quite complicated
 # 6. Terrain
 
 
@@ -192,3 +230,26 @@ if __name__ == "__main__":
 # store the game state in a 2D array i.e - size of game board, each position is a number representing the space the operative is taking up, 255 for empty and 254 for terrain (Should probably use some enums)
 # Added some error checking to the circle detection
 # If we find an encoding we're not using, we dont have anything to update - helps reduce false positives
+
+
+# 03/04/24
+# So kill team cover rules are a pain
+# Question 1 - Can attackers head see any part of the defender - Center of model to any part of the defender
+# Question 2 - Concealment or engaged
+# Q3 - if engaged Visable + not obscured
+# Q4 - if concealed - Visable + not obscured + not in cover 
+
+# https://www.reddit.com/r/killteam/comments/vukgpz/basic_line_of_sight_rule_slate_i_made_for_our/
+# Obscurity - good lord this one is not easy
+# Fire cone - One point on the base - to EVERY point on a defender
+# Similar to drawing a triangle from the base to the defender
+# Could just check if I draw a rectangle between 2 pieces if that rectangle covers any terrain
+# If no - No cover
+# If yes - There is some cover, still need to find out how much
+# Right, left, top, bottom of attacker circle. Draw a triangle (?)
+# Get intersects
+# Check range of intersects - if defender >2" from intersect -> obscured
+# If <=1" -> that part of the terrain is not obscuring the defender
+
+# Determine Cover 
+# >2" away -> are they <1" from Terrain  -> in cover 

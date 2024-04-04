@@ -4,6 +4,7 @@ import glob
 
 def main():
 
+    # Use -1 to get a list of available devices
     # for camera in glob.glob("/dev/video?"):
     #     print(camera)
     #     c = cv.VideoCapture(camera)
