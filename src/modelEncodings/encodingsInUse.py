@@ -5,6 +5,8 @@ direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import ModelEncoding
 
+BOARD_SCALE = 3
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
@@ -33,21 +35,27 @@ class Operative:
 class OperativeList:
     def __init__(self):
         # ENCODINGS ARE LEFT TO RIGHT i.e. 1,2,1,2 = 10 (denary)
-        self.encodings = []
+        self.operatives = []
         self.setupOperatives()
         
     # Add an encoding to the list
-    def addEncoding(self, encoding: Operative):
-        self.encodings.append(encoding)
+    def addOperative(self, operative: Operative):
+        self.operatives.append(operative)
     
     # Model ID is the ID of the model in base 10
     # Encodings are in base 2 (binary)
     # This acts as a helper function to get the model by its encoding
     def getModelByEncoding(self, encoding: list[int]) -> Operative | None:
         id = self.convertEncodingToId(encoding)
-        for encoding in self.encodings:
-            if encoding.id == id:
-                return encoding
+        for operative in self.operatives:
+            if operative.id == id:
+                return operative
+        return None
+    
+    def getModelById(self,id) -> Operative | None:
+        for operative in self.operatives:
+            if operative.id == id:
+                return operative
         return None
     
     # Converts a binary encoding to a base 10 number
@@ -74,10 +82,10 @@ class OperativeList:
         
         #Test with 5, 2, 13, 10
         # Team One
-        self.addEncoding(Operative(id = 5,name = "Five Team One",radius=14,team=1,alive=True,position=(200,200),obscured=False))
+        self.addOperative(Operative(id = 5,name = "Five Team One",radius=14*BOARD_SCALE,team=1,alive=True,position=(200,200),obscured=False))
         # self.addEncoding(Operative(id = 2,name = "Two Team One",radius=14,team=1,alive=True,position=(300,300),obscured=False))
         
         #Team Two
         # self.addEncoding(Operative(id = 13,name = "Thirteen Team Two",radius=14,team=2,alive=True,position=(400,400),obscured=False))
-        self.addEncoding(Operative(id = 10,name = "Ten Team Two",radius=14,team=2,alive=True,position=(500,500),obscured=False))
+        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=14*BOARD_SCALE,team=2,alive=True,position=(500,500),obscured=False))
 

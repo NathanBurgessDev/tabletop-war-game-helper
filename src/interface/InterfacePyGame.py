@@ -1,7 +1,7 @@
 import pygame
 import sys
 import cv2 as cv
-
+from math import sqrt
 # from pathlib import Path
 import path
 # path_root = Path(__file__).parents[2]
@@ -33,6 +33,7 @@ BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GRAY = (128, 128, 128)
+MAGENTA = (255, 0, 255)
 
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
@@ -49,12 +50,19 @@ class GameBoard:
             self.imageSize = imageSize
             self.screen = screen
             
-    def drawOperative(self, screen, operative: Operative,):
-        pygame.draw.circle(screen, operative.getColourRGB(), self.translatePointToBoardSize(operative.position), operative.radius * BOARD_SCALE)
+    def drawOperative(self, operative: Operative,):
+        pygame.draw.circle(self.screen, operative.getColourRGB(), self.translatePointToBoardSize(operative.position), operative.radius)
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
-        screen.blit(text, self.translateCircleToBoardSize(operative.position))
+        self.screen.blit(text, self.translatePointToBoardSize(operative.position))
+        
+    def drawCircle(self, circle: tuple[int,int], radius: int):
+        pygame.draw.circle(self.screen, MAGENTA, self.translatePointToBoardSize(circle), radius)
+        
+    def drawLine(self, start: tuple[int,int], end: tuple[int,int]):
+        pygame.draw.line(self.screen, MAGENTA, self.translatePointToBoardSize(start), self.translatePointToBoardSize(end))
+        
 
     # This took a while to get working
     # We need to translate the circle center from the size of the image to the size of the baord
@@ -67,7 +75,7 @@ class GameBoard:
         return (newCenterWidth, newCenterHeight)
     
     def setTestMode(self):
-        self.imageSize = (381 * BOARD_SCALE,559 * BOARD_SCALE)
+        self.imageSize = (BOARD_HEIGHT,BOARD_WIDTH)
         
     def drawGameBoard(self):
         pygame.draw.rect(self.screen, BLACK, self.gameBoardRect)
@@ -146,11 +154,153 @@ class MainGame:
             self.gameBoard.drawGameBoard()
 
             # Draw operatives on the game board        
-            for operative in self.operativeList.encodings:
-                self.gameBoard.drawOperative(self.screen, operative)
+            for operative in self.operativeList.operatives:
+                self.gameBoard.drawOperative(operative)
+                
+            self.checkObscurity(10)
 
             # Update the display
             pygame.display.flip()
+            
+            
+    def checkObscurity(self, operativeID):
+        chosenOperative = self.operativeList.getModelById(operativeID)
+        
+        for operative in self.operativeList.operatives:
+            if (chosenOperative.team != operative.team):
+                # Draw 2 Firing cones from the extreme of each circle to the extremes of the other circle
+                # Get the gradient of the line between the two circles
+                # Take the negative of the gradient to get the perpendicular gradient
+                # For each circle
+                # Get the intercepts of the perpendicular lines with the circle
+                # Draw a triangle between these three points
+                
+                h = round(chosenOperative.position[0])
+                k = round(chosenOperative.position[1])
+                r = round(chosenOperative.radius)
+                
+                gradient = (k- round(operative.position[1])) / (h - round(operative.position[0]))
+                perpendicularGradient = -(gradient**-1)
+                
+                # Get the line equation of the perpendicular lines
+                # Get C
+                # c = y - mx
+                # chosenOperative.position[1] = perpendicularGradient * chosenOperative.position[0] + c
+                
+                c = k - (perpendicularGradient * round(chosenOperative.position[0]))
+                m = perpendicularGradient
+                
+                
+                self.gameBoard.drawLine((0,c),(h,k))
+                self.gameBoard.drawLine((h,k),(operative.position[0],operative.position[1]))
+                
+                # Circle equations (x - h)^2 + (y - k)^2 = r^2
+                # we want to find the intercepts of the line with the circle
+                # This is a quadratic equation
+                # (x - h)^2 + (m * x + c - k)^2 = r^2
+                # x^2 - 2hx + h^2 + (m * x + c - k)^2 = r^2
+                
+                # dx = chosenOperative.position[0] - operative.position[0]
+                # dy = chosenOperative.position[1] - operative.position[1]
+                
+                # dr = sqrt(dx**2 + dy**2)
+                
+                # capitalD = chosenOperative.position[0] * operative.position[1] - operative.position[0] * chosenOperative.position[1]
+                
+                # xMinus = (capitalD * dy - self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+                
+                # xPlus = (capitalD * dy + self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+                
+                # yMinus = (-capitalD * dx - abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+                
+                # yPlus = (-capitalD * dx + abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+                
+                # self.gameBoard.drawCircle((xMinus,yMinus),2)
+                
+                
+                # Wolfram testing
+                
+               
+                
+                # a = 1 + m**2 
+                # b = c * m - k * m - h
+                # quadraticC = 2 * k * m * c + c**2 - r**2
+                
+                # chosenOperativeX = (-b - sqrt(b**2 - (4 * a * quadraticC))) / (2 * a)
+                
+                # chosenOperativeY = m * chosenOperativeX + c
+                # print("Chosen Operative")
+                # print(chosenOperativeX,chosenOperativeY)
+                # # 514 ish
+                
+                
+                # print("translated Intersect")
+                # print(self.gameBoard.translatePointToBoardSize(point=(chosenOperativeX,chosenOperativeY)))
+                # print("Translated Center")
+                # print(self.gameBoard.translatePointToBoardSize((chosenOperative.position[0],chosenOperative.position[1])))
+                
+                
+                # # print(self.gameBoard.translatePointToBoardSize((h,k)))
+                
+                # self.gameBoard.drawCircle((chosenOperativeX,chosenOperativeY),2)
+                
+                # self.gameBoard.drawLine((h,k),(operative.position[0],operative.position[1]))
+                
+                
+                
+                
+                
+                
+                # self.gameBoard.drawCircle((509+ (509-h)*2,490 + (490-k)*2),2)
+                
+                finalXplus = round((h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
+                
+                finalXminus = round((h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
+                
+                finalYplus = round(m * finalXplus + c)
+                
+                finalYminus = round(m * finalXminus + c)
+                
+                # self.gameBoard.drawCircle((finalXplus + (finalXplus-h)*2,finalYplus+ (finalYplus-k)*2),2)
+                # self.gameBoard.drawCircle((finalXminus+ (finalXminus-h)*2,finalYminus+ (finalYminus-k)*2),2)
+                
+                self.gameBoard.drawCircle((finalXplus,finalYplus),5)
+                self.gameBoard.drawCircle((finalXminus,finalYminus),5)
+                
+                
+                print(finalXminus,finalYminus)
+                print(finalXplus,finalYplus)
+                
+                
+                
+                
+                
+                
+                # This is probably gonna need discriminants :(
+                # B^2 - 4AC
+                
+                # -b +- sqrt(b^2 - 4ac) / 2a
+                
+                
+                    
+                
+                
+                # operative 
+                
+                
+                
+                
+                
+                pass
+        pass
+    
+    def getInterceptLineCircle(self, line, circle) -> tuple[tuple[int,int],tuple[int,int]]:
+        pass
+            
+    def sgn(self, x):
+        if x < 0:
+            return -1
+        return 1
         
         
 
@@ -253,3 +403,17 @@ if __name__ == "__main__":
 
 # Determine Cover 
 # >2" away -> are they <1" from Terrain  -> in cover 
+
+# What if center of cricle ends up outside of bounds???
+
+# 04/04/24
+# We're gonna model this as "simple" terrain i.e. just simple rectangles
+# If we wanted to do more complex terrain we would likely need to use a more complex approach
+# Either making a 2D representation of the game board and then performing raycasting from there
+# Or using barycentric coordinates to calculate whether objects fall within the firing cone.
+# This approach would be useful but would be incredibly slow without multithreading / GPU
+# As it is every pixel in the firing cone for every peice of terrain / model.
+# repeated for each possible firing cone from the model
+# For now we will simly check collisions within a firing cone within the area of our simple terrain objects
+
+# All game logic is performed on the original coordinates (from the image) which are then translated to the game board abstraction when drawing
