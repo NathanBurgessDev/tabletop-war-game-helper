@@ -297,16 +297,16 @@ class MainGame:
     def getInterceptLineCircle(self, line, circle) -> tuple[tuple[int,int],tuple[int,int]]:
         pass
             
-    def sgn(self, x):
-        if x < 0:
-            return -1
-        return 1
+    # def sgn(self, x):
+    #     if x < 0:
+    #         return -1
+    #     return 1
         
         
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList,True)
+    game = MainGame(operativeList,False)
 
 
 # 30/03/24
@@ -417,3 +417,25 @@ if __name__ == "__main__":
 # For now we will simly check collisions within a firing cone within the area of our simple terrain objects
 
 # All game logic is performed on the original coordinates (from the image) which are then translated to the game board abstraction when drawing
+
+
+# 05/04/24
+# FIRING CONE YIPEEE
+# Was a massive pain to get working 
+# I cant do maths (gcse level)
+# TLDR - the perpendicular gradient was wrong - calcualting reciprocal incorrectly, was missing a -
+# Spent a loooong time trying to derive the equation for getting the X value for the intercept of a line and a circle
+# Got it wrong the first time
+# Got it wrong the second time 
+# Got confused cause I had a 2nd problem with scaling the circle
+# Previously when I was placing the circle o nthe board I was taking hte point, translating it to the board size and then sccaling the radius
+# This becomes a problem when trying to track a specific point o nthe circle before and after scaling
+# When we expand the circle we dont just multiply each point by the scale factor
+# the X,Y of each point is scaled different depending on the angle from the center
+# As a result of this When drawing the firing cone points were all over the place
+# Had to go back and re-work the scaling to be consistent
+# Along with this, The game board uses 0,0 at the top left increasing to the right and down
+# This made it difficult to transfer between calculating the values and drawing them
+# Spent a while trying to use the method from wolfram alpha - turned out this only worked for circles at 0,0
+# Probably couldve just translated the positions there and back but that sounded like a pain
+ 

@@ -76,7 +76,10 @@ class OperativeList:
                 model.position = modelEncoding.circleCenter
 
       
-
+    # Somewhat annoyingly the radius is relative to the DISPLAYED board size
+    # and the position is relative to the ACTUAL board size
+    # This doesnt really cause too many issues as the radius is only used for drawing and we never actually utilise the real radius
+    # But it is something to be aware of
     def setupOperatives(self):
         # 0 through 15 are the pieces in use
         

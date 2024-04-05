@@ -23,6 +23,10 @@
 #set par(justify: true)
 #pagebreak()
 
+#import "@preview/wordometer:0.1.1": word-count, total-words
+#show: word-count
+
+In this document, there are #total-words words all up.
 = Introduction and Motivation
 
 Tabletop war-gaming is a popular hobby but, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players putting them off the hobby as well as causing arguments between seasoned players over different rules interpretations.
