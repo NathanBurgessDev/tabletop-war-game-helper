@@ -2,6 +2,9 @@ import cv2 as cv
 import numpy as np
 from numpy import ndarray
 
+
+#Note: I did not write this code, I got it from pyimagesearch.com - GET SPECIFIC LINK
+
 def order_points(pts):
 	# initialzie a list of coordinates that will be ordered
 	# such that the first entry in the list is the top-left,

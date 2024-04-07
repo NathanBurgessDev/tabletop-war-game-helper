@@ -17,7 +17,7 @@ GRAY = (128, 128, 128)
 # This stores a list of the encodings we are currently using
 
 class Operative:
-    def __init__(self,id:int, name:str, radius:int, team:int, alive:bool, position:tuple, obscured:bool):
+    def __init__(self,id:int, name:str, radius:int, team:int, alive:bool, position:tuple, obscured:bool, inCover:bool):
         self.id = id
         self.name = name
         self.radius = radius
@@ -25,6 +25,7 @@ class Operative:
         self.alive = alive
         self.position = position
         self.obsured = obscured
+        self.inCover = inCover
         
     def getColourRGB(self):
         if (self.team == 1):
@@ -85,10 +86,10 @@ class OperativeList:
         
         #Test with 5, 2, 13, 10
         # Team One
-        self.addOperative(Operative(id = 5,name = "Five Team One",radius=14*BOARD_SCALE,team=1,alive=True,position=(200,200),obscured=False))
+        self.addOperative(Operative(id = 5,name = "Five Team One",radius=14*BOARD_SCALE,team=1,alive=True,position=(200,200),obscured=False, inCover=False))
         # self.addEncoding(Operative(id = 2,name = "Two Team One",radius=14,team=1,alive=True,position=(300,300),obscured=False))
         
         #Team Two
         # self.addEncoding(Operative(id = 13,name = "Thirteen Team Two",radius=14,team=2,alive=True,position=(400,400),obscured=False))
-        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=14*BOARD_SCALE,team=2,alive=True,position=(500,500),obscured=False))
+        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=14*BOARD_SCALE,team=2,alive=True,position=(500,500),obscured=False,inCover=False))
 

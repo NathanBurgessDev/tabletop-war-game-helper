@@ -11,6 +11,7 @@ direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import ModelFinder
 from modelEncodings.encodingsInUse import Operative, OperativeList
+from terrain.TerrainObject import Terrain
 
 # Initialize Pygame
 pygame.init()
@@ -24,8 +25,10 @@ SCREEN_WIDTH = 559 * SCREEN_SCALE
 SCREEN_HEIGHT = 381 * SCREEN_SCALE
 
 # Game board dimensions
-BOARD_WIDTH = 559 * BOARD_SCALE # 1677
-BOARD_HEIGHT = 381 * BOARD_SCALE # 1143
+BOARD_WIDTH = 559 * BOARD_SCALE # 1677 - 22 inches
+BOARD_HEIGHT = 381 * BOARD_SCALE # 1143 - 15 inches
+
+BOARD_INCH = round(25.4 * BOARD_SCALE)
 
 # Colors
 WHITE = (255, 255, 255)
@@ -34,6 +37,7 @@ RED = (255, 0, 0)
 BLUE = (0, 0, 255)
 GRAY = (128, 128, 128)
 MAGENTA = (255, 0, 255)
+ORANGE = (255, 165, 0)
 
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
@@ -41,7 +45,8 @@ CIRCLE_RADIUS = 14 * BOARD_SCALE
 
 class GameBoard:
     gameBoardRect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT)
-    
+    imageInch = None
+    terrainList = []
     def __init__(self,screen,imageSize = (0,0)):
         if (imageSize == (0,0)):
             self.setTestMode()
@@ -49,6 +54,7 @@ class GameBoard:
         else:
             self.imageSize = imageSize
             self.screen = screen
+        self.imageInch = round(self.imageSize[1] / 22)
             
     def drawOperative(self, operative: Operative,):
         pygame.draw.circle(self.screen, operative.getColourRGB(), self.translatePointToBoardSize(operative.position), operative.radius)
@@ -63,6 +69,9 @@ class GameBoard:
     def drawLine(self, start: tuple[int,int], end: tuple[int,int]):
         pygame.draw.line(self.screen, MAGENTA, self.translatePointToBoardSize(start), self.translatePointToBoardSize(end))
         
+    def addTerrain(self, terrain: Terrain):
+        self.terrainList.append(terrain)
+        
 
     # This took a while to get working
     # We need to translate the circle center from the size of the image to the size of the baord
@@ -74,6 +83,13 @@ class GameBoard:
         newCenterHeight = (point[1] * (BOARD_HEIGHT / self.imageSize[0])) + 50
         return (newCenterWidth, newCenterHeight)
     
+    # def translateRectangleToBoardSize(self, rectangle: pygame.Rect) -> pygame.Rect:
+    #     newTopLeftX = (rectangle.x * (BOARD_WIDTH / self.imageSize[1])) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
+    #     newTopLeftY = (rectangle.y * (BOARD_HEIGHT / self.imageSize[0])) + 50
+    #     newWidth = rectangle.width * (BOARD_WIDTH / self.imageSize[1])
+    #     newHeight = rectangle.height * (BOARD_HEIGHT / self.imageSize[0])
+    #     return pygame.Rect(newTopLeftX,newTopLeftY,newWidth,newHeight)
+    
     def setTestMode(self):
         self.imageSize = (BOARD_HEIGHT,BOARD_WIDTH)
         
@@ -82,6 +98,14 @@ class GameBoard:
         # Center of the game board
         pygame.draw.circle(self.screen, BLUE,(((SCREEN_WIDTH - BOARD_WIDTH) // 2) + (BOARD_WIDTH // 2),(BOARD_HEIGHT // 2) + 50), 10)
         
+    def drawTerrain(self):
+        # for terrain in self.terrainList:
+        #     for rectangle in terrain.terrainRectangles:
+        #         translatedRectangle = self.translateRectangleToBoardSize(rectangle)
+        #         pygame.draw.rect(self.screen, ORANGE, translatedRectangle)
+        pass
+                
+            
 
 
 
@@ -135,9 +159,15 @@ class MainGame:
             image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
             
             gameBoardData = self.modelFinder.identifyModels(image,self.modelFinder.cornerPoints)
+            self.gameBoard.imageSize = gameBoardData[1]
             
             if (gameBoardData[0] != None):
                 operativeList.updateEncodingListPositions(gameBoardData[0])
+                
+        if (self.testingFlag):
+            terrain = Terrain()
+            # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
+            # self.gameBoard.addTerrain(terrain)
             
         while True:
             # Event handling
@@ -152,17 +182,28 @@ class MainGame:
 
             # Draw the game board
             self.gameBoard.drawGameBoard()
+            
+            #Draw terrain
+            self.gameBoard.drawTerrain()
 
             # Draw operatives on the game board        
             for operative in self.operativeList.operatives:
                 self.gameBoard.drawOperative(operative)
+                
+                
                 
             self.checkObscurity(10)
 
             # Update the display
             pygame.display.flip()
             
-            
+    
+    def checkVisability(self, operativeID):
+        pass
+                
+    def checkCover(self,operativeID):
+        pass        
+                
     def checkObscurity(self, operativeID):
         chosenOperative = self.operativeList.getModelById(operativeID)
         
@@ -175,138 +216,68 @@ class MainGame:
                 # Get the intercepts of the perpendicular lines with the circle
                 # Draw a triangle between these three points
                 
-                h = round(chosenOperative.position[0])
-                k = round(chosenOperative.position[1])
-                r = round(chosenOperative.radius)
                 
-                gradient = (k- round(operative.position[1])) / (h - round(operative.position[0]))
-                perpendicularGradient = -(gradient**-1)
+                chosenOperativePoints = self.getCircleExtremes(chosenOperative.position[0],chosenOperative.position[1],chosenOperative.radius,operative.position[0],operative.position[1])
                 
-                # Get the line equation of the perpendicular lines
-                # Get C
-                # c = y - mx
-                # chosenOperative.position[1] = perpendicularGradient * chosenOperative.position[0] + c
+                targetOperativePoints = self.getCircleExtremes(operative.position[0],operative.position[1],operative.radius,chosenOperative.position[0],chosenOperative.position[1])
                 
-                c = k - (perpendicularGradient * round(chosenOperative.position[0]))
-                m = perpendicularGradient
+       
+                self.gameBoard.drawCircle(chosenOperativePoints[0],5)
+                self.gameBoard.drawCircle(chosenOperativePoints[1],5)
                 
+                self.gameBoard.drawCircle(targetOperativePoints[0],5)
+                self.gameBoard.drawCircle(targetOperativePoints[1],5)
                 
-                self.gameBoard.drawLine((0,c),(h,k))
-                self.gameBoard.drawLine((h,k),(operative.position[0],operative.position[1]))
+                self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[0])
+                self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[1])
                 
-                # Circle equations (x - h)^2 + (y - k)^2 = r^2
-                # we want to find the intercepts of the line with the circle
-                # This is a quadratic equation
-                # (x - h)^2 + (m * x + c - k)^2 = r^2
-                # x^2 - 2hx + h^2 + (m * x + c - k)^2 = r^2
-                
-                # dx = chosenOperative.position[0] - operative.position[0]
-                # dy = chosenOperative.position[1] - operative.position[1]
-                
-                # dr = sqrt(dx**2 + dy**2)
-                
-                # capitalD = chosenOperative.position[0] * operative.position[1] - operative.position[0] * chosenOperative.position[1]
-                
-                # xMinus = (capitalD * dy - self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
-                
-                # xPlus = (capitalD * dy + self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
-                
-                # yMinus = (-capitalD * dx - abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
-                
-                # yPlus = (-capitalD * dx + abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
-                
-                # self.gameBoard.drawCircle((xMinus,yMinus),2)
+                self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
+                self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
                 
                 
-                # Wolfram testing
-                
-               
-                
-                # a = 1 + m**2 
-                # b = c * m - k * m - h
-                # quadraticC = 2 * k * m * c + c**2 - r**2
-                
-                # chosenOperativeX = (-b - sqrt(b**2 - (4 * a * quadraticC))) / (2 * a)
-                
-                # chosenOperativeY = m * chosenOperativeX + c
-                # print("Chosen Operative")
-                # print(chosenOperativeX,chosenOperativeY)
-                # # 514 ish
-                
-                
-                # print("translated Intersect")
-                # print(self.gameBoard.translatePointToBoardSize(point=(chosenOperativeX,chosenOperativeY)))
-                # print("Translated Center")
-                # print(self.gameBoard.translatePointToBoardSize((chosenOperative.position[0],chosenOperative.position[1])))
-                
-                
-                # # print(self.gameBoard.translatePointToBoardSize((h,k)))
-                
-                # self.gameBoard.drawCircle((chosenOperativeX,chosenOperativeY),2)
-                
-                # self.gameBoard.drawLine((h,k),(operative.position[0],operative.position[1]))
-                
-                
-                
-                
-                
-                
-                # self.gameBoard.drawCircle((509+ (509-h)*2,490 + (490-k)*2),2)
-                
-                finalXplus = round((h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
-                
-                finalXminus = round((h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
-                
-                finalYplus = round(m * finalXplus + c)
-                
-                finalYminus = round(m * finalXminus + c)
-                
-                # self.gameBoard.drawCircle((finalXplus + (finalXplus-h)*2,finalYplus+ (finalYplus-k)*2),2)
-                # self.gameBoard.drawCircle((finalXminus+ (finalXminus-h)*2,finalYminus+ (finalYminus-k)*2),2)
-                
-                self.gameBoard.drawCircle((finalXplus,finalYplus),5)
-                self.gameBoard.drawCircle((finalXminus,finalYminus),5)
-                
-                
-                print(finalXminus,finalYminus)
-                print(finalXplus,finalYplus)
-                
-                
-                
-                
-                
-                
-                # This is probably gonna need discriminants :(
-                # B^2 - 4AC
-                
-                # -b +- sqrt(b^2 - 4ac) / 2a
-                
-                
-                    
-                
-                
-                # operative 
-                
-                
-                
-                
-                
-                pass
+    
+
+    def checkLineOfSight(self, operativeID):
         pass
     
-    def getInterceptLineCircle(self, line, circle) -> tuple[tuple[int,int],tuple[int,int]]:
-        pass
-            
-    # def sgn(self, x):
-    #     if x < 0:
-    #         return -1
-    #     return 1
+    def getCircleExtremes(self, h,k,r, targetX, targetY) -> tuple[tuple[int,int],tuple[int,int]]:
         
+        
+        gradient = (k- round(targetY)) / (h - round(targetX))
+        perpendicularGradient = -(gradient**-1)
+        
+        c = k - (perpendicularGradient * round(h))
+        m = perpendicularGradient
+        
+        # self.gameBoard.drawLine((0,c),(h,k))
+        # self.gameBoard.drawLine((h,k),(targetX,targetY))
+        
+        finalXplus = round((h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
+                
+        finalXminus = round((h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
+        
+        finalYplus = round(m * finalXplus + c)
+        
+        finalYminus = round(m * finalXminus + c)
+        
+ 
+        
+        # self.gameBoard.drawCircle((finalXplus,finalYplus),5)
+        # self.gameBoard.drawCircle((finalXminus,finalYminus),5)
+        
+        
+        # print(finalXminus,finalYminus)
+        # print(finalXplus,finalYplus)
+                
+        
+        return ((finalXminus,finalYminus),(finalXplus,finalYplus))
+            
+
         
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList,False)
+    game = MainGame(operativeList,True)
 
 
 # 30/03/24
@@ -439,3 +410,132 @@ if __name__ == "__main__":
 # Spent a while trying to use the method from wolfram alpha - turned out this only worked for circles at 0,0
 # Probably couldve just translated the positions there and back but that sounded like a pain
  
+ 
+# 07/04/24
+# Old comments remainting for the sake of history - help to write the report 
+# Get the line equation of the perpendicular lines
+# Get C
+# c = y - mx
+# chosenOperative.position[1] = perpendicularGradient * chosenOperative.position[0] + c
+
+
+
+
+
+# Circle equations (x - h)^2 + (y - k)^2 = r^2
+# we want to find the intercepts of the line with the circle
+# This is a quadratic equation
+# (x - h)^2 + (m * x + c - k)^2 = r^2
+# x^2 - 2hx + h^2 + (m * x + c - k)^2 = r^2
+
+# dx = chosenOperative.position[0] - operative.position[0]
+# dy = chosenOperative.position[1] - operative.position[1]
+
+# dr = sqrt(dx**2 + dy**2)
+
+# capitalD = chosenOperative.position[0] * operative.position[1] - operative.position[0] * chosenOperative.position[1]
+
+# xMinus = (capitalD * dy - self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+
+# xPlus = (capitalD * dy + self.sgn(dy)*dx * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+
+# yMinus = (-capitalD * dx - abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+
+# yPlus = (-capitalD * dx + abs(dy) * sqrt(chosenOperative.radius**2 * dr**2 - capitalD**2)) / dr**2
+
+# self.gameBoard.drawCircle((xMinus,yMinus),2)
+
+
+# Wolfram testing
+
+
+
+# a = 1 + m**2 
+# b = c * m - k * m - h
+# quadraticC = 2 * k * m * c + c**2 - r**2
+
+# chosenOperativeX = (-b - sqrt(b**2 - (4 * a * quadraticC))) / (2 * a)
+
+# chosenOperativeY = m * chosenOperativeX + c
+# print("Chosen Operative")
+# print(chosenOperativeX,chosenOperativeY)
+# # 514 ish
+
+
+# print("translated Intersect")
+# print(self.gameBoard.translatePointToBoardSize(point=(chosenOperativeX,chosenOperativeY)))
+# print("Translated Center")
+# print(self.gameBoard.translatePointToBoardSize((chosenOperative.position[0],chosenOperative.position[1])))
+
+
+# # print(self.gameBoard.translatePointToBoardSize((h,k)))
+
+# self.gameBoard.drawCircle((chosenOperativeX,chosenOperativeY),2)
+
+# self.gameBoard.drawLine((h,k),(operative.position[0],operative.position[1]))
+
+
+
+
+
+
+# self.gameBoard.drawCircle((509+ (509-h)*2,490 + (490-k)*2),2)
+
+
+# self.gameBoard.drawCircle((finalXplus + (finalXplus-h)*2,finalYplus+ (finalYplus-k)*2),2)
+# self.gameBoard.drawCircle((finalXminus+ (finalXminus-h)*2,finalYminus+ (finalYminus-k)*2),2)
+
+
+
+
+# This is probably gonna need discriminants :(
+# B^2 - 4AC
+
+# -b +- sqrt(b^2 - 4ac) / 2a
+
+# def sgn(self, x):
+#     if x < 0:
+#         return -1
+#     return 1
+    
+    
+
+
+# operative 
+
+# 07/04/24
+# Actual notes
+# LOS - need
+# Terrain - need 
+# Clicking - need 
+# April tags for board corners - would be nice to have
+# Realised that pygame rectangles are top left corner based and therefore cant be rotated or placed at an angle
+# Can use pygame polygons instead
+# Started making terrain representation - realised rectangles won't work so need to re-think solution
+# Gonna use polygons instead, need to look at how this should be represented to make my time easier later
+# Unfortunatly it would appear im making a very rudamentary game engine as a result of this
+#Terrain objects are now polygons - defined as a list of points
+# Now we need to check a few things for obscuring 
+# We could do this with raycasting but it is way overkill and performance heavy
+# It would also give us other problems to deal with (think about what these are at some point)
+# instead we will do it mathematically
+
+
+# Are any of the points of the terrain object within the firing cone
+# If yes - Get the point on the lines the point is a part of which is closest to the center of the circle
+# Check the distance between the point and the center of the circle - radius of the circle
+# If the distance is > 2 inches -> obscured
+
+
+# If no - are any of the lines of the terrain object intersecting the lines of the firing cone? 
+# If yes - return the point on the line closest to the center of the circle
+
+
+# Vector math - since we have the line of the terrain which is in our line of sight
+# For the defender
+# we need to find the closest point on the line to our operative (any point in our circle)
+# We get the closest point to the center of the circle on the line
+# Take the distance and subtract the radius of the circle
+# If the distance is > 2 inches -> obscured
+# https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_line.html
+# https://www.varsitytutors.com/hotmath/hotmath_help/topics/shortest-distance-between-a-point-and-a-circle
