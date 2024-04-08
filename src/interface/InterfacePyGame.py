@@ -43,6 +43,12 @@ ORANGE = (255, 165, 0)
 # Spent a while being confused - found out I was using radius not diameter
 CIRCLE_RADIUS = 14 * BOARD_SCALE
 
+class BarycentricCoordinates:
+    def __init__(self,alpha,beta,gamma):
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+
 class GameBoard:
     gameBoardRect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT)
     imageInch = None
@@ -54,41 +60,52 @@ class GameBoard:
         else:
             self.imageSize = imageSize
             self.screen = screen
-        self.imageInch = round(self.imageSize[1] / 22)
-            
-    def drawOperative(self, operative: Operative,):
-        pygame.draw.circle(self.screen, operative.getColourRGB(), self.translatePointToBoardSize(operative.position), operative.radius)
+        
+    def drawOperative(self, operative: Operative):
+
+        pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
+        
+      
+        # print("Operative Point")
+        # print(self.translatePointToBoardSize(operative.position))
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
-        self.screen.blit(text, self.translatePointToBoardSize(operative.position))
+        self.screen.blit(text, operative.position)
         
     def drawCircle(self, circle: tuple[int,int], radius: int):
-        pygame.draw.circle(self.screen, MAGENTA, self.translatePointToBoardSize(circle), radius)
+        pygame.draw.circle(self.screen, MAGENTA, circle, radius)
+        
+
+        # print("Points")
+        # print(self.translatePointToBoardSize(circle))
         
     def drawLine(self, start: tuple[int,int], end: tuple[int,int]):
-        pygame.draw.line(self.screen, MAGENTA, self.translatePointToBoardSize(start), self.translatePointToBoardSize(end))
+        pygame.draw.line(self.screen, MAGENTA,start, end)
         
     def addTerrain(self, terrain: Terrain):
         self.terrainList.append(terrain)
         
-
+    def getBoardToImageWidthScale(self):
+        return BOARD_WIDTH / self.imageSize[1]
+    
+    def getBoardToImageHeightScale(self):
+        return BOARD_HEIGHT / self.imageSize[0]
+    
+    def getImageToBoardWidthScale(self):
+        return self.imageSize[1] / BOARD_WIDTH
+        
+    def getImageToBoardHeightScale(self):
+        return self.imageSize[0] / BOARD_HEIGHT
     # This took a while to get working
     # We need to translate the circle center from the size of the image to the size of the baord
     # To do this we need to use a scale factor to translate the circle center and then move it to be relative to the 0,0 of the board display
     # As opposed to the 0,0 of the screen
     # Spent a while on this cause imageSize is in the format (height, width) and I was using it as (width, height)
     def translatePointToBoardSize(self, point: tuple[int,int]) -> tuple[int,int]:
-        newCenterWidth = (point[0] * (BOARD_WIDTH / self.imageSize[1])) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
-        newCenterHeight = (point[1] * (BOARD_HEIGHT / self.imageSize[0])) + 50
-        return (newCenterWidth, newCenterHeight)
-    
-    # def translateRectangleToBoardSize(self, rectangle: pygame.Rect) -> pygame.Rect:
-    #     newTopLeftX = (rectangle.x * (BOARD_WIDTH / self.imageSize[1])) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
-    #     newTopLeftY = (rectangle.y * (BOARD_HEIGHT / self.imageSize[0])) + 50
-    #     newWidth = rectangle.width * (BOARD_WIDTH / self.imageSize[1])
-    #     newHeight = rectangle.height * (BOARD_HEIGHT / self.imageSize[0])
-    #     return pygame.Rect(newTopLeftX,newTopLeftY,newWidth,newHeight)
+        newX = (point[0] * (self.getBoardToImageWidthScale())) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
+        newY = (point[1] * (self.getBoardToImageHeightScale())) + 50
+        return (newX, newY)
     
     def setTestMode(self):
         self.imageSize = (BOARD_HEIGHT,BOARD_WIDTH)
@@ -99,11 +116,9 @@ class GameBoard:
         pygame.draw.circle(self.screen, BLUE,(((SCREEN_WIDTH - BOARD_WIDTH) // 2) + (BOARD_WIDTH // 2),(BOARD_HEIGHT // 2) + 50), 10)
         
     def drawTerrain(self):
-        # for terrain in self.terrainList:
-        #     for rectangle in terrain.terrainRectangles:
-        #         translatedRectangle = self.translateRectangleToBoardSize(rectangle)
-        #         pygame.draw.rect(self.screen, ORANGE, translatedRectangle)
-        pass
+        for terrain in self.terrainList:
+            pygame.draw.polygon(self.screen, ORANGE, terrain.verticies,0)
+        
                 
             
 
@@ -119,8 +134,8 @@ class MainGame:
             self.setupModelFinderTesting()
             self.setupGameBoardTesting()
         else:
-            self.setupModelFinder()
-            self.setupGameBoard()
+            imageSize = self.setupModelFinder()
+            self.setupGameBoard(imageSize)
         self.gameLoop()
         
     def setupModelFinder(self):
@@ -131,7 +146,7 @@ class MainGame:
         
         self.modelFinder = ModelFinder(image)
         gameBoardData = self.modelFinder.identifyModels(image, self.modelFinder.cornerPoints)
-        self.imageSize = gameBoardData[1]
+        return gameBoardData[1]
         
     def setupModelFinderTesting(self):
         pass
@@ -141,14 +156,19 @@ class MainGame:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Game Board")
         
-    def setupGameBoard(self):
-        self.gameBoard = GameBoard(screen=self.screen,imageSize=self.imageSize)
+    def setupGameBoard(self, imageSize):
+        self.gameBoard = GameBoard(screen=self.screen,imageSize=imageSize)
         
     def setupGameBoardTesting(self):
         self.gameBoard = GameBoard(screen=self.screen)
         
         
     def gameLoop(self):
+        # print("game loop")
+        # print(self.gameBoard.getBoardToImageHeightScale())
+        # print(self.gameBoard.getBoardToImageWidthScale())
+        
+        
         
         # Testing purposes we do an inital update
         if (not self.testingFlag):
@@ -163,13 +183,25 @@ class MainGame:
             
             if (gameBoardData[0] != None):
                 operativeList.updateEncodingListPositions(gameBoardData[0])
+            
                 
         if (self.testingFlag):
-            terrain = Terrain()
+            terrain = Terrain([[300,300],[300,350],[350,350],[350,300]])
             # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
-            # self.gameBoard.addTerrain(terrain)
+            self.gameBoard.addTerrain(terrain)
             
+        # Transform the operatives to be within the board scale
+        for operative in self.operativeList.operatives:
+            operative.position = self.gameBoard.translatePointToBoardSize(operative.position)
+            
+        #Transform the terrain to be within the board scale
+        for terrain in self.gameBoard.terrainList:
+            for i in range(0,len(terrain.verticies)):
+                terrain.verticies[i] = self.gameBoard.translatePointToBoardSize(terrain.verticies[i])
+        
+        
         while True:
+            
             # Event handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -221,9 +253,13 @@ class MainGame:
                 
                 targetOperativePoints = self.getCircleExtremes(operative.position[0],operative.position[1],operative.radius,chosenOperative.position[0],chosenOperative.position[1])
                 
+                # print("Operative Radius")
+                # print(operative.radius)
+                
        
                 self.gameBoard.drawCircle(chosenOperativePoints[0],5)
                 self.gameBoard.drawCircle(chosenOperativePoints[1],5)
+                
                 
                 self.gameBoard.drawCircle(targetOperativePoints[0],5)
                 self.gameBoard.drawCircle(targetOperativePoints[1],5)
@@ -234,8 +270,64 @@ class MainGame:
                 self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
                 self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
                 
+                plusTriangle = [chosenOperativePoints[0],chosenOperativePoints[1],targetOperativePoints[0]]
                 
+                minusTriangle = [chosenOperativePoints[0],chosenOperativePoints[1],targetOperativePoints[1]]
+                
+                # For each object
+                # Check if any of the points are within the firing cone
+                
+                for terrain in self.gameBoard.terrainList:
+                    for point in terrain.verticies:
+                        if (self.isPointInTriangle(point,plusTriangle)):
+                            pass
+                        if (self.isPointInTriangle(point,minusTriangle)):
+                            pass
+                           
+    def checkFiringCones(self, point, triangleOne, triangleTwo):
+        pass
+                
+    # Best to use barycentric coordinates for this          
+    def isPointInTriangle(self, point, triangle):
+        barycentricCoordinates = self.getBarycentricCoordinates(point,triangle)
+        
+        if ((barycentricCoordinates.alpha >= 0 and barycentricCoordinates.alpha <= 1)and (barycentricCoordinates.beta >= 0 and barycentricCoordinates.beta <=1) and (barycentricCoordinates.gamma >= 0 and barycentricCoordinates.gamma <= 1)):
+            return True
+        return False
+        
     
+    def getBarycentricCoordinates(self, point: tuple[int,int], triangle: list[tuple[int,int]]) -> BarycentricCoordinates:
+        A = triangle[0]
+        B = triangle[1]
+        C = triangle[2]
+        
+        lineBCP = self.getImplicitLineEquation(B,C,point)
+        lineBCA = self.getImplicitLineEquation(B,C,A)
+        
+        alpha = lineBCP / lineBCA
+        
+        lineACP = self.getImplicitLineEquation(A,C,point)
+        lineACB = self.getImplicitLineEquation(A,C,B)
+        
+        beta = lineACP / lineACB
+        
+        lineABP = self.getImplicitLineEquation(A,B,point)
+        lineABC = self.getImplicitLineEquation(A,B,C)
+        
+        gamma = lineABP / lineABC
+        
+        # Mildly fedup of just returning a tuple
+        # struct would be nicer but python has forced my hand
+        return BarycentricCoordinates(alpha,beta,gamma)
+        
+        
+        
+        
+        
+    def getImplicitLineEquation(self, A,B,P):
+        line = (B[1] - A[1]) * P[0] + (A[0] - B[0]) * P[1] + B[0] * A[1] - A[0] * B[1]
+        return line
+        
 
     def checkLineOfSight(self, operativeID):
         pass
@@ -273,6 +365,8 @@ class MainGame:
         return ((finalXminus,finalYminus),(finalXplus,finalYplus))
             
 
+        
+        
         
 
 if __name__ == "__main__":
@@ -539,3 +633,16 @@ if __name__ == "__main__":
 # If the distance is > 2 inches -> obscured
 # https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_line.html
 # https://www.varsitytutors.com/hotmath/hotmath_help/topics/shortest-distance-between-a-point-and-a-circle
+
+#08/04/24
+# DO THE TERRAIN
+# Calibration is gonna be interesting to look at 
+# Instead of doing calculations on image space and then translating everything to board space, convert to board space first and then do calculations on that :3
+# Wasted an entire day trying to work out why teh firing cone interecepts were when drawn
+# I was treating the radius of the circles as the same in both the image space and the board (world) space
+# As a result when I was translating the points to the world space The radius of the cricle was remaining the same
+# This was causing the firing cone to be drawn in the wrong place
+# As a result when performing further calculations a lot of the positions were off as a result
+# I really should do a proper translation matrix
+# THIS TOOK A WHOLE DAY TO WORK OUT WHAT THE PROBLEM WAS
+#
