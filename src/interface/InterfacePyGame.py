@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 import sys
 import cv2 as cv
 from math import sqrt
@@ -105,7 +106,7 @@ class GameBoard:
     def translatePointToBoardSize(self, point: tuple[int,int]) -> tuple[int,int]:
         newX = (point[0] * (self.getBoardToImageWidthScale())) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
         newY = (point[1] * (self.getBoardToImageHeightScale())) + 50
-        return (newX, newY)
+        return (int(newX), int(newY))
     
     def setTestMode(self):
         self.imageSize = (BOARD_HEIGHT,BOARD_WIDTH)
@@ -186,7 +187,10 @@ class MainGame:
             
                 
         if (self.testingFlag):
-            terrain = Terrain([[300,300],[300,350],[350,350],[350,300]])
+            terrainVertecies = [(300,300),(300,350),(350,350),(350,300)]
+            for vertex in terrainVertecies:
+                terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+            terrain = Terrain(terrainVertecies, heavy=True)
             # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
             self.gameBoard.addTerrain(terrain)
             
@@ -195,9 +199,9 @@ class MainGame:
             operative.position = self.gameBoard.translatePointToBoardSize(operative.position)
             
         #Transform the terrain to be within the board scale
-        for terrain in self.gameBoard.terrainList:
-            for i in range(0,len(terrain.verticies)):
-                terrain.verticies[i] = self.gameBoard.translatePointToBoardSize(terrain.verticies[i])
+        # for terrain in self.gameBoard.terrainList:
+        #     for i in range(0,len(terrain.verticies)):
+        #         terrain.verticies[i] = self.gameBoard.translatePointToBoardSize(terrain.verticies[i])
         
         
         while True:
@@ -278,14 +282,81 @@ class MainGame:
                 # Check if any of the points are within the firing cone
                 
                 for terrain in self.gameBoard.terrainList:
-                    for point in terrain.verticies:
-                        if (self.isPointInTriangle(point,plusTriangle)):
-                            pass
-                        if (self.isPointInTriangle(point,minusTriangle)):
-                            pass
+                    if (terrain.heavy):
+                        # We want to check 2 things
+                        # If a line of terrain intersects the firing cone
+                        # If a point of terrain is within the firing cone
+                        
+                        # We want to do the lines first as it is easier to assume the terrain is entirely within the firing cone
+                        # Which would be the case if there are no intersectionsw
+                        for point in terrain.verticies:
+                            if (self.isPointInTriangle(point,plusTriangle)):
+                                # If a point is within the firing line we then need to find the closest point on the line segment to the center of the circle
+                                # To do this we take the 2 lines the point is a part of and find the closest point on the line to the center of the circle
+                            
+                                
+                                # Get the 2 lines the point is a part of
+                                lines = terrain.linePointMembers[point]
+                                closestPoint = self.getClosestPointOnLineSegment((lines[0],point),operative.position)
+                 
+                                
+                                self.gameBoard.drawCircle(point,5)
+                                
+                                self.gameBoard.drawCircle(closestPoint,5)
+                                
+                                return
+                                
+                                
+                            if (self.isPointInTriangle(point,minusTriangle)):
+                                pass
+                        
+                
                            
     def checkFiringCones(self, point, triangleOne, triangleTwo):
         pass
+    
+    # https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_line.html
+    # https://stackoverflow.com/questions/47177493/python-point-on-a-line-closest-to-third-point
+    def getClosestPointOnLine(self, line: tuple[tuple[int,int],tuple[int,int]], point: tuple[int,int]):
+        
+        x1, y1 = line[0]
+        x2, y2 = line[1]
+        x3, y3 = point
+        
+        dx, dy = x2 - x1, y2 - y1
+        det = dx * dx + dy * dy
+        a = (dy * (y3 - y1) + dx * (x3 - x1)) / det
+        return (int(x1 + a * dx), int(y1 + a * dy))
+    
+    def getClosestPointOnLineSegment(self, line: tuple[tuple[int,int],tuple[int,int]], point: tuple[int,int]):
+        # Break ab apart into components a and b
+        a = line[0]
+        b = line[1]
+
+        # Project c onto ab, computing the parameterized position d(t) = a + t * (b - a)
+        t = self.dotProduct((point[0] - a[0], point[1] - a[1]), (b[0] - a[0], b[1] - a[1])) / self.dotProduct((b[0] - a[0], b[1] - a[1]),(b[0] - a[0], b[1] - a[1]))
+
+        # Clamp T to a 0-1 range. If t was < 0 or > 1 then the closest point was outside the line!
+        t = self.clamp(t, 0, 1)
+
+        # Compute the projected position from the clamped t
+        d = (a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]))
+
+        # Return result
+        return d
+    
+    def dotProduct(self, a: tuple[int,int], b: tuple[int,int]):
+        return a[0] * b[0] + a[1] * b[1]
+        
+    def clamp(self,value, min_val, max_val):
+        return max(min_val, min(value, max_val))
+        
+        
+        
+        
+        
+        
+        
                 
     # Best to use barycentric coordinates for this          
     def isPointInTriangle(self, point, triangle):
@@ -646,3 +717,41 @@ if __name__ == "__main__":
 # I really should do a proper translation matrix
 # THIS TOOK A WHOLE DAY TO WORK OUT WHAT THE PROBLEM WAS
 #
+
+# 09/04/24
+# Im not even sure anymore
+#  Terrain will now give the lines that each vertex is a member on
+#  Terrain is now translated to board space by default
+#  Re-working LOS becuase it was a stupid diea
+# When doing the terrain positions within the triangle
+#  I assumed that the object was entirely within the triangle
+# This is obviously not always the case
+# Instead I should check if an object is fully within the triangle and then utilise this as an assumption to optimise 
+# Previously I was taking a vertex, seeing if it was within the triangle and then checking the 2 lines it was a part of for the closest positio on that line segment to the center of the circle
+# If the object was entirely within the triangle this would be fine - If the object is half in half out - then it would return the closest position as outside the triangle (probably)
+# INSTEAD
+# Check if all the corners are within the triangle -> if they are then we can use the assumption that the object is entirely within the triangle
+# Check if all the corners are outside the object -> We can use the assumption that the object is entirely outside the triangle -> find hte intersects -> make lines -> find the closest intersect
+# If some corners are in and some are out then we need to build the shape of the object within the triangle
+
+# 2 methods
+# 1 - vertex by vertex and then line by line - i.e. take a vertex, check if it is in the triangle, take the 2 connecting vertexes, make the 2 lines, check if they intersect the line of sight
+# Construct a line using the original vertex and either the intersect or the connecting vertex
+# Get closest point on the line -> see if it satisfies the conditions
+# If no vertex within, go line by line to check intercepts -> construct new lines -> get closest point on the line
+# repeat until 1 satisfies the conditions
+# Upsides - probably quite quick? will give a single yes or no answer
+# Downside won't give us all the points that are obstructing the line of sight -> could be useful to display to the user what is obscuring 
+# 2 - Construct the shape of the object within the triangle -> Find points in triangle, find all intercepts
+
+# RAYCASTING
+# COol idea
+# Not gonna work
+# Kinda hacky solutiom
+# 2 problems
+# 1 - performance, would have to do a ray for each point on the circle between the 2 extremes - kinda cringe
+# 2 - 2D game board representation - This would probably be quiteeeeeeeeeeeee slow as each terrain piece + model would need to take up a space on the board
+# As a 2D array - Since the terrain is defined as a polygon of points. We would need to find a way to fill in the space between the points. THis would probably mean building a software rasteriser
+# This is relatively simple to implement BUT PAINFULLY SLOW - we would be doing every pixel for every point for every object - and since this is not multirthreaded or GPU accelerated it would be very slow
+# Also the 2D gameboard and the on screen representation would likely differ from eachother so the results returned wouldnt quite be "exact" in our representation
+# Unfortanately pygame doesnt have a way to just rip the pixels from the screen given a rect 
