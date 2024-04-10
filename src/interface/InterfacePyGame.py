@@ -226,8 +226,6 @@ class MainGame:
             for operative in self.operativeList.operatives:
                 self.gameBoard.drawOperative(operative)
                 
-                
-                
             self.checkObscurity(10)
 
             # Update the display
@@ -268,15 +266,19 @@ class MainGame:
                 self.gameBoard.drawCircle(targetOperativePoints[0],5)
                 self.gameBoard.drawCircle(targetOperativePoints[1],5)
                 
+       
+                
+               
+                
                 self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[0])
                 self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[1])
                 
-                self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
-                self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
+                plusTriangle = [chosenOperativePoints[0],targetOperativePoints[1],targetOperativePoints[0]]
                 
-                plusTriangle = [chosenOperativePoints[0],chosenOperativePoints[1],targetOperativePoints[0]]
+                # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
+                # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
                 
-                minusTriangle = [chosenOperativePoints[0],chosenOperativePoints[1],targetOperativePoints[1]]
+                minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
                 
                 # For each object
                 # Check if any of the points are within the firing cone
@@ -289,34 +291,120 @@ class MainGame:
                         
                         # We want to do the lines first as it is easier to assume the terrain is entirely within the firing cone
                         # Which would be the case if there are no intersectionsw
-                        for point in terrain.verticies:
-                            if (self.isPointInTriangle(point,plusTriangle)):
+                        
                                 # If a point is within the firing line we then need to find the closest point on the line segment to the center of the circle
                                 # To do this we take the 2 lines the point is a part of and find the closest point on the line to the center of the circle
                             
                                 
-                                # Get the 2 lines the point is a part of
-                                lines = terrain.linePointMembers[point]
-                                closestPoint = self.getClosestPointOnLineSegment((lines[0],point),operative.position)
-                 
+                                # Alternatively we could think of this as "find the closest point in the object, that is inside the firing cone, to the center of the circle - "
+                                # To do this we need to take each line - and clip it to be within the firing cone
+                                # Then find the closest point on the line to the center of the circle
+                                # Repeat until we have one that satisfies Obscurity or we run out of terrain
                                 
-                                self.gameBoard.drawCircle(point,5)
+                                # As objects are not filled we can think of the object as a collection of lines defined by the verticies
                                 
-                                self.gameBoard.drawCircle(closestPoint,5)
+                                # Find the points of the line within the firing cone
+                                # Take a line -> check if the start or end is within the triangle
+                                # If they are use the start and end points
+                                # If One is and one isnt - take the point that is within the triangle and find the intersect of the line with the firing cone
+                                # If neither are - find the 2 points that intersect the firing cone
+                                # If there are no intercepts - that line is not in the firing cone
                                 
-                                return
-                                
-                                
-                            if (self.isPointInTriangle(point,minusTriangle)):
+                                # If we have 2 points that are within the firing cone - find the closest point on the line to the center of the circle
+                                # Check if that distance - circle radius is > 2 inches
+                        for lineSegment in terrain.polygonLineSegments:
+                            newLine = self.constructNewLine(lineSegment,plusTriangle)
+                    
+                            if newLine != None:
+                                self.gameBoard.drawLine(newLine[0],newLine[1])
+                                # self.gameBoard.drawLine(lineSegment[0],lineSegment[1])
                                 pass
+                               
+                            
                         
-                
+    def constructNewLine(self, lineSegment: tuple[tuple[int,int],tuple[int,int]], triangle):
+        # Check if point is within the triangle
+        newLine = []
+        if (self.isPointInTriangle(lineSegment[0],triangle)):
+            newLine.append(lineSegment[0])
+        if (self.isPointInTriangle(lineSegment[1],triangle)):
+            newLine.append(lineSegment[1])
+        
+        # If both points are within the triangle
+        if (len(newLine) == 2):
+            return newLine
+        
+        lineTriangleIntercept = self.getLineTriangleIntercept(lineSegment,triangle)
+        # self.gameBoard.drawCircle(lineSegment[0],5)
+        # self.gameBoard.drawCircle(lineSegment[1],5)
+        # self.gameBoard.drawCircle(lineTriangleIntercept[0],5)
+        
+        if (len(lineTriangleIntercept)) == 2:
+            return lineTriangleIntercept
+        
+        if (len(lineTriangleIntercept) == 1):
+            newLine.append(lineTriangleIntercept[0])
+            return newLine
+        
+        return None
+        
+        # print(lineTriangleIntercept)
+        
+     
+            
+            
+        
+        pass  
                            
     def checkFiringCones(self, point, triangleOne, triangleTwo):
         pass
     
-    # https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_line.html
+    def getLineTriangleIntercept(self, line: tuple[tuple[int,int],tuple[int,int]], triangle: list[tuple[int,int]]) -> tuple[tuple[int,int],tuple[int,int] | None | tuple[int,int]]:
+        A = (triangle[0],triangle[1])
+        B = (triangle[1],triangle[2])
+        C = (triangle[2],triangle[0])
+        
+        aLineIntercept = self.getLineLineIntercept(line,A)
+        bLineIntercept = self.getLineLineIntercept(line,B)
+        cLineIntercept = self.getLineLineIntercept(line,C)
+        
+        intercepts = []
+        
+        if (aLineIntercept != None):
+            intercepts.append(aLineIntercept)
+        if (bLineIntercept != None):
+            intercepts.append(bLineIntercept)
+        if (cLineIntercept != None):
+            intercepts.append(cLineIntercept)
+            
+        if (len(intercepts) == 0):
+            return None
+        return (intercepts[0],intercepts[1])
+       
+    
+    # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+    def getLineLineIntercept(self, lineOne: tuple[tuple[int,int],tuple[int,int]], lineTwo: tuple[tuple[int,int],tuple[int,int]]) -> tuple[int,int] | None:
+        
+        a = np.array(lineOne[0])
+        b = np.array(lineOne[1])
+        c = np.array(lineTwo[0])
+        d = np.array(lineTwo[1])
+        
+        e = b - a
+        f = d-c
+        p = np.array([-e[1],e[0]])
+        h = ((a-c).dot(p)) / (f.dot(p))
+        
+        if (h >= 0 and h <= 1):
+            tupleIntercept= tuple(c + h * f)
+            returnTuple = (int(tupleIntercept[0]),int(tupleIntercept[1]))
+            return returnTuple
+            
+        
+    
+  
     # https://stackoverflow.com/questions/47177493/python-point-on-a-line-closest-to-third-point
+    # DEPRECATED
     def getClosestPointOnLine(self, line: tuple[tuple[int,int],tuple[int,int]], point: tuple[int,int]):
         
         x1, y1 = line[0]
@@ -328,6 +416,7 @@ class MainGame:
         a = (dy * (y3 - y1) + dx * (x3 - x1)) / det
         return (int(x1 + a * dx), int(y1 + a * dy))
     
+      # https://gdbooks.gitbooks.io/3dcollisions/content/Chapter1/closest_point_on_line.html
     def getClosestPointOnLineSegment(self, line: tuple[tuple[int,int],tuple[int,int]], point: tuple[int,int]):
         # Break ab apart into components a and b
         a = line[0]
@@ -755,3 +844,22 @@ if __name__ == "__main__":
 # This is relatively simple to implement BUT PAINFULLY SLOW - we would be doing every pixel for every point for every object - and since this is not multirthreaded or GPU accelerated it would be very slow
 # Also the 2D gameboard and the on screen representation would likely differ from eachother so the results returned wouldnt quite be "exact" in our representation
 # Unfortanately pygame doesnt have a way to just rip the pixels from the screen given a rect 
+
+#10/04/24
+# Probably gonna do some report stuff for today
+# Things to do
+# Line of sight
+# clicking on people
+# MAKING VIDEO WORK PLEASE
+# Terrain
+# (calibration if there is time)
+
+# Spent 2 hours re-doing the LOS
+# Tried ot make my own vector library - stupid idea just used numpy
+# Tried to find the intersection between a triangle and a line 
+# Did the maths for this
+# Was getting weird results
+# Realised I was defining my triangles from the wrong points 
+# but drawing them in the correct place
+#  Was probably responsible for some of my previous problems
+# This was likely contributing to the problems I was having previously with weird drawing of barycentric coordinates
