@@ -268,17 +268,23 @@ class MainGame:
                 
        
                 
-               
-                
-                self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[0])
-                self.gameBoard.drawLine(chosenOperativePoints[0],targetOperativePoints[1])
-                
                 plusTriangle = [chosenOperativePoints[0],targetOperativePoints[1],targetOperativePoints[0]]
                 
+                
+                
+                # self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
+                # self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
+                # self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
+                
+               
                 # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
                 # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
                 
                 minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
+                
+                # self.gameBoard.drawLine(minusTriangle[0],minusTriangle[1])
+                # self.gameBoard.drawLine(minusTriangle[1],minusTriangle[2])
+                # self.gameBoard.drawLine(minusTriangle[2],minusTriangle[0])
                 
                 # For each object
                 # Check if any of the points are within the firing cone
@@ -313,16 +319,22 @@ class MainGame:
                                 # If we have 2 points that are within the firing cone - find the closest point on the line to the center of the circle
                                 # Check if that distance - circle radius is > 2 inches
                         for lineSegment in terrain.polygonLineSegments:
-                            newLine = self.constructNewLine(lineSegment,plusTriangle)
-                    
+                            newLine = self.constructNewLine(lineSegment,minusTriangle)
+                            
+                            print("newLine")
+                            print(newLine)
+
+                            # self.gameBoard.drawLine(lineSegment[0],lineSegment[1])
                             if newLine != None:
+                                self.gameBoard.drawCircle(newLine[0],5)
+                                self.gameBoard.drawCircle(newLine[1],5)
                                 self.gameBoard.drawLine(newLine[0],newLine[1])
                                 # self.gameBoard.drawLine(lineSegment[0],lineSegment[1])
                                 pass
                                
                             
                         
-    def constructNewLine(self, lineSegment: tuple[tuple[int,int],tuple[int,int]], triangle):
+    def constructNewLine(self, lineSegment: tuple[tuple[int,int],tuple[int,int]], triangle) -> tuple[tuple[int,int],tuple[int,int]] | None:
         # Check if point is within the triangle
         newLine = []
         if (self.isPointInTriangle(lineSegment[0],triangle)):
@@ -332,21 +344,24 @@ class MainGame:
         
         # If both points are within the triangle
         if (len(newLine) == 2):
-            return newLine
+            return (newLine[0],newLine[1])
         
         lineTriangleIntercept = self.getLineTriangleIntercept(lineSegment,triangle)
         # self.gameBoard.drawCircle(lineSegment[0],5)
         # self.gameBoard.drawCircle(lineSegment[1],5)
-        # self.gameBoard.drawCircle(lineTriangleIntercept[0],5)
+        if (lineTriangleIntercept != None):
+            for line in lineTriangleIntercept:
+                print(line)
+                if newLine[0] != line:
+                    newLine.append(line)
+            
+        if len(newLine) != 2:
+            return None
         
-        if (len(lineTriangleIntercept)) == 2:
-            return lineTriangleIntercept
+        if (newLine[0] == newLine[1]):
+            return None
         
-        if (len(lineTriangleIntercept) == 1):
-            newLine.append(lineTriangleIntercept[0])
-            return newLine
-        
-        return None
+        return (newLine[0],newLine[1])
         
         # print(lineTriangleIntercept)
         
@@ -377,9 +392,7 @@ class MainGame:
         if (cLineIntercept != None):
             intercepts.append(cLineIntercept)
             
-        if (len(intercepts) == 0):
-            return None
-        return (intercepts[0],intercepts[1])
+        return intercepts
        
     
     # https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
@@ -389,19 +402,27 @@ class MainGame:
         b = np.array(lineOne[1])
         c = np.array(lineTwo[0])
         d = np.array(lineTwo[1])
+      
         
-        e = b - a
-        f = d-c
-        p = np.array([-e[1],e[0]])
-        h = ((a-c).dot(p)) / (f.dot(p))
+        h1 = self.computeH(a,b,c,d)
+        h2 = self.computeH(c,d,a,b)
         
-        if (h >= 0 and h <= 1):
-            tupleIntercept= tuple(c + h * f)
+        if (h1 > 0 and h1 < 1 and h2 > 0 and h2 < 1):
+            tupleIntercept= tuple(c + h1 * (d - c))
+            
             returnTuple = (int(tupleIntercept[0]),int(tupleIntercept[1]))
             return returnTuple
+        
+        
+        return None
             
         
-    
+    def computeH(self, a,b,c,d):
+        e = b - a
+        f = d - c
+        p = np.array([-e[1],e[0]])
+        h = ((a-c).dot(p)) / (f.dot(p))
+        return h
   
     # https://stackoverflow.com/questions/47177493/python-point-on-a-line-closest-to-third-point
     # DEPRECATED
