@@ -1003,4 +1003,4 @@ if __name__ == "__main__":
 # problems caused by parallel lines when getting the gradient - > had to add some edge cases for this
 # Probably shouldve used shapely
 # Obscurity now works (hopefully) (havnt done extensive testing but it seems fine)
-# The next 2 parts of LOS are cover, concealment and mayyyyyyybe do something about 
+# The next 2 parts of LOS are cover, concealment and mayyyyyyybe do something about checking "is visable" tho this is somewhat annoying to do
