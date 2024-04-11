@@ -39,6 +39,7 @@ BLUE = (0, 0, 255)
 GRAY = (128, 128, 128)
 MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
+YELLOW = (255, 255, 0)
 
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
@@ -69,6 +70,14 @@ class GameBoard:
       
         # print("Operative Point")
         # print(self.translatePointToBoardSize(operative.position))
+        # Draw the name of the operative
+        font = pygame.font.Font(None, 36)
+        text = font.render(operative.name, True, WHITE)
+        self.screen.blit(text, operative.position)
+        
+    def drawOperativeObscured(self, operative: Operative):
+        pygame.draw.circle(self.screen, YELLOW, operative.position, operative.radius)
+        
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
@@ -212,6 +221,8 @@ class MainGame:
                     pygame.quit()
                     sys.exit()
 
+            for operative in self.operativeList.operatives:
+                operative.obsured = False
 
             # Clear the screen
             self.screen.fill(GRAY)
@@ -221,12 +232,20 @@ class MainGame:
             
             #Draw terrain
             self.gameBoard.drawTerrain()
+            
+            
+            self.checkObscurity(10)
+                
 
             # Draw operatives on the game board        
             for operative in self.operativeList.operatives:
-                self.gameBoard.drawOperative(operative)
-                
-            self.checkObscurity(10)
+                if (operative.obsured):
+                    self.gameBoard.drawOperativeObscured(operative)
+                else:
+                    self.gameBoard.drawOperative(operative)
+                    
+            
+            
 
             # Update the display
             pygame.display.flip()
@@ -240,7 +259,6 @@ class MainGame:
                 
     def checkObscurity(self, operativeID):
         chosenOperative = self.operativeList.getModelById(operativeID)
-        
         for operative in self.operativeList.operatives:
             if (chosenOperative.team != operative.team):
                 # Draw 2 Firing cones from the extreme of each circle to the extremes of the other circle
@@ -258,13 +276,15 @@ class MainGame:
                 # print("Operative Radius")
                 # print(operative.radius)
                 
+
+                
        
-                self.gameBoard.drawCircle(chosenOperativePoints[0],5)
-                self.gameBoard.drawCircle(chosenOperativePoints[1],5)
+                # self.gameBoard.drawCircle(chosenOperativePoints[0],5)
+                # self.gameBoard.drawCircle(chosenOperativePoints[1],5)
                 
                 
-                self.gameBoard.drawCircle(targetOperativePoints[0],5)
-                self.gameBoard.drawCircle(targetOperativePoints[1],5)
+                # self.gameBoard.drawCircle(targetOperativePoints[0],5)
+                # self.gameBoard.drawCircle(targetOperativePoints[1],5)
                 
        
                 
@@ -276,9 +296,6 @@ class MainGame:
                 # self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
                 # self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
                 
-               
-                # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[0])
-                # self.gameBoard.drawLine(chosenOperativePoints[1],targetOperativePoints[1])
                 
                 minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
                 
@@ -289,50 +306,94 @@ class MainGame:
                 # For each object
                 # Check if any of the points are within the firing cone
                 
-                for terrain in self.gameBoard.terrainList:
-                    if (terrain.heavy):
-                        # We want to check 2 things
-                        # If a line of terrain intersects the firing cone
-                        # If a point of terrain is within the firing cone
+                if (self.isObscured(chosenOperative,operative,plusTriangle) and self.isObscured(chosenOperative,operative,minusTriangle)):
+                    self.operativeList.setOperativeToObscured(operative.id)
+                    print("OBSCURED")
+                    continue
+            
+                      
                         
-                        # We want to do the lines first as it is easier to assume the terrain is entirely within the firing cone
-                        # Which would be the case if there are no intersectionsw
                         
-                                # If a point is within the firing line we then need to find the closest point on the line segment to the center of the circle
-                                # To do this we take the 2 lines the point is a part of and find the closest point on the line to the center of the circle
+                        
+                        
+                       
+                        
                             
-                                
-                                # Alternatively we could think of this as "find the closest point in the object, that is inside the firing cone, to the center of the circle - "
-                                # To do this we need to take each line - and clip it to be within the firing cone
-                                # Then find the closest point on the line to the center of the circle
-                                # Repeat until we have one that satisfies Obscurity or we run out of terrain
-                                
-                                # As objects are not filled we can think of the object as a collection of lines defined by the verticies
-                                
-                                # Find the points of the line within the firing cone
-                                # Take a line -> check if the start or end is within the triangle
-                                # If they are use the start and end points
-                                # If One is and one isnt - take the point that is within the triangle and find the intersect of the line with the firing cone
-                                # If neither are - find the 2 points that intersect the firing cone
-                                # If there are no intercepts - that line is not in the firing cone
-                                
-                                # If we have 2 points that are within the firing cone - find the closest point on the line to the center of the circle
-                                # Check if that distance - circle radius is > 2 inches
-                        for lineSegment in terrain.polygonLineSegments:
-                            newLine = self.constructNewLine(lineSegment,minusTriangle)
-                            
-                            print("newLine")
-                            print(newLine)
+    # We want to check 2 things
+    # If a line of terrain intersects the firing cone
+    # If a point of terrain is within the firing cone
+    
+    # We want to do the lines first as it is easier to assume the terrain is entirely within the firing cone
+    # Which would be the case if there are no intersectionsw
+    
+    # If a point is within the firing line we then need to find the closest point on the line segment to the center of the circle
+    # To do this we take the 2 lines the point is a part of and find the closest point on the line to the center of the circle
 
-                            # self.gameBoard.drawLine(lineSegment[0],lineSegment[1])
-                            if newLine != None:
-                                self.gameBoard.drawCircle(newLine[0],5)
-                                self.gameBoard.drawCircle(newLine[1],5)
-                                self.gameBoard.drawLine(newLine[0],newLine[1])
-                                # self.gameBoard.drawLine(lineSegment[0],lineSegment[1])
-                                pass
-                               
-                            
+    
+    # Alternatively we could think of this as "find the closest point in the object, that is inside the firing cone, to the center of the circle - "
+    # To do this we need to take each line - and clip it to be within the firing cone
+    # Then find the closest point on the line to the center of the circle
+    # Repeat until we have one that satisfies Obscurity or we run out of terrain
+    
+    # As objects are not filled we can think of the object as a collection of lines defined by the verticies
+    
+    # Find the points of the line within the firing cone
+    # Take a line -> check if the start or end is within the triangle
+    # If they are use the start and end points
+    # If One is and one isnt - take the point that is within the triangle and find the intersect of the line with the firing cone
+    # If neither are - find the 2 points that intersect the firing cone
+    # If there are no intercepts - that line is not in the firing cone
+    
+    # If we have 2 points that are within the firing cone - find the closest point on the line to the center of the circle
+    # Check if that distance - circle radius is > 2 inches
+                                                         
+    def isObscured(self, attackerId: int, defenderId: int, triangle: list[tuple[int,int]]):
+        for terrain in self.gameBoard.terrainList:
+            if (terrain.heavy):
+                for lineSegment in terrain.polygonLineSegments:
+                    newLine = self.constructNewLine(lineSegment,triangle)
+                    # If newLine is None -> The line is not within the firing cone, so we can ignore it 
+                    if (newLine != None):
+                       
+                        
+                        # Get the closest point on the line to the center of the circle of the target operative
+                        closestPointDefender = self.getClosestPointOnLineSegment(newLine,defenderId.position)
+                        
+                        # Check if the distance between the closest point and the center of the circle is less than 2 inches
+                        # Since we are working within world space (board space) the sizes are known,
+
+                        distanceToDefender = self.getDistanceBetweenPoints(closestPointDefender,defenderId.position)
+                        distanceToDefender = distanceToDefender - defenderId.radius
+                        
+                        distanceToShooter = self.getDistanceBetweenPoints(closestPointDefender,attackerId.position)
+                        distanceToShooter = distanceToShooter - attackerId.radius
+                        
+                        closestPointAttacker = self.getClosestPointOnLineSegment(newLine,attackerId.position)
+                        
+                        distanceToDefender1 = self.getDistanceBetweenPoints(closestPointAttacker,defenderId.position)
+                        distanceToDefender1 = distanceToDefender1 - defenderId.radius
+                        
+                        distanceToShooter1 = self.getDistanceBetweenPoints(closestPointAttacker,attackerId.position)
+                        distanceToShooter1 = distanceToShooter1 - attackerId.radius
+                        
+                        
+                        # print(f"Distance to Defend",distanceToDefender)
+                        # print(f"2 Inches",BOARD_INCH*2)
+                        if (distanceToDefender >= BOARD_INCH*2 and distanceToShooter >= BOARD_INCH):
+                            print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
+                            print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
+                            self.gameBoard.drawCircle(closestPointDefender,5)
+
+                            # self.gameBoard.drawLine(newLine[0],newLine[1])
+                            return True
+                        if (distanceToDefender1 >= BOARD_INCH*2 and distanceToShooter1 >= BOARD_INCH):
+                            print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
+                            print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
+                            self.gameBoard.drawCircle(closestPointAttacker,5)
+                          
+                            # self.gameBoard.drawLine(newLine[0],newLine[1])
+                            return True
+        return False
                         
     def constructNewLine(self, lineSegment: tuple[tuple[int,int],tuple[int,int]], triangle) -> tuple[tuple[int,int],tuple[int,int]] | None:
         # Check if point is within the triangle
@@ -351,7 +412,6 @@ class MainGame:
         # self.gameBoard.drawCircle(lineSegment[1],5)
         if (lineTriangleIntercept != None):
             for line in lineTriangleIntercept:
-                print(line)
                 if newLine[0] != line:
                     newLine.append(line)
             
@@ -364,13 +424,7 @@ class MainGame:
         return (newLine[0],newLine[1])
         
         # print(lineTriangleIntercept)
-        
-     
-            
-            
-        
-        pass  
-                           
+             
     def checkFiringCones(self, point, triangleOne, triangleTwo):
         pass
     
@@ -407,6 +461,9 @@ class MainGame:
         h1 = self.computeH(a,b,c,d)
         h2 = self.computeH(c,d,a,b)
         
+        if (h1 == None or h2 == None):
+            return None
+        
         if (h1 > 0 and h1 < 1 and h2 > 0 and h2 < 1):
             tupleIntercept= tuple(c + h1 * (d - c))
             
@@ -416,11 +473,14 @@ class MainGame:
         
         return None
             
-        
+    # https://jsfiddle.net/ferrybig/eokwL9mp/
     def computeH(self, a,b,c,d):
         e = b - a
         f = d - c
         p = np.array([-e[1],e[0]])
+        # The lines are parrallel
+        if (f.dot(p) == 0):
+            return None
         h = ((a-c).dot(p)) / (f.dot(p))
         return h
   
@@ -461,7 +521,8 @@ class MainGame:
     def clamp(self,value, min_val, max_val):
         return max(min_val, min(value, max_val))
         
-        
+    def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
+        return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
         
         
         
@@ -516,22 +577,63 @@ class MainGame:
     def getCircleExtremes(self, h,k,r, targetX, targetY) -> tuple[tuple[int,int],tuple[int,int]]:
         
         
+        
+        
+        # Problem
+        # When the gradient is < 0.01 we lose precision
+        # As the gradient gets smaller when we calcualte the reciprocal we lose everything after the first decimal place
+        # As a result the further we go down our calculations the error increases
+        
+        # i.e for a gradient of 0.0333333333 we get a reciprocal of -30.0
+        
+        # This issue was actually caused by the rounding on finalXplus etc etc
+        
+        
+        # Another problem
+        # If the gradient is 0 we can't get the reciprocal (this is the case when the targets are the same y value)
+        # We need to handle this case
+        # If the gradient is 0 then the line intersects are the top and bottom of the circle
+        # We already know the x and y of the circle
+        # and the radius
+        # So we can just add and subtract the radius from the y value
+        
+        # Another problem
+        # Targets are on the same x value
+        # We can't get the gradient as its / 0 
+        
+        if (targetX == h):
+            finalXplus = h + r 
+            finalXminus = h - r
+            finalYplus = k 
+            finalYminus = k 
+            return ((finalXminus,finalYminus),(finalXplus,finalYplus))
+        
         gradient = (k- round(targetY)) / (h - round(targetX))
-        perpendicularGradient = -(gradient**-1)
+        if (gradient != 0):
+            positivePerpendicularGradient = np.reciprocal(gradient)
+            perpendicularGradient = np.negative(positivePerpendicularGradient)
+            c = k - (perpendicularGradient * (h))
+            m = perpendicularGradient
+            
+            finalXplus = (h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
+                    
+            finalXminus = (h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
+            
+            finalYplus = (m * finalXplus + c)
+            
+            finalYminus = (m * finalXminus + c)
+        else:
+            finalXplus = h
+            finalXminus = h
+            finalYplus = k + r
+            finalYminus = k - r
         
-        c = k - (perpendicularGradient * round(h))
-        m = perpendicularGradient
-        
+       
+       
         # self.gameBoard.drawLine((0,c),(h,k))
         # self.gameBoard.drawLine((h,k),(targetX,targetY))
         
-        finalXplus = round((h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
-                
-        finalXminus = round((h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2))
-        
-        finalYplus = round(m * finalXplus + c)
-        
-        finalYminus = round(m * finalXminus + c)
+       
         
  
         
@@ -545,7 +647,7 @@ class MainGame:
         
         return ((finalXminus,finalYminus),(finalXplus,finalYplus))
             
-
+   
         
         
         
@@ -884,3 +986,19 @@ if __name__ == "__main__":
 # but drawing them in the correct place
 #  Was probably responsible for some of my previous problems
 # This was likely contributing to the problems I was having previously with weird drawing of barycentric coordinates
+
+# Spent a while debugging this -> the stackoverflow guy was annoyingly wrong
+# Was only calculating 1 h and taking the solutuon to that - did not actually consider if that complete line 
+
+
+# 11/04/24
+# LOS is the bain of my existence
+# Obscuring is now working 
+# If an operative is obsured by terrain it will colour that operative yellow
+# Now to pu the rest of LOS in
+# Had a lot of problems caused by parallel lines and / 0 when computingH 
+# Porlbmes in barycentric coordinates caused by rounding errors
+# Problems in getting the circle extremes caused by premature rounding
+# problems caused by floating point errors when calculating the reciprocal of the gradient
+# problems caused by parallel lines when getting the gradient - > had to add some edge cases for this
+# Probably shouldve used shapely
