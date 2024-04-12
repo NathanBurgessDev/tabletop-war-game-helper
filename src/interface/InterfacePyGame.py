@@ -12,7 +12,7 @@ direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import ModelFinder
 from modelEncodings.encodingsInUse import Operative, OperativeList
-from terrain.TerrainObject import Terrain
+from terrain.TerrainObject import Terrain, TerrainLine
 
 # Initialize Pygame
 pygame.init()
@@ -196,7 +196,7 @@ class MainGame:
             
                 
         if (self.testingFlag):
-            terrainVertecies = [(300,300),(300,350),(350,350),(350,300)]
+            terrainVertecies = [(300,500),(300,550),(400,550),(400,500)]
             for vertex in terrainVertecies:
                 terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
             terrain = Terrain(terrainVertecies, heavy=True)
@@ -233,8 +233,9 @@ class MainGame:
             #Draw terrain
             self.gameBoard.drawTerrain()
             
+           
+            self.checkLineOfSight(10)
             
-            self.checkObscurity(10)
                 
 
             # Draw operatives on the game board        
@@ -251,14 +252,12 @@ class MainGame:
             pygame.display.flip()
             
     
-    def checkVisability(self, operativeID):
-        pass
+   
+       
                 
-    def checkCover(self,operativeID):
-        pass        
-                
-    def checkObscurity(self, operativeID):
+    def checkLineOfSight(self, operativeID):
         chosenOperative = self.operativeList.getModelById(operativeID)
+     
         for operative in self.operativeList.operatives:
             if (chosenOperative.team != operative.team):
                 # Draw 2 Firing cones from the extreme of each circle to the extremes of the other circle
@@ -292,31 +291,30 @@ class MainGame:
                 
                 
                 
-                # self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
-                # self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
-                # self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
+                self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
+                self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
+                self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
                 
                 
                 minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
                 
-                # self.gameBoard.drawLine(minusTriangle[0],minusTriangle[1])
-                # self.gameBoard.drawLine(minusTriangle[1],minusTriangle[2])
-                # self.gameBoard.drawLine(minusTriangle[2],minusTriangle[0])
+                self.gameBoard.drawLine(minusTriangle[0],minusTriangle[1])
+                self.gameBoard.drawLine(minusTriangle[1],minusTriangle[2])
+                self.gameBoard.drawLine(minusTriangle[2],minusTriangle[0])
+                
+                
+                terrainLinesPositive = self.getLinesInFiringCone(plusTriangle)
+                terrainLinesNegative = self.getLinesInFiringCone(minusTriangle)
                 
                 # For each object
                 # Check if any of the points are within the firing cone
                 
-                if (self.isObscured(chosenOperative,operative,plusTriangle) and self.isObscured(chosenOperative,operative,minusTriangle)):
+                if (self.isObscured(chosenOperative,operative,terrainLinesPositive) and self.isObscured(chosenOperative,operative,terrainLinesNegative)):
                     self.operativeList.setOperativeToObscured(operative.id)
-                    print("OBSCURED")
-                    continue
-            
-                      
-                        
-                        
-                        
-                        
-                       
+                
+                if (self.isInCover(chosenOperative,operative,terrainLinesPositive) and self.isInCover(chosenOperative,operative,terrainLinesNegative)):
+                    self.operativeList.setOperativeToObscured(operative.id)
+                
                         
                             
     # We want to check 2 things
@@ -345,56 +343,94 @@ class MainGame:
     # If there are no intercepts - that line is not in the firing cone
     
     # If we have 2 points that are within the firing cone - find the closest point on the line to the center of the circle
-    # Check if that distance - circle radius is > 2 inches
-                                                         
-    def isObscured(self, attackerId: int, defenderId: int, triangle: list[tuple[int,int]]):
-        for terrain in self.gameBoard.terrainList:
-            if (terrain.heavy):
-                for lineSegment in terrain.polygonLineSegments:
-                    newLine = self.constructNewLine(lineSegment,triangle)
-                    # If newLine is None -> The line is not within the firing cone, so we can ignore it 
-                    if (newLine != None):
-                       
-                        
-                        # Get the closest point on the line to the center of the circle of the target operative
-                        closestPointDefender = self.getClosestPointOnLineSegment(newLine,defenderId.position)
-                        
-                        # Check if the distance between the closest point and the center of the circle is less than 2 inches
-                        # Since we are working within world space (board space) the sizes are known,
+    # Check if that distance - circle radius is > 2 inches    
+    
+    
+    
+    # This technically doesnt cover other operatives counting as cover - but we will leave that out for now 
+    
+    # Checks for 2 things to be in cover
+    # Defender must be more than 2 inches from the Attacker
+    # Defender must be within 1 inch of a piece of terrain that covers a cover line
+    def isInCover(self, attacker: Operative, defender: Operative, terrain: list[TerrainLine]) -> bool:
+        
+        distanceFromAttackerToDefender = self.getDistanceBetweenPoints(attacker.position,defender.position)
+            
+        if (distanceFromAttackerToDefender < BOARD_INCH*2):
+            return False
+        
+        for lineSegment in terrain:
+            closestPointDefender = self.getClosestPointOnLineSegment(lineSegment.line,defender.position)
 
-                        distanceToDefender = self.getDistanceBetweenPoints(closestPointDefender,defenderId.position)
-                        distanceToDefender = distanceToDefender - defenderId.radius
-                        
-                        distanceToShooter = self.getDistanceBetweenPoints(closestPointDefender,attackerId.position)
-                        distanceToShooter = distanceToShooter - attackerId.radius
-                        
-                        closestPointAttacker = self.getClosestPointOnLineSegment(newLine,attackerId.position)
-                        
-                        distanceToDefender1 = self.getDistanceBetweenPoints(closestPointAttacker,defenderId.position)
-                        distanceToDefender1 = distanceToDefender1 - defenderId.radius
-                        
-                        distanceToShooter1 = self.getDistanceBetweenPoints(closestPointAttacker,attackerId.position)
-                        distanceToShooter1 = distanceToShooter1 - attackerId.radius
-                        
-                        
-                        # print(f"Distance to Defend",distanceToDefender)
-                        # print(f"2 Inches",BOARD_INCH*2)
-                        if (distanceToDefender >= BOARD_INCH*2 and distanceToShooter >= BOARD_INCH):
-                            print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
-                            print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
-                            self.gameBoard.drawCircle(closestPointDefender,5)
+            # Check if the distance between the closest point and the center of the circle is less than 2 inches
+            # Since we are working within world space (board space) the sizes are known,
 
-                            # self.gameBoard.drawLine(newLine[0],newLine[1])
-                            return True
-                        if (distanceToDefender1 >= BOARD_INCH*2 and distanceToShooter1 >= BOARD_INCH):
-                            print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
-                            print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
-                            self.gameBoard.drawCircle(closestPointAttacker,5)
-                          
-                            # self.gameBoard.drawLine(newLine[0],newLine[1])
-                            return True
+            distanceToDefender = self.getDistanceBetweenPoints(closestPointDefender,defender.position)
+            distanceToDefender = distanceToDefender - defender.radius
+
+            if (distanceToDefender <= BOARD_INCH):
+                return True
+            
         return False
-                        
+    
+                                              
+    def isObscured(self, attacker: Operative, defender: Operative, terrain: list[TerrainLine]):
+        for lineSegment in terrain:
+            if (lineSegment.heavy):
+                # Get the closest point on the line to the center of the circle of the target operative
+                closestPointDefender = self.getClosestPointOnLineSegment(lineSegment.line,defender.position)
+
+                # Check if the distance between the closest point and the center of the circle is less than 2 inches
+                # Since we are working within world space (board space) the sizes are known,
+
+                distanceToDefender = self.getDistanceBetweenPoints(closestPointDefender,defender.position)
+                distanceToDefender = distanceToDefender - defender.radius
+
+                distanceToShooter = self.getDistanceBetweenPoints(closestPointDefender,attacker.position)
+                distanceToShooter = distanceToShooter - attacker.radius
+
+
+
+                closestPointAttacker = self.getClosestPointOnLineSegment(lineSegment.line,attacker.position)
+
+                distanceToDefender1 = self.getDistanceBetweenPoints(closestPointAttacker,defender.position)
+                distanceToDefender1 = distanceToDefender1 - defender.radius
+
+                distanceToShooter1 = self.getDistanceBetweenPoints(closestPointAttacker,attacker.position)
+                distanceToShooter1 = distanceToShooter1 - attacker.radius
+
+
+                # print(f"Distance to Defend",distanceToDefender)
+                # print(f"2 Inches",BOARD_INCH*2)
+                if (distanceToDefender >= BOARD_INCH*2 and distanceToShooter >= BOARD_INCH):
+                    # print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
+                    # print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
+                    self.gameBoard.drawCircle(closestPointDefender,5)
+
+                    # self.gameBoard.drawLine(newLine[0],newLine[1])
+                    return True
+                if (distanceToDefender1 >= BOARD_INCH*2 and distanceToShooter1 >= BOARD_INCH):
+                    # print(f"distanceToDefender: ",distanceToDefender / BOARD_INCH)
+                    # print(f"distanceToShooter: ",distanceToShooter / BOARD_INCH)
+                    self.gameBoard.drawCircle(closestPointAttacker,5)
+                    
+                    # self.gameBoard.drawLine(newLine[0],newLine[1])
+                    return True
+        return False
+                      
+                      
+                      
+    def getLinesInFiringCone(self, triangle: list[tuple[int,int]]) -> list[TerrainLine] | None:
+        newTerrainLineList = []
+        for terrain in self.gameBoard.terrainList:
+            for lineSegment in terrain.polygonLineSegments:
+                newLine = self.constructNewLine(lineSegment,triangle)
+                if (newLine != None):
+                    newTerrainLineList.append(TerrainLine(newLine[0],newLine[1],terrain.heavy))
+        
+        return newTerrainLineList
+                      
+    # This would make sense to de recursively  
     def constructNewLine(self, lineSegment: tuple[tuple[int,int],tuple[int,int]], triangle) -> tuple[tuple[int,int],tuple[int,int]] | None:
         # Check if point is within the triangle
         newLine = []
@@ -412,7 +448,9 @@ class MainGame:
         # self.gameBoard.drawCircle(lineSegment[1],5)
         if (lineTriangleIntercept != None):
             for line in lineTriangleIntercept:
-                if newLine[0] != line:
+                if (newLine == []):
+                    newLine.append(line)
+                elif newLine[0] != line:
                     newLine.append(line)
             
         if len(newLine) != 2:
@@ -425,8 +463,7 @@ class MainGame:
         
         # print(lineTriangleIntercept)
              
-    def checkFiringCones(self, point, triangleOne, triangleTwo):
-        pass
+   
     
     def getLineTriangleIntercept(self, line: tuple[tuple[int,int],tuple[int,int]], triangle: list[tuple[int,int]]) -> tuple[tuple[int,int],tuple[int,int] | None | tuple[int,int]]:
         A = (triangle[0],triangle[1])
@@ -570,9 +607,6 @@ class MainGame:
         line = (B[1] - A[1]) * P[0] + (A[0] - B[0]) * P[1] + B[0] * A[1] - A[0] * B[1]
         return line
         
-
-    def checkLineOfSight(self, operativeID):
-        pass
     
     def getCircleExtremes(self, h,k,r, targetX, targetY) -> tuple[tuple[int,int],tuple[int,int]]:
         
@@ -1004,3 +1038,33 @@ if __name__ == "__main__":
 # Probably shouldve used shapely
 # Obscurity now works (hopefully) (havnt done extensive testing but it seems fine)
 # The next 2 parts of LOS are cover, concealment and mayyyyyyybe do something about checking "is visable" tho this is somewhat annoying to do
+
+
+# 12/04/24
+# So what do I actually need to do
+# Get the video feed working - work out how to put a camera on an arm
+# Eligiable to be shot? -> update the visuals to be a bit more descriptive
+# Concealment -> update the visuals to be a bit more descriptive
+# Talk about UI choices for displaying Line of sight -> display waht is blocking (points) or display the valid sight line -> Obscurity / cover differences? if an object is providing cover do I colour the whole object? or the line?
+# TERRAIN FOR THE LOVE OF GOD PLEASE DO TERRAIN
+# selecting an operative
+# Probably needs some error checking 
+# Occlusion is the term we should use for stuff thats blocking -> talk about my solution for occlusion
+
+# April tags are nice to use - well supported - effective - although generating custom ones is a bit of a pain
+# OpenCV can do ArUco tags (generate + detect) itself - this is likely the better one to use (cv2.aruco) module
+# https://docs.opencv.org/4.x/da/d13/tutorial_aruco_calibration.html
+# https://docs.opencv.org/3.4/d5/dae/tutorial_aruco_detection.html
+# By the looks of it im probably gonna have to do some calibration :(
+# perspectiveRemoveIgnoredMarginPerCell - > When finding the bits in the encoding We should probably take an average of the area inside the bits -> best to ignore areas near the border though
+# https://lensfun.github.io/
+
+
+# Cover - Could just do another loop through for each line of terrain and check if it intersects the line of sight and then check the distances
+# Though this feels inefficient
+# Instead ->
+# We make a function that returns a cover point and an obscuring point (if it exists)
+
+
+# Refactored the Line of sight code to instead return a list of lines that are within the firing cone
+# and then use this list to determine cover obscurity etc

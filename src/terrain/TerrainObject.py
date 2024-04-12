@@ -27,4 +27,11 @@ class Terrain:
             pointMembers[self.verticies[i]] = [self.verticies[i-1], self.verticies[(i+1) % len(self.verticies)]]
         return pointMembers
         
+        
+class TerrainLine:
+    def __init__(self, start: tuple[int,int], end: tuple[int,int], heavy : bool ):
+        self.start = start
+        self.end = end
+        self.heavy = heavy
+        self.line = (start, end)
     

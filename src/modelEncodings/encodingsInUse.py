@@ -95,7 +95,7 @@ class OperativeList:
         
         #Team Two
         # self.addEncoding(Operative(id = 13,name = "Thirteen Team Two",radius=14,team=2,alive=True,position=(400,400),obscured=False))
-        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=42,team=2,alive=True,position=(250,500),obscured=False,inCover=False))
+        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=42,team=2,alive=True,position=(500,800),obscured=False,inCover=False))
         
         
     def scaleRadius(self, scale):
