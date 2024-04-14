@@ -1,4 +1,5 @@
 import cv2 as cv
+from cv2 import aruco
 import numpy as np
 import math
 import path
@@ -27,8 +28,21 @@ class ModelEncoding:
 class ModelFinder:
     def __init__(self, calibrateImage):
         self.cornerPoints = calibrateTopDownView(calibrateImage) # top left, top right, bottom left, bottom right
-    def identifyModels(self,image, pts):
-        return identifyAllPieces(image,pts)
+        self.arucoDict = aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+        self.arucoParams = aruco.DetectorParameters()
+        self.arucoDetector = aruco.ArucoDetector(self.arucoDict, self.arucoParams)
+    def identifyModels(self,image):
+        return identifyAllPieces(image,self.cornerPoints)
+    def identifyTerrain(self,image):
+        return identifyAllTerrain(image,self.cornerPoints,self.arucoDetector)
+
+def identifyAllTerrain(img,pts,detector):
+    image = getTopDownView(img,pts)
+    
+    marker_corners, marker_ids = detector.detectMarkers(image)[:2]
+    return (marker_corners, marker_ids)
+    
+    
 
 def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,int]]:
     

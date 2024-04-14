@@ -155,7 +155,7 @@ class MainGame:
         image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
         
         self.modelFinder = ModelFinder(image)
-        gameBoardData = self.modelFinder.identifyModels(image, self.modelFinder.cornerPoints)
+        gameBoardData = self.modelFinder.identifyModels(image)
         return gameBoardData[1]
         
     def setupModelFinderTesting(self):
@@ -1068,3 +1068,16 @@ if __name__ == "__main__":
 
 # Refactored the Line of sight code to instead return a list of lines that are within the firing cone
 # and then use this list to determine cover obscurity etc
+
+#14/04/24
+# Terrain is mostly there
+# Currently have aruco tags working 
+# Make vertex representations which canbe drawn from the top left corner of the aruco tag
+# Rotations from the center of the object
+# aruco documentation is annoying - either out of date or in C++
+# Talk about how this should be a nice 3D representations with pose finding etc
+# test with different aruco tag sizes
+# Talk about april tags
+# Hamming distance 
+# Alternate fiducial markers
+# Occlusion

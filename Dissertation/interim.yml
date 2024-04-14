@@ -1,0 +1,196 @@
+40k-rules:
+  type: article
+  title: Warhammer 40k Core Rules
+  author: Games Workshop
+  date: 2022-06-02
+  page-total: 60
+  url: https://www.warhammer-community.com/wp-content/uploads/2023/06/dLZIlatQJ3qOkGP7.pdf
+
+kt-lite-rules:
+  type: article
+  title: Kill Team Lite Rules
+  author: Games Workshop
+  date: 2022-08-16
+  page-total: 3
+  url: https://www.warhammer-community.com/wp-content/uploads/2022/08/ekD0GG2pTHlYba0G.pdf
+
+gw-size:
+  type: article
+  title: Games Workshop Investor Relations Statement
+  author: ["Games Workshop"]
+  date: 2023-10-17
+  url: https://investor.games-workshop.com/our-history
+
+last-game-board:
+  type: article
+  title: The Last Gameboard Kickstarter
+  author: Last Gameboard
+  url: {value: https://www.kickstarter.com/projects/gameboard1/gameboard-1, date: 2023-12-12}
+
+teburu:
+  type: article
+  title: Teburu
+  author: Teburu
+  url: {value: https://teburu.net/#home, date: 2023-12-12}
+
+rfid-based:
+  type: periodical
+  title: An RFID-based Infrastructure for Automatically Determining the Position and Orientation of Game Objects in Tabletop Games
+  author: ["Steve Hinske","Marc Langheinrich"]
+  page-total: 21
+  date: 2007-06-05
+  url: https://vs.inf.ethz.ch/publ/papers/hinske-pg07-rfidtabletop.pdf
+
+teburu-video:
+  type: scene
+  title: "Teburu: a sneak peek"
+  url: {value: https://www.youtube.com/watch?v=5paNoKA4b5A, date: 2023-12-13}
+
+surfacescapes:
+  type: article
+  title: Surfacescapes
+  author: ["Whitney Babcock-McConnell" ,"Michael Cole", "Stephen Dewhurst", "Bulut Karakaya", "Dyala Kattan-Wright", "Maokai Xiao" ]
+  parent:
+    type: blog
+    url: {value: https://www.etc.cmu.edu/projects/surfacescapes/index.html, date: 2023-12-13}
+
+pixelsense-specs:
+  type: article
+  title: Microsoft Surface 1.0 documentation
+  author: Microsoft
+  parent:
+    type: blog
+    url: {value: https://social.technet.microsoft.com/wiki/contents/articles/8017.microsoft-surface-1-0-sp1-getting-started-guide-hardware-overview.aspx#Tabletop, date: 2023-12-13}
+
+surfacescapes-images:
+  type: article
+  title: "With Surfacescapes, Dungeons & Dragons becomes high-tech"
+  author: Abhay Buch
+  parent:
+    type: blog
+    url: {value: http://thetartan.org/2010/4/5/scitech/surfacescapes, date: 2023-12-13}
+
+foundry: 
+  type: article
+  title: "Foundry VTT"
+  author: Foundry Gaming LLC
+  parent:
+    type: blog
+    url: {value: https://foundryvtt.com/, date: 2023-12-23}
+
+material-plane:
+  type: article
+  title: "Material Plane"
+  author: "Material Foundry"
+  parent:
+    type: blog
+    url: {value: https://www.materialfoundry.nl/, date: 2023-12-23}
+
+material-plane-github:
+  type: article
+  title: "Material Plane Github"
+  author: "Material Foundry"
+  parent:
+    type: blog
+    url: {value: https://github.com/MaterialFoundry/MaterialPlane/wiki/Beta-Hardware-Guide, date: 2023-12-23}
+
+STARS:
+  type: article
+  title: Towards the Next Generation of Tabletop Gaming Experiences
+  journal: Proceedings of Graphics interface 2004
+  page-range: 73--80
+  volume:
+  issue:
+  date: 2004
+  authors: [Magerkurth, Carsten and Memisoglu, Maral and Engelke, Timo and Streitz, Norbert]
+  parent:
+    title: Proceedings of Graphics interface 2004
+
+RSSI: 
+  type: article
+  title:  Robust and Accurate Indoor Localization Using Learning-Based Fusion of Wi-Fi RTT and RSSI
+  authors: [Hamada Rizk,  Ahmed Elmogy, Hirozumi Yamaguch]
+  url: {value: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9002808/, date: 2023-12-27 }
+  date: 2022
+  
+rfid-tracking:
+  type: periodical
+  title: TrackT Accurate tracking of RFID tags with mm-level accuracy using first-order taylor series approximation
+  author: ["Zhongqin Wang","Ning Ye","Reza Malekian","Fu Xiao","Ruchuan Wang"]
+  journal: Ad Hoc Networks
+  date: 2016-12-15
+  url: https://www.sciencedirect.com/science/article/pii/S1570870516302736
+
+ARKit:
+  type: article
+  title: ARKit
+  author: Apple 
+  url: {value: https://developer.apple.com/documentation/arkit/arkit_in_ios/content_anchors/scanning_and_detecting_3d_objects, date: 2023-12-27}
+
+
+yolo:
+  type: repository
+  title: YOLOv4 / Scaled-YOLOv4 / YOLO - Neural Networks for Object Detection (Windows and Linux version of Darknet) 
+  url: {value: https://github.com/AlexeyAB/darknet, date: 2023-12-28}
+
+sci-kit:
+  type: article
+  title: scikit-learn Blob Detection
+  url: {value: https://scikit-image.org/docs/stable/auto_examples/features_detection/plot_blob.html, date: 2023-12-29}
+
+pyqt:
+  type: article
+  title: PyQt
+  author: Riverbank Computing Limited
+  url: {value: https://riverbankcomputing.com/software/pyqt/intro, date: 2023-12-31}
+
+openCV:
+  type: repository
+  title: The OpenCV Library
+  author: Bradski, G.
+  journal: Dr. Dobb's Journal of Software Tools
+  date: 2000
+  url: {value: https://github.com/opencv/opencv, date: 2023-12-12}
+
+gallowdark:
+  type: article
+  title: Killzone Gallowdark
+  author: "Games Workshop"
+  url: {value: https://www.warhammer.com/en-GB/shop/killzone-gallowdark-2023, date: 2023-12-12}
+
+hough-circles:
+  type: repository
+  title: Hough Circle Transform
+  author: Bradski, G.
+  url: {value: https://docs.opencv.org/4.x/da/d53/tutorial_py_houghcircles.html, date: 2023-12-27}
+
+one-page:
+  type: article
+  title: Firefight
+  author: One Page Rules
+  url: {value: https://www.onepagerules.com/games/grimdark-future-firefight, date: 2023-12-31}
+
+
+gallowdark-image:
+  type: article
+  title: "Kill Team: Into the Dark – What’s in the Box?"
+  author: Warhammer Community
+  url: {value: https://www.warhammer-community.com/2022/08/04/kill-team-into-the-dark-whats-in-the-box/, date: 2023-12-31} 
+
+
+# https://dl.acm.org/doi/abs/10.1016/j.patcog.2014.01.005
+arucoTags:
+  type: article
+  title: "Automatic generation and detection of highly reliable fiducial markers under occlusion"
+  author: [Garrido-Jurado, S. and Muñoz-Salinas, R. and Madrid-Cuevas, F.J. and Marín-Jiménez, M.]
+  doi: 10.1016/j.patcog.2014.01.005
+  url: https://doi.org/10.1016/j.patcog.2014.01.005
+  volume: 47
+  issue: 6
+  journal: Pattern Recognition
+  publisher: Elsevier Science Inc.
+
+
+# https://www.researchgate.net/publication/282426080_Generation_of_fiducial_marker_dictionaries_using_Mixed_Integer_Linear_Programming
+
+# https://cvg.cit.tum.de/_media/members/demmeln/loipfuehrer2022ma.pdf
