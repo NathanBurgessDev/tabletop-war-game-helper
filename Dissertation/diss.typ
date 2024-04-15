@@ -564,6 +564,7 @@ Official openCV python documentation is somewhat lacking.
 
 The main LSEPI issue you could see here is copyright issues as _Kill Team_ is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the _Kill Team Lite_ rule set previously mentioned. This is publicly available published by _Games Workshop_. One issue is that different "_Kill Teams_" (groups of operatives) will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published _Kill Team_ information. If this proves to be problematic then the game rules will be based off a very similar system _Firefight_ @one-page. This is published by _One Page Rules_, who produce free to use, public miniature war-game systems.
 
+=== Accessability 
 
 
 

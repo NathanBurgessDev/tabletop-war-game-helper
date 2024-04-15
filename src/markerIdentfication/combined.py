@@ -4,19 +4,32 @@ import numpy as np
 import math
 import path
 import sys
+from math import tan, radians, sqrt
 
 direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 
 from markerDetection.findPieces import findPieces
 from boardHomogrophy.TopDownView import getTopDownView, calibrateTopDownView
-# from numpy import _Shape
 
 
 # The board is brown - composite colour - very annoying
 
 NUM_SEGMENTS = 4
 NUM_ENCODING = 5
+
+class TerrainTag:
+    def __init__(self,id,corners):
+        self.id = id
+        self.corners = corners
+        self.rotation = self.getRotation()
+        
+    def getRotation(self):
+        sideLength = self.getDistanceBetweenPoints(self.corners[0], self.corners[1])
+        distanceFromCenterToTopLeft = self.getDistanceBetweenPoints(self.corners[0], (0,0)) 
+    
+    def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
+        return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
 
 
 class ModelEncoding:
@@ -40,8 +53,13 @@ def identifyAllTerrain(img,pts,detector):
     image = getTopDownView(img,pts)
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
-    return (marker_corners, marker_ids)
     
+    terrainZip = zip(marker_corners, marker_ids)
+    terrainList = []
+    for terrain in terrainZip:
+        terrainList.append(TerrainTag(terrain[1], terrain[0]))
+    
+    return terrain
     
 
 def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,int]]:
@@ -53,7 +71,7 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,i
     imageSize = image.shape
     
     circles = findPieces(image)
-    print(circles)
+    # print(circles)
     
     # For testing please change this later ty ty
     # center = (circles[0][0], circles[0][1])

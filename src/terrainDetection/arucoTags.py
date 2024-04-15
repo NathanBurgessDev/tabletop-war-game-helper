@@ -64,12 +64,13 @@ def main():
     
 def detectMarkers(image):
 	image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-	arucoDict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_6X6_250)
+	arucoDict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
 	detectorParams = cv.aruco.DetectorParameters()
 	detector = cv.aruco.ArucoDetector(arucoDict, detectorParams)
 	imgCopy = image.copy()
 	marker_corners, marker_ids = detector.detectMarkers(imgCopy)[:2]
 	cv.aruco.drawDetectedMarkers(image = imgCopy, corners= marker_corners, ids= marker_ids)
+	imgCopy =  cv.resize(imgCopy, (int(imgCopy.shape[1]/2), int(imgCopy.shape[0]/2)))
 	cv.imshow("ArUCo Tag", imgCopy)
 	cv.waitKey(0)	
   
@@ -77,5 +78,5 @@ def detectMarkers(image):
 
 
 if __name__ == "__main__":
-    detectMarkers(cv.imread("testImages/market_23_print.jpg"))
+    detectMarkers(cv.imread("testImages/oneCoverWall.jpg"))
     # main()

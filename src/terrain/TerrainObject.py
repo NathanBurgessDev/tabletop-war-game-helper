@@ -1,4 +1,6 @@
 import pygame        
+from shapely import Polygon
+from shapely import affinity
 # A terrain object is a collection of points that make up the terrain X
 # Each point is a tuple of (x, y) coordinates
 # Each point has a line between itself, then next point, and the previous point
@@ -6,7 +8,9 @@ import pygame
 class Terrain:
     verticies = []
     heavy = False
-    def __init__(self, points: list[tuple[int,int]], heavy: bool = False):
+    id = 0
+    scaledPolygon = None
+    def __init__(self, points: list[tuple[int,int]], heavy: bool = False, id: int = 0):
         if len(points) < 3:
             raise ValueError("Terrain object must have at least 3 points")
         self.verticies = points
@@ -26,7 +30,24 @@ class Terrain:
         for i in range(0, len(self.verticies)):
             pointMembers[self.verticies[i]] = [self.verticies[i-1], self.verticies[(i+1) % len(self.verticies)]]
         return pointMembers
+    
+    def updateTerrain(self):
+        self.updateVerticies()
+        polygon = Polygon(self.verticies)
+        self.scaledPolygon = polygon
+        self.polygonLineSegments = self.getPolygonLineSegments()
+        self.linePointMembers = self.pointLineSegmentMembers()
         
+    def translatePolygon(self, xoff, yoff):
+        self.scaledPolygon = affinity.translate(self.scaledPolygon, xoff, yoff)
+        self.updateTerrain()
+    def rotatePolygon(self, angle):
+        self.scaledPolygon = affinity.rotate(self.scaledPolygon, angle)
+        self.updateTerrain()
+        
+    def updateVerticies(self):
+        self.verticies = list(self.scaledPolygon.exterior.coords[:-1])
+    
         
 class TerrainLine:
     def __init__(self, start: tuple[int,int], end: tuple[int,int], heavy : bool ):
@@ -34,4 +55,25 @@ class TerrainLine:
         self.end = end
         self.heavy = heavy
         self.line = (start, end)
+        
+# 5.6mm Wall Width
+# 78.81 Wall length
+# 24.67 Pillar Width
+# 28.95 pillar length
+
+# 24.67 /2 = 12.335
+#5.6 / 2 = 2.8
+# 12.335 - 2.8 = 9.535
+# 12.335 + 2.7 = 15.135
+class PillarDoubleWall(Terrain):
+    def __init__(self, id):
+        super().__init__(points=self.buildPolygon(), heavy = True, id = id)
+    def buildPolygon(self):
+            verts = [(100,100), (109.5,100),(109.5, 178.8),(115.1,178.8), (115.1,100),(124.6,100),(124.6,71.05),(115.1,71.05), (115.1,-7.76), (109.5,-7.76), (109.5,71.05), (100,71.05)]
+            polygon = Polygon(verts)
+            scaledVerts = affinity.scale(polygon, xfact=3, yfact = 3)
+            self.scaledPolygon = scaledVerts
+            scaledVerts = list(scaledVerts.exterior.coords[:-1])
+            return scaledVerts
     
+        

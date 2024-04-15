@@ -12,7 +12,7 @@ direction = path.Path(__file__).abspath()
 sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import ModelFinder
 from modelEncodings.encodingsInUse import Operative, OperativeList
-from terrain.TerrainObject import Terrain, TerrainLine
+from terrain.TerrainObject import Terrain, TerrainLine, PillarDoubleWall
 
 # Initialize Pygame
 pygame.init()
@@ -196,10 +196,15 @@ class MainGame:
             
                 
         if (self.testingFlag):
-            terrainVertecies = [(300,500),(300,550),(400,550),(400,500)]
-            for vertex in terrainVertecies:
-                terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
-            terrain = Terrain(terrainVertecies, heavy=True)
+            # terrainVertecies = [(300,500),(300,550),(400,550),(400,500)]
+            # for vertex in terrainVertecies:
+            #     terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+            terrain = PillarDoubleWall(1)
+            for vertex in terrain.verticies:
+                terrain.verticies[terrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+            terrain.updateTerrain()
+            terrain.translatePolygon(750,300)
+            terrain.rotatePolygon(45)
             # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
             self.gameBoard.addTerrain(terrain)
             
@@ -1081,3 +1086,30 @@ if __name__ == "__main__":
 # Hamming distance 
 # Alternate fiducial markers
 # Occlusion
+
+# 15/04/24
+# Terrain - problem
+# Originally I inteded for each artag to have a terrain type associated i.e. tag ID 1 is a wall tag ID2 isa wall and a corner
+# I ran into a problem before starting of how I would know which terrain to update
+# i.e. I detect 3 tags - 1,1,1
+# And build a terrain in these positions
+# I do another detection and detect 1,1
+# How do I know which terrain to keep as they are (the missed tag) and which to update to the new position (i.e if the camera was knocked)
+# I could approach this roblem by finding the closest tag to the previous position and updating that one for each tag
+# This is A. a bit of a pain to do B. quite clunky and C. will ahve problems if pieces are close to eachother / equidistant
+# As a fix to this I decided to split the ARuco tags into sub types
+# As gallowdark terrain is made up of walls, corners, corners with wall, corner with 2 walls etc etc
+# We can split up the ARuco tags into ranges - i.e. wall is 1-15, corner with 2 walls is 15 - 30 etc etc
+# when we detect a tag we see which sub type if fits into to define the verticies
+# This way each wall has a unique ID so when we detect terrain we can update the correct terrain and leave any undetected terrain in their previous position
+# Started using shapely for the terrain, makes transformations etc much much easier
+# Wish I had found this sooner - wouldve made planning things much easier - oh well
+
+# could work well as an app - take a photo, visualise the game
+# Problem with this - app development sucks
+# Would have no way to develop for ios
+# Would need to hackintosh my laptop
+# Leanr swift dev
+# Apple computer vision stuff is really really good
+# i.e. VNDetectRectanglesRequest 
+# https://developer.apple.com/documentation/vision/vndetectrectanglesrequest
