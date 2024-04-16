@@ -80,6 +80,11 @@ class OperativeList:
          for operative in self.operatives:
             if operative.id == id:
                 operative.obsured = True
+                
+    def setOperativeToInCover(self, id):
+        for operative in self.operatives:
+            if operative.id == id:
+                operative.inCover = True
       
     # Somewhat annoyingly the radius is relative to the DISPLAYED board size
     # and the position is relative to the ACTUAL board size

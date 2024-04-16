@@ -21,12 +21,21 @@ NUM_ENCODING = 5
 class TerrainTag:
     def __init__(self,id,corners):
         self.id = id
-        self.corners = corners
+        self.cornerPoints = corners
+        # Assumes our marker is a perfect square
+        # It never will be but its a close enough approximation to not cause huge issues
+        self.centerY = self.getCenterY(corners)
+        self.centerX = self.getCenterX(corners)
         self.rotation = self.getRotation()
         
+    def getCenterY(self, corners):
+        return int((corners[0][1] +corners[2][1]) / 2)
+        
+    def getCenterX(self, corners):
+        return int((corners[0][0] + corners[2][0]) / 2)
+        
     def getRotation(self):
-        sideLength = self.getDistanceBetweenPoints(self.corners[0], self.corners[1])
-        distanceFromCenterToTopLeft = self.getDistanceBetweenPoints(self.corners[0], (0,0)) 
+        pass
     
     def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
         return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)

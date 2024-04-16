@@ -204,7 +204,7 @@ class MainGame:
                 terrain.verticies[terrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
             terrain.updateTerrain()
             terrain.translatePolygon(750,300)
-            terrain.rotatePolygon(45)
+            terrain.rotatePolygon(-75)
             # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
             self.gameBoard.addTerrain(terrain)
             
@@ -318,7 +318,7 @@ class MainGame:
                     self.operativeList.setOperativeToObscured(operative.id)
                 
                 if (self.isInCover(chosenOperative,operative,terrainLinesPositive) and self.isInCover(chosenOperative,operative,terrainLinesNegative)):
-                    self.operativeList.setOperativeToObscured(operative.id)
+                    self.operativeList.setOperativeToInCover(operative.id)
                 
                         
                             

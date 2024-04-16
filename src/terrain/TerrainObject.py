@@ -42,7 +42,7 @@ class Terrain:
         self.scaledPolygon = affinity.translate(self.scaledPolygon, xoff, yoff)
         self.updateTerrain()
     def rotatePolygon(self, angle):
-        self.scaledPolygon = affinity.rotate(self.scaledPolygon, angle)
+        self.scaledPolygon = affinity.rotate(self.scaledPolygon, angle, origin = "centroid")
         self.updateTerrain()
         
     def updateVerticies(self):
