@@ -1113,3 +1113,41 @@ if __name__ == "__main__":
 # Apple computer vision stuff is really really good
 # i.e. VNDetectRectanglesRequest 
 # https://developer.apple.com/documentation/vision/vndetectrectanglesrequest
+
+# 16/04/24
+# Getting terrain working
+# Need to put white border around tags to amke ti not blend into black terrain
+# Needed to find a way to determine the rotation of the terrain
+# More difficult than expected
+# Was originally going to find the center of the tag, find the distance between one of the corners and then use this to produce a perfect
+# square (non rotated) and then from there calculate the angle between the "perfect" top left and the actual top left through the center
+# Decided not to do this - probably wouldve been easier 
+# Decided to use the rotation information of the aruco tags
+# Was a real pain to get working - took a whole day
+# Had to calculate the camera matrix and distortion coefficients using the openCV calibration off of a chessboard
+# Had issues with this - was veyr slow, turned ot I was using the wrong board size in cv.getChessboardCorners
+# Spent some time saving the values in a joblib file (basically a .pickl)
+# Once I had the camera calibrated (different cameras will ahve different distortions and bends i.e fisheye lenses, this lets you correct for this)
+# this has to be done for every different camera type used
+# Once I had the camera calibrated I could use it to perform pose estimation
+# This was a gigantic pain
+# openCV 4.7 and lower uses estimatePoseSingleMarkers
+# In the latest versions this functionality has been moved into solvePnP
+# This makes most of the documentation and tutorials either wrong, very roundabout or just not helpful
+# i.e. the tutorial for this is in C++ so has lots of C++ extra requirements / pointers that are just not needed in python
+# After a lot of research and trial and error I found a method to get the pose of the aruco tags by essentially
+# using a reverse engineered version of estimateSinglePoseMarker so that I wouldnt have to perform lots of conversions between
+# current and past documentation / tutorials
+# Once this was working I could get the rodrigues rotation vector and the translation vector of the tags
+# Though, this was not the end of the problems
+# I had not encountered rotation vectors before - only matricies so this took some learning
+# As well as this I found it veyr difficult to make a translation from the rotation vector to degrees
+# Every method I found online simply gave the wrong results
+# Evnetually I found cv.RQDecomp3x3. this produces a rotation matrix from a rodriques rotation vector for each axis
+# From here I can convert the rotation matrix to euler angles and then convert to negative to get the correct rotation needed by shapely
+# So when I detect a tag I create a tag object which stores :
+# the rotation (in degrees)
+# The corners
+# The ID
+# and the center
+# Which can then be passed to the gameboard to display at the correct position and coordinates
