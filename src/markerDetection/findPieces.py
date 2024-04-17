@@ -29,6 +29,9 @@ def findPieces(img):
                               minRadius=30, maxRadius=130,
                               param1=100, param2 = 20,)
     
+    if circles is None:
+        return []
+    
     circles = np.uint16(np.around(circles))
     
     

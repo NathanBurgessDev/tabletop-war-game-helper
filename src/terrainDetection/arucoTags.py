@@ -67,40 +67,44 @@ def main():
     cv.waitKey(0)
     
 def detectMarkers(image):
-	image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-	arucoDict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
-	detectorParams = cv.aruco.DetectorParameters()
-	detector = cv.aruco.ArucoDetector(arucoDict, detectorParams)
-	imgCopy = image.copy()
-	marker_corners, marker_ids = detector.detectMarkers(imgCopy)[:2]
-	cv.aruco.drawDetectedMarkers(image = imgCopy, corners= marker_corners, ids= marker_ids)
-	# imgCopy =  cv.resize(imgCopy, (int(imgCopy.shape[1]/2), int(imgCopy.shape[0]/2)))
-	
-	camerMatrix = joblib.load("mtx.joblib")
-	dist = joblib.load("dist.joblib")
+    cv.imshow("ArUCo Tag", image)
+    
+    image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
+    arucoDict = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
+    detectorParams = cv.aruco.DetectorParameters()
+    detector = cv.aruco.ArucoDetector(arucoDict, detectorParams)
+    imgCopy = image.copy()
+    marker_corners, marker_ids = detector.detectMarkers(imgCopy)[:2]
+    cv.aruco.drawDetectedMarkers(image = imgCopy, corners= marker_corners, ids= marker_ids)
+    print(marker_corners)
+    # imgCopy =  cv.resize(imgCopy, (int(imgCopy.shape[1]/2), int(imgCopy.shape[0]/2)))
 
-	rvecs,tvecs,trash = my_estimatePoseSingleMarkers(marker_corners, 0.1, camerMatrix, dist)
-	
-	
+    camerMatrix = joblib.load("mtx.joblib")
+    dist = joblib.load("dist.joblib")
 
-	cv.drawFrameAxes(imgCopy, camerMatrix, dist, rvecs[0], tvecs[0], 0.1)
-	print(rvecs[0][0])
-	
-	print(tvecs[0])	
-	
-	
-	rMatrix = cv.Rodrigues(rvecs[0][0])
- 
-	mtxR, mtxQ, mtxP,qx,qy,qz = cv.RQDecomp3x3(rMatrix[0])
- 
-	r = Rotation.from_matrix(qz)
-	print(r.as_euler('xyz', degrees=True))	
- 
-	print(qx)
-	print(qy)
-	print(qz) 
-	cv.imshow("ArUCo Tag", imgCopy)
-	cv.waitKey(0)	
+    rvecs,tvecs,trash = my_estimatePoseSingleMarkers(marker_corners, 0.1, camerMatrix, dist)
+
+
+
+    cv.drawFrameAxes(imgCopy, camerMatrix, dist, rvecs[0], tvecs[0], 0.1)
+    print(rvecs[0][0])
+
+    print(tvecs[0])	
+
+
+    rMatrix = cv.Rodrigues(rvecs[0][0])
+
+    mtxR, mtxQ, mtxP,qx,qy,qz = cv.RQDecomp3x3(rMatrix[0])
+    # coordinate = r.as_euler('xyz', degrees=True)
+    
+    # might be able to just throw rMatrix into the roation.from_matrix and then take the z value without needing to negate the value or do RQDecomp3x3
+    
+    r = Rotation.from_matrix(qz)
+    coordinate = r.as_euler('xyz', degrees=True)
+    print(r.as_euler('xyz', degrees=True))
+    print(coordinate[2])
+    cv.imshow("ArUCo Tag", imgCopy)
+    cv.waitKey(0)	
   
 # https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
 # Does not work
@@ -156,5 +160,5 @@ def my_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     return np.array([rvecs]), np.array([tvecs]), trash
 
 if __name__ == "__main__":
-    detectMarkers(cv.imread("testImages/newColourWall.jpg"))
+    detectMarkers(cv.imread("testImages/arucoWithWallAndBorder.jpg"))
     # main()

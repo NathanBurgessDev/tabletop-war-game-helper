@@ -4,6 +4,8 @@ import numpy as np
 import math
 import path
 import sys
+import joblib
+from scipy.spatial.transform import Rotation  
 from math import tan, radians, sqrt
 
 direction = path.Path(__file__).abspath()
@@ -19,26 +21,65 @@ NUM_SEGMENTS = 4
 NUM_ENCODING = 5
 
 class TerrainTag:
-    def __init__(self,id,corners):
+    def __init__(self,id,corners,cameraMatrix, dist):
         self.id = id
         self.cornerPoints = corners
+        self.cornerPointsAsTupleList = self.convertToTupleList(corners)
         # Assumes our marker is a perfect square
         # It never will be but its a close enough approximation to not cause huge issues
-        self.centerY = self.getCenterY(corners)
-        self.centerX = self.getCenterX(corners)
-        self.rotation = self.getRotation()
-        
+        # self.centerY = self.getCenterY(self.cornerPointsAsTupleList)
+        # self.centerX = self.getCenterX(self.cornerPointsAsTupleList)
+        self.rotation = self.getRotation(cameraMatrix, dist)
+    
+    def convertToTupleList(self,corners):
+        cornerList = []
+        for corner in corners[0]:
+            cornerList.append((corner[0],corner[1]))
+        return cornerList
+    
     def getCenterY(self, corners):
-        return int((corners[0][1] +corners[2][1]) / 2)
+        return int((corners[0][1] + corners[2][1]) / 2)
         
     def getCenterX(self, corners):
         return int((corners[0][0] + corners[2][0]) / 2)
         
-    def getRotation(self):
-        pass
+    def getRotation(self,cameraMatrix, dist):
+        rvecs,tvecs,trash = self.my_estimatePoseSingleMarkers(np.array(self.cornerPoints,dtype=np.float32), 0.1, cameraMatrix, dist)
+        rMatrix = cv.Rodrigues(rvecs[0][0])
+ 
+        mtxR, mtxQ, mtxP,qx,qy,qz = cv.RQDecomp3x3(rMatrix[0])
+    
+        r = Rotation.from_matrix(qz)
+        return -(r.as_euler('xyz', degrees=True)[2])
     
     def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
         return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
+    
+    def my_estimatePoseSingleMarkers(self,corners, marker_size, mtx, distortion):        
+        '''
+        This will estimate the rvec and tvec for each of the marker corners detected by:
+            corners, ids, rejectedImgPoints = detector.detectMarkers(image)
+        corners - is an array of detected corners for each detected marker in the image
+        marker_size - is the size of the detected markers
+        mtx - is the camera matrix
+        distortion - is the camera distortion matrix
+        RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
+        '''
+        marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
+                                [marker_size / 2, marker_size / 2, 0],
+                                [marker_size / 2, -marker_size / 2, 0],
+                                [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+        trash = []
+        rvecs = []
+        tvecs = []
+        
+        # c needs to be in the format array([[[x.,y.]]])
+        for c in corners:
+            nada, R, t = cv.solvePnP(marker_points, c, mtx, distortion, False, cv.SOLVEPNP_IPPE_SQUARE)
+            rvecs.append(R)
+            tvecs.append(t)
+            trash.append(nada)
+        return np.array([rvecs]), np.array([tvecs]), trash
 
 
 class ModelEncoding:
@@ -53,25 +94,32 @@ class ModelFinder:
         self.arucoDict = aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_50)
         self.arucoParams = aruco.DetectorParameters()
         self.arucoDetector = aruco.ArucoDetector(self.arucoDict, self.arucoParams)
+        self.cameraMatrix = joblib.load("mtx.joblib")
+        self.dist = joblib.load("dist.joblib")
+        
     def identifyModels(self,image):
         return identifyAllPieces(image,self.cornerPoints)
     def identifyTerrain(self,image):
-        return identifyAllTerrain(image,self.cornerPoints,self.arucoDetector)
+        return identifyAllTerrain(image,self.cornerPoints,self.arucoDetector,self.cameraMatrix,self.dist)
 
-def identifyAllTerrain(img,pts,detector):
+def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] | None:
     image = getTopDownView(img,pts)
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
     
     terrainZip = zip(marker_corners, marker_ids)
     terrainList = []
-    for terrain in terrainZip:
-        terrainList.append(TerrainTag(terrain[1], terrain[0]))
-    
-    return terrain
+    for i in range (0, len(marker_ids)):
+        print(marker_corners[i])
+        terrainList.append(TerrainTag(marker_ids[i],marker_corners[i],cameraMatrix,dist))
+   
+    if (len(terrainList) <= 0):
+        return None
+   
+    return terrainList
     
 
-def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,int]]:
+def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | None, tuple[int,int]]:
     
     
     # cv.imshow("image", image)
@@ -80,6 +128,9 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding] | None, tuple[int,i
     imageSize = image.shape
     
     circles = findPieces(image)
+    
+    if (len(circles) <= 0):
+        return (None, imageSize)
     # print(circles)
     
     # For testing please change this later ty ty

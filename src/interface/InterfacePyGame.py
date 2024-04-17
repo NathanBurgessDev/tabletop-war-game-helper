@@ -149,7 +149,7 @@ class MainGame:
         self.gameLoop()
         
     def setupModelFinder(self):
-        filePath = "testImages/paperTestCorners.jpg"
+        filePath = "testImages/arucoWithWallAndBorder.jpg"
         
         image = cv.imread(filePath)
         image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
@@ -183,16 +183,20 @@ class MainGame:
         # Testing purposes we do an inital update
         if (not self.testingFlag):
         
-            filePath = "testImages/paperTestCorners.jpg"
+            filePath = "testImages/arucoWithWallAndBorder.jpg"
             
             image = cv.imread(filePath)
             image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
             
-            gameBoardData = self.modelFinder.identifyModels(image,self.modelFinder.cornerPoints)
-            self.gameBoard.imageSize = gameBoardData[1]
+            # gameBoardData = self.modelFinder.identifyModels(image,self.modelFinder.cornerPoints)
+            # self.gameBoard.imageSize = gameBoardData[1]
             
-            if (gameBoardData[0] != None):
-                operativeList.updateEncodingListPositions(gameBoardData[0])
+            # if (gameBoardData[0] != None):
+            #     operativeList.updateEncodingListPositions(gameBoardData[0])
+            
+            terrainData = self.modelFinder.identifyTerrain(image)
+            for terrain in terrainData:
+                print(terrain.cornerPointsAsTupleList)
             
                 
         if (self.testingFlag):
@@ -693,7 +697,11 @@ class MainGame:
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList,True)
+    game = MainGame(operativeList,False)
+
+
+
+
 
 
 # 30/03/24
@@ -1151,3 +1159,5 @@ if __name__ == "__main__":
 # The ID
 # and the center
 # Which can then be passed to the gameboard to display at the correct position and coordinates
+
+# Also realised the camera arm I had was broken - had to order a new one. The joint locks were not strong enough to hold the arm in place
