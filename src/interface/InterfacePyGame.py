@@ -1205,4 +1205,43 @@ if __name__ == "__main__":
 # Terrain is now rotated correctly
 # Terrain caused me an insane amount of problems 
 # I noticed that the terrain was being placed on the board, but in the incorrect location (roughly correct side of the board, but the actual placement was wayyyyy off)
-# 
+# I was trying to take the top left hand corner of hte aruco tag (should be position [0] in the return as mentoned in the documentation)
+# and then find the translation between the top left hand corner (position [0] in the object list) and the top left hand corner of the tag
+# then apply this translation to all the verticies to get the correct postiion
+# The postions and scales were all weirdly off doing this
+# I was converting the terrain point and tag point to board space and then applying the translation
+# Then converting the terrain into board space
+# Since converting into board space assumes that we are going from the image position to the board position
+# It shrinks by the ratio between the image and the board
+# As a result the terrain was being shrunk by the ratio between the image and the board
+# To fix this we - rotate the terrain by the angle provided first
+# then find hte translation between the terrains top left default and the tags top left CONVERTED TO BOARD SPACE
+# Another problem I had was that the terrain was being placed at the bottom left hand corner of the tag
+# I was confused by the outputs from teh aruco tags - the documentation says that the top left hand corner is position [0] in the list and it goes clockwise
+# I took the outputs and plotted them in desmos and saw that the output order was seemingly random and anticlockwise
+# Having found no one else having this similar problem this puzzled me
+# The next day I realised that desmos has the y axis increasing upwards - my board is downward
+# After accounting for this the output's were still wrong
+# After some more debugging and finding no problems with my logic I did some random drawing to the screen of points
+# I found that I had defined the terrain object incorrectly. I thought I was starting at hthe top left pillar corner at [0]
+# However once again, the board has 0,0 at the top left hand corner
+# So my model actually started at the bottom left hand corner
+# Once I accounted for this the terrain was placed *mostly* correctly
+# It's always going to be a little bit off due to errors and translation problems etc etc
+# but this was good enough
+# The order is now
+# Rotate the terrain by the angle
+# Scale the terrain to use the correct scale (the terrain is defined in 1 pixel is 1 mm but the board uses 3 pixels as 1mm)
+# Find the translation between the bottom left hand corner of the tag (translated to board space) and the bottom left hand corner of the terrain
+# apply this translation to all the verticies
+# :D
+
+# We also defined the terrain as a shapely polygon to make the translations a bit easier
+# as a result when we want to update the terrain the verticies and shapely object are slightly separate
+# So I made some methods to update the internal objects correctly (I did not do this very well but it "works")
+
+# We could technically make this much nicer by actually using the transformation that the pose estimation provides
+# But I couldnt find a way to convert this transformation to work nicely with shapely
+# And I didnt really feel like re-writing a geometry library 
+
+# Should probably make some graphs of the problem I was having

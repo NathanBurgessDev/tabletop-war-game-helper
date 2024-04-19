@@ -32,11 +32,11 @@ In this document, there are #total-words words all up.
 
 = Introduction and Motivation
 
-Tabletop war-gaming is a popular hobby but, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
+Tabletop war-gaming is a popular hobby that is quickly gaining popularity, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
 
-The most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules
+Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules. This complexity can be off putting to new players. Many tabletop / boardgames suffer from a players first few games taking significantly longer than is advertised due to needing to constantly check the rules. As well as this, new players are likely to take longer to make decisions as they are not familiar was the game's mechanics of what is and what isn't a bad move. This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that semmingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
 
-_Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. These actions can involving moving to another location, shooting at an enemy or capturing an objective. The game uses dice to determine the results of your models engaging in combat with each other. 
+_Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. These a selection of actions are: moving to another location, shooting at an enemy, melee combat and capturing an objective. The game uses dice to determine the results of your models engaging in combat with each other with the required rolls being determined by the statistics of each "operative" (a miniature) involved and the terrain.
 
 #figure(
     image("images/gallowdark.jpg", width:80%),
@@ -45,11 +45,14 @@ _Kill Team_ is a miniature war-game known as a "skirmish" game. This means the g
 
 Video games help on-board new players by having the rules enforced by the game itself. This project aims to bring a similar methodology to tabletop war-gaming, specifically the _Kill Team Lite_ @kt-lite-rules  system using the _Gallowdark_ setting. The _Kill Team Lite_ rules are publicly available from _Games Workshop's_ website and is designed to be played on a smaller scale to other war games, making it a good candidate for a proof of concept. As well as this, the _Gallowdark_ @gallowdark setting streamlines the terrain used and removes verticality from the game, making implementation much simpler.
 
-Developing a system that can accurately track the position of miniatures and terrain in a _Kill Team_ board would allow for the creation of tools to assist players. For example, a digital game helper would remove the burden of rules enforcement from the players and onto the system, allowing players to focus on the game itself or allow players to make more informed game decisions by being able to preview the options available to them. Model tracking could also be utilised to record a game and view a replay of it or be utilised for content creation to create accurate board representations to viewers with visual effects.
+Developing a system that can digitally represent a physical _Kill Team_ board would allow for the creation of tools to assist players. For example, a digital game helper would remove the burden of rules enforcement from the players and onto the system, allowing players to focus on the game itself or allow players to make more informed game decisions by being able to preview the options available to them. This could also be utilised to record a game and view a replay or be used for content creation to make accurate board representations to viewers with digital effects.
 
-== Project Intention
+== Project Intention and Background
 
-This project will focus on the development of a system that can track the position of miniature and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement a visualisation of select game rules on the digital board to allow players to focus on the decision making process as opposed to the rules enforcement.
+This project will focus on the development of a system that can track the position of miniature models and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement a visualisation of select game rules on the digital board to allow players to focus on the decision making process as opposed to the rules enforcement.
+
+To determine the specific goals for this project it is important to provide some more context on the gameplay and community of _Kill Team_.
+
 
 
 
@@ -59,7 +62,7 @@ This project will focus on the development of a system that can track the positi
 
 Some companies, such as _The Last Game Board_ @last-game-board and _Teburu_ @teburu, sell specialist game boards to provide a mixed reality experience. 
 
-_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17"x17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350.
+_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17" x 17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350.
 #figure(
 image("images/theLastGameBoard.png", width:80%),
 caption: [The Last Game Board touchscreen tabletop system @last-game-board])
@@ -97,15 +100,77 @@ _Foundry Virtual Tabletop_ @foundry is an application used to create fully digit
 
 == Object Detection and Tracking Systems
 
-=== RFID
+Finding a method to detect and find the positions of miniatures on a game board, whilst not obstructing the game, is the main focus of this project. This section will outline the different technological approaches that could be taken to achieve this.
 
-=== Machine Learning 
+== RFID
+
+An RFID approach is the somewhat obvious solution. This would involve embedding RFID chips underneath the bases of the miniatures. Then some method of reading these chips would then need to be embedded either within or underneath the game board. There are a number of different approaches that could be taken to locating RFID chips which have been outlined by Steve Hinske and Marc Langheinrich @rfid-based in their work on a similar project.
+
+RFID solutions would require either an antenna grid underneath the game board or multiple individual RFID readers. This would be a viable option as hiding an antenna grid below a board is a relatively simple and unobstructive task. The same goes for hiding RFID readers beneath a table.
+
+The main drawback of RFID is that a reader (at its core) can only detect if a chip is in range or not (referred to as "absence and presence" results). Due to this, some extra methodology would need to be implemented to determine the position of a chip.
+
+One approach utilises increasing the range of an RFID reader to its maximum and then subsequently reducing the range repeatedly. Using the known ranges of the readers it would be possible to deduce which tags are within range of which reader - and subsequently deduce from which ranges it is detectable in the position of the RFID chip. This approach could in theory provide a reasonably accurate position of the RFID chip. However, this approach would take a longtime to update as each RFID reader would need to perform several read cycles. Combined with problems caused from interference between the chips / readers, the fact that being able to vary the signal strength of an RFID reader is not a common feature and the need for multiple RFID readers, this approach does not meet the requirements for this project.
+
+Another approach utilises measuring the signal strength received from an RFID chip and estimating the distance from the reader to the chip, known as received signal strength indication (RSSI) . This approach is much quicker than the previous method needing only a single read cycle to determine distance. Most modern day RFID readers can report RF phase upon tag reading. However, current RSSI methods have an error range of \~60cm caused by noise data, false positives / negatives and NLOS (non-line of sight) @RSSI. This won't work for this project given than the board size is 70 x 60 cm.
+
+Triliteration is a process in which multiple receivers use the time of arrival signal from a tag to determine it's position. This suffers from similar problems to other RFID methods in that it produces an area in which the tag could exist within - as opposed to it's exact position. Combined with the need for 3 RFID readers, this approach fails to be accessible to the target audience.
+
+The approach previously mentioned in Steve Hinske and Marc Langheinrich's paper, which utilised an antenna grid below the game board, seemed promising. 
+
+#figure(
+    image("images/rfidCircle.png",width:60%),
+    caption:([An example from Steve Hinske and Marc Langheinrich's paper @rfid-based describing their overlapping approach. The black square represents the RFID tag whilst the grey circles show the read area of each RFID reader. The intent is to use which readers are in range of the tag to determine an "area of uncertainty" of the tag's location.])
+)
+
+They were attempting to do this for _Warhammer 40k_, a game played on a much bigger board typically with larger models. As a result they were able to put RFID tags across larger models, such as vehicles, and utilise the known position of each tag relative to the model and the estimated position from the RFID readers to determine not only an accurate position but also orientation. Unfortunately for this project the size of the miniatures in _Kill Team_ would require the use of one tag or two in very close proximity. 
+
+A potentially valid method utilizing RFID could be to use the approach outlined by Zhongqin Wang, Ning Ye, Reza Malekian, Fu Xiao, and Ruchuan Wan in their paper @rfid-tracking using first-order taylor series approximation to achieve mm level accuracy called _TrackT_. However, this approach is highly complex and can only track a small amount of tags at a time.
+
+// READ THIS AND EXPLAIN
+
+=== Machine / Deep Learning
+
+// - YOLO?
+// - Lots of different ML approaches
+// - Size of dataset must be big
+// - Problems with identifying specific minitures
+// - Problematic when minitures will have similar paint schemes and poses - could be solved by looking at last known positions?
+// - Difficulty in keeping objects "unique"
+
+Modern object tracking systems are often based on a machine learning or deep learning approach. In this case a classifier model would be used to identify each unique miniature on a team, and then subsequently locate it within the game board. The biggest drawback to this approach is the amount of training data needed for each class in a classifier. According to _Darknet's_ documentation (a framework for neural-networks such as YOLO) @yolo each class should have ~2000 training images.
+
+Since each user will use their own miniatures, posed and painted in their own way, they would have to create their own dataset for their miniatures and train the model on them each time. As a user's miniatures are likely to follow a similar paint scheme, ML classification could potentially struggle to identify between miniatures from top down and far away if not enough training data is supplied.
+
 
 === ARKit
 
-== Computer Vision Systems
+_Apple's_ ARKit supports the scanning and detection of 3D objects @ARKit by finding 3D spatial features on a target. Currently any phone running IOS 12 or above is capable of utilising the ARKit. In this system, you could scan in your models, then use the ARKit to detect them from above. This information could then be conveyed to the main system. This could also allow for the system to be expanded in the future to use a side on camera as opposed to just top down detection, allowing for verticality within other _Kill Team_ game systems. Combined with certain Apple products having an inbuilt LIDAR sensor (such as the _iPhone 12+ Pro_ and _iPad Pro_ 2020 - 2022), which further enhances the ARKit's detection, this could be a viable approach.
 
-=== Tag Detection and Occlusion solutions
+#figure(
+    image("images/LIDAR.png", width:80%),
+    caption:([Registering an an object in ARKit @ARKit])
+)
+
+After some testing utilizing an iPad Pro with a LIDAR scanner, some drawbacks were found with this approach. The object detection required you to be too close to the models detect them, and when being removed and re-added ARKit either took a long time to re-locate a model or failed to do so at all.
+
+As a result I won't be using this approach for the project. Although, for future work, this could be an interesting option to explore allowing you to implement AR features such as highlighting models on your phone or tablet or displaying information above the model.
+
+=== Computer Vision without neural networks
+
+After considering all the options above, the best method found was using computer vision techniques.
+
+One technique is blob detection. A blob is defined as a group of bright or dark pixels contrasting against a background. In this case the miniatures would be the blobs.
+
+Utilizing blob analysis would allow locating general position of miniatures (as they would very clearly stick out from the background) but getting their exact center may then prove difficult (which would be needed for calculating movement and line of sight). Combined with the addition of terrain adding clutter to the image and the miniatures potentially being any colour, this approach could prove difficult to implement in the given time frame.
+
+The computer vision method explored the most was utilizing coloured tags to identify miniatures.
+
+The use of coloured tags would also mean there would be access to specific measurements allowing for an accurate location to be discerned. However, some external modification to the the game board or miniatures would need to be made. The challenge here is finding a way to do this without obstructing the flow of the game or the models themselves.
+
+=== Fiducial Markers and Tag Detection
+
+=== Occlusion solutions
 
 === Object Detection
 
@@ -150,74 +215,6 @@ As a result, the project can be broken down into two main goals.
 
 
 = Methodology and Design
-
-Finding a method to detect and find the positions of miniatures on a game board, whilst not obstructing the game, is a challenge. The majority of the work done so far has been in researching and designing different approaches to this problem. This section will outline the different approaches that have been considered.
-
-== RFID
-
-An RFID approach is the somewhat obvious solution. This would involve embedding RFID chips underneath the bases of the miniatures. Then some method of reading these chips would then need to be embedded either within or underneath the game board. There are a number of different approaches that could be taken to locating RFID chips which have been outlined by Steve Hinske and Marc Langheinrich @rfid-based in their work on a similar project.
-
-RFID solutions would require either an antenna grid underneath the game board or multiple individual RFID readers. This would be a viable option as hiding an antenna grid below a board is a relatively simple and unobstructive task. The same goes for hiding RFID readers beneath a table.
-
-The main drawback of RFID is that a reader (at its core) can only detect if a chip is in range or not (referred to as "absence and presence" results). Due to this, some extra methodology would need to be implemented to determine the position of a chip.
-
-One approach utilises increasing the range of an RFID reader to its maximum and then subsequently reducing the range repeatedly. Using the known ranges of the readers it would be possible to deduce which tags are within range of which reader - and subsequently deduce from which ranges it is detectable in the position of the RFID chip. This approach could in theory provide a reasonably accurate position of the RFID chip. However, this approach would take a longtime to update as each RFID reader would need to perform several read cycles. Combined with problems caused from interference between the chips / readers, the fact that being able to vary the signal strength of an RFID reader is not a common feature and the need for multiple RFID readers, this approach does not meet the requirements for this project.
-
-Another approach utilises measuring the signal strength received from an RFID chip and estimating the distance from the reader to the chip, known as received signal strength indication (RSSI) . This approach is much quicker than the previous method needing only a single read cycle to determine distance. Most modern day RFID readers can report RF phase upon tag reading. However, current RSSI methods have an error range of \~60cm caused by noise data, false positives / negatives and NLOS (non-line of sight) @RSSI. This won't work for this project given than the board size is 70 x 60 cm.
-
-Triliteration is a process in which multiple receivers use the time of arrival signal from a tag to determine it's position. This suffers from similar problems to other RFID methods in that it produces an area in which the tag could exist within - as opposed to it's exact position. Combined with the need for 3 RFID readers, this approach fails to be accessible to the target audience.
-
-The approach previously mentioned in Steve Hinske and Marc Langheinrich's paper, which utilised an antenna grid below the game board, seemed promising. 
-
-#figure(
-    image("images/rfidCircle.png",width:60%),
-    caption:([An example from Steve Hinske and Marc Langheinrich's paper @rfid-based describing their overlapping approach. The black square represents the RFID tag whilst the grey circles show the read area of each RFID reader. The intent is to use which readers are in range of the tag to determine an "area of uncertainty" of the tag's location.])
-)
-
-This approach worked rather well for Steve Hinske and Marc Langheinrich as they were attempting to do this for _Warhammer 40k_, a game played on a much bigger board typically with larger models. As a result they were able to put RFID tags across larger models, such as vehicles, and utilise the known position of each tag relative to the model and the estimated position from the RFID readers to determine not only an accurate position but also orientation. Unfortunately for this project the size of the miniatures in _Kill Team_ would require the use of one tag or two in very close proximity. 
-
-A potentially valid method utilizing RFID could be to use the approach outlined by Zhongqin Wang, Ning Ye, Reza Malekian, Fu Xiao, and Ruchuan Wan in their paper @rfid-tracking using first-order taylor series approximation to achieve mm level accuracy called _TrackT_. However, this approach is highly complex and can only track a small amount of tags at a time.
-
-// READ THIS AND EXPLAIN
-
-=== Machine / Deep Learning
-
-// - YOLO?
-// - Lots of different ML approaches
-// - Size of dataset must be big
-// - Problems with identifying specific minitures
-// - Problematic when minitures will have similar paint schemes and poses - could be solved by looking at last known positions?
-// - Difficulty in keeping objects "unique"
-
-Modern object tracking systems are often based on a machine learning or deep learning approach. In this case a classifier model would be used to identify each unique miniature on a team, and then subsequently locate it within the game board. The biggest drawback to this approach is the amount of training data needed for each class in a classifier. According to _Darknet's_ documentation (a framework for neural-networks such as YOLO) @yolo each class should have ~2000 training images.
-
-Since each user will use their own miniatures, posed and painted in their own way, they would have to create their own dataset for their miniatures and train the model on them each time. As a user's miniatures are likely to follow a similar paint scheme, ML classification could potentially struggle to identify between miniatures from top down and far away if not enough training data is supplied.
-
-
-=== ARKit
-
-_Apple's_ ARKit supports the scanning and detection of 3D objects @ARKit by finding 3D spatial features on a target. Currently any phone running IOS 12 or above is capable of utilising the ARKit. In this system, you could scan in your models, then use the ARKit to detect them from above. This information could then be conveyed to the main system. This could also allow for the system to be expanded in the future to use a side on camera as opposed to just top down detection, allowing for verticality within other _Kill Team_ game systems. Combined with certain Apple products having an inbuilt LIDAR sensor (such as the _iPhone 12+ Pro_ and _iPad Pro_ 2020 - 2022), which further enhances the ARKit's detection, this could be a viable approach.
-
-#figure(
-    image("images/LIDAR.png", width:80%),
-    caption:([Registering an an object in ARKit @ARKit])
-)
-
-After some testing utilizing an iPad Pro with a LIDAR scanner, some drawbacks were found with this approach. The object detection required you to be too close to the models detect them, and when being removed and re-added ARKit either took a long time to re-locate a model or failed to do so at all.
-
-As a result I won't be using this approach for the project. Although, for future work, this could be an interesting option to explore allowing you to implement AR features such as highlighting models on your phone or tablet or displaying information above the model.
-
-=== Computer Vision without neural networks
-
-After considering all the options above, the best method found was using computer vision techniques.
-
-One technique is blob detection. A blob is defined as a group of bright or dark pixels contrasting against a background. In this case the miniatures would be the blobs.
-
-Utilizing blob analysis would allow locating general position of miniatures (as they would very clearly stick out from the background) but getting their exact center may then prove difficult (which would be needed for calculating movement and line of sight). Combined with the addition of terrain adding clutter to the image and the miniatures potentially being any colour, this approach could prove difficult to implement in the given time frame.
-
-The computer vision method explored the most was utilizing coloured tags to identify miniatures.
-
-The use of coloured tags would also mean there would be access to specific measurements allowing for an accurate location to be discerned. However, some external modification to the the game board or miniatures would need to be made. The challenge here is finding a way to do this without obstructing the flow of the game or the models themselves.
 
 == Design
 
