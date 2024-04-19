@@ -84,7 +84,10 @@ class GameBoard:
         self.screen.blit(text, operative.position)
         
     def drawCircle(self, circle: tuple[int,int], radius: int):
-        pygame.draw.circle(self.screen, MAGENTA, circle, radius)
+        pygame.draw.circle(self.screen, MAGENTA, (int(circle[0]),int(circle[1])), radius)
+        
+    def drawYellowCircle(self, circle: tuple[int,int], radius: int):
+        pygame.draw.circle(self.screen, YELLOW, (int(circle[0]),int(circle[1])), radius)
         
 
         # print("Points")
@@ -197,6 +200,30 @@ class MainGame:
             terrainData = self.modelFinder.identifyTerrain(image)
             for terrain in terrainData:
                 print(terrain.cornerPointsAsTupleList)
+                if (terrain.id == 1):
+                    newTerrain = PillarDoubleWall(1)
+                    print(newTerrain.verticies[0])
+                    newTerrain.rotatePolygon(terrain.rotation)
+                    newTerrain.scalePolygon(3,3)
+                    
+                    print(terrain.cornerPointsAsTupleList[0])
+                    print(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[0]))
+                    
+                    translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
+                    newTerrain.translatePolygon(translation[0],translation[1])
+                    
+                    # for vertex in newTerrain.verticies:
+                    #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+                        
+                    newTerrain.updatePolygon()
+                    
+                    
+                    
+                    # newTerrain.rotatePolygon(terrain.rotation)
+                    print(newTerrain.verticies)
+                    self.gameBoard.addTerrain(newTerrain)
+                    
+                    
             
                 
         if (self.testingFlag):
@@ -242,6 +269,14 @@ class MainGame:
             #Draw terrain
             self.gameBoard.drawTerrain()
             
+            self.gameBoard.drawCircle((1267,911),5)
+            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2137,1747)),5)
+            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2269,1659)),5)
+            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2357,1747)),5) 
+            
+            
+            self.gameBoard.drawYellowCircle(self.gameBoard.terrainList[0].verticies[0],5)
+            self.gameBoard.drawYellowCircle(self.gameBoard.terrainList[0].verticies[1],5)
            
             self.checkLineOfSight(10)
             
@@ -1161,3 +1196,13 @@ if __name__ == "__main__":
 # Which can then be passed to the gameboard to display at the correct position and coordinates
 
 # Also realised the camera arm I had was broken - had to order a new one. The joint locks were not strong enough to hold the arm in place
+
+# 17/18/19 /04/24
+# Terrain now works (mostly) correctly
+# This marks the end of MOST of the main functionality
+# Still needs work for: display, UI, general improvements, Camera feed, multiple terrain types, removing operatives, selecting operatives
+# Terrain is now displayed correctly(mostly) COULD scale the terrain based on the difference in area between the model central pillar and the detected tag?
+# Terrain is now rotated correctly
+# Terrain caused me an insane amount of problems 
+# I noticed that the terrain was being placed on the board, but in the incorrect location (roughly correct side of the board, but the actual placement was wayyyyy off)
+# 

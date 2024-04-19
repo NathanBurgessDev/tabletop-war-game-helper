@@ -31,8 +31,12 @@ class Terrain:
             pointMembers[self.verticies[i]] = [self.verticies[i-1], self.verticies[(i+1) % len(self.verticies)]]
         return pointMembers
     
-    def updateTerrain(self):
-        self.updateVerticies()
+    def updateVerticies(self):
+        self.verticies = list(self.scaledPolygon.exterior.coords[:-1])
+        self.polygonLineSegments = self.getPolygonLineSegments()
+        self.linePointMembers = self.pointLineSegmentMembers()
+        
+    def updatePolygon(self):
         polygon = Polygon(self.verticies)
         self.scaledPolygon = polygon
         self.polygonLineSegments = self.getPolygonLineSegments()
@@ -40,13 +44,22 @@ class Terrain:
         
     def translatePolygon(self, xoff, yoff):
         self.scaledPolygon = affinity.translate(self.scaledPolygon, xoff, yoff)
-        self.updateTerrain()
+        self.updateVerticies()
+        
     def rotatePolygon(self, angle):
         self.scaledPolygon = affinity.rotate(self.scaledPolygon, angle, origin = "centroid")
-        self.updateTerrain()
+        self.updateVerticies()
         
-    def updateVerticies(self):
-        self.verticies = list(self.scaledPolygon.exterior.coords[:-1])
+    def scalePolygon(self, xfact, yfact):
+        self.scaledPolygon = affinity.scale(self.scaledPolygon, xfact, yfact)
+        self.updateVerticies()
+        
+  
+    def findXandYTranslation(self,moveTo: tuple[int,int],current: tuple[int,int]):
+        xTranslation = moveTo[0] - current[0]
+        yTranslation = moveTo[1] - current[1]
+        return (xTranslation,yTranslation) 
+        
     
         
 class TerrainLine:
@@ -68,12 +81,15 @@ class TerrainLine:
 class PillarDoubleWall(Terrain):
     def __init__(self, id):
         super().__init__(points=self.buildPolygon(), heavy = True, id = id)
+    
+    # I built this upside down :((((((((((((((((((((((((((((((((((((((((((((((
     def buildPolygon(self):
             verts = [(100,100), (109.5,100),(109.5, 178.8),(115.1,178.8), (115.1,100),(124.6,100),(124.6,71.05),(115.1,71.05), (115.1,-7.76), (109.5,-7.76), (109.5,71.05), (100,71.05)]
             polygon = Polygon(verts)
-            scaledVerts = affinity.scale(polygon, xfact=3, yfact = 3)
-            self.scaledPolygon = scaledVerts
-            scaledVerts = list(scaledVerts.exterior.coords[:-1])
+            # self.scaledPolygon = affinity.scale(polygon, xfact=3, yfact = 3)
+            self.scaledPolygon = polygon
+            scaledVerts = list(self.scaledPolygon.exterior.coords[:-1])
+            print(scaledVerts)
             return scaledVerts
     
         

@@ -3,6 +3,7 @@ from cv2 import aruco
 import numpy as np
 import joblib
 import math
+import time
 from scipy.spatial.transform import Rotation   
 
 
@@ -104,7 +105,8 @@ def detectMarkers(image):
     print(r.as_euler('xyz', degrees=True))
     print(coordinate[2])
     cv.imshow("ArUCo Tag", imgCopy)
-    cv.waitKey(0)	
+    cv.waitKey(0)
+    time.sleep(1000)	
   
 # https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
 # Does not work

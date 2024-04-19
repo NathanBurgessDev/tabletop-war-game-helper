@@ -107,7 +107,6 @@ def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] |
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
     
-    terrainZip = zip(marker_corners, marker_ids)
     terrainList = []
     for i in range (0, len(marker_ids)):
         print(marker_corners[i])
