@@ -11,7 +11,7 @@
 )
 
 #pagebreak()
-#outline(title: "Table of Contents",indent: auto)
+#outline(title: "Table of Contents",depth: 3, indent: auto)
 
 // Number all headings
 #set heading(numbering: "1.1.")
@@ -34,14 +34,16 @@ In this document, there are #total-words words all up.
 
 Tabletop war-gaming is a popular hobby that is quickly gaining popularity, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
 
-Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules. This complexity can be off putting to new players. Many tabletop / boardgames suffer from a players first few games taking significantly longer than is advertised due to needing to constantly check the rules. As well as this, new players are likely to take longer to make decisions as they are not familiar was the game's mechanics of what is and what isn't a bad move. This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that semmingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
+Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules. This complexity can be off putting to new players. Many tabletop / boardgames suffer from a players first few games taking significantly longer than is advertised due to needing to constantly check the rules.
+
+As well as this, new players are likely to take longer to make decisions as they are not familiar with the game's mechanics of what constitutes a "good" move (sometimes referred to as "analysis paralysis"). This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that seemingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
 
 _Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. These a selection of actions are: moving to another location, shooting at an enemy, melee combat and capturing an objective. The game uses dice to determine the results of your models engaging in combat with each other with the required rolls being determined by the statistics of each "operative" (a miniature) involved and the terrain.
 
 #figure(
     image("images/gallowdark.jpg", width:80%),
-    caption:([An example of the _Kill Team_ tabletop game using the _Gallowdark_ terrain. @gallowdark-image])
-)
+    caption:([An example of the _Kill Team_ tabletop game using the _Gallowdark_ terrain. The terrain we will focus on here are the flat walls and pillars. @gallowdark-image])
+) <gallowdark-terrain>
 
 Video games help on-board new players by having the rules enforced by the game itself. This project aims to bring a similar methodology to tabletop war-gaming, specifically the _Kill Team Lite_ @kt-lite-rules  system using the _Gallowdark_ setting. The _Kill Team Lite_ rules are publicly available from _Games Workshop's_ website and is designed to be played on a smaller scale to other war games, making it a good candidate for a proof of concept. As well as this, the _Gallowdark_ @gallowdark setting streamlines the terrain used and removes verticality from the game, making implementation much simpler.
 
@@ -49,22 +51,69 @@ Developing a system that can digitally represent a physical _Kill Team_ board wo
 
 == Project Intention and Background
 
-This project will focus on the development of a system that can track the position of miniature models and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement a visualisation of select game rules on the digital board to allow players to focus on the decision making process as opposed to the rules enforcement.
+This project will focus on the development of a system that can track the position of miniature models and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement proof of concept visualisation of a few select game rules on the digital board to demonstrate that the tracking system provides the necessary information to process said rules.
 
-To determine the specific goals for this project it is important to provide some more context on the gameplay and community of _Kill Team_.
+To determine the specific goals for this project, it is important to provide some more context on the gameplay and community surrounding _Kill Team_.
+
+=== Gameboard Components
+
+Before looking at the game rules, we will first break down the physical components of the gameboard to determine what needs to be tracked and problems that may arrise from this.
+
+A game of _Kill Team_ is comprised of two players, each with a group of "operatives" (miniatures) referred to as a "Kill Team". Each Kill Team has it's own unique rules, with each operative having it's own set of unique statistics and special abilities.  A miniature is comprised of a circular base with a model placed on top. The diameter of the base is either 25mm, 28.5mm, 32mm, 40mm or occasionally 50mm.
+
+#figure(
+  image("images/kasrkinExample.jpg", width:50%),
+  caption:[An example of a _Kasrkin_ _Kill Team_ operative on a 28.5mm base @kasrkin-image. The height of the operative is \~35mm exclusing the base. This project will focus on getting the system functional with the _Kasrkin_ models on 28.5mm bases.]
+) <Kasrkin-Example-Figure>
+
+It is worth noting that is is common for models to extend past the edge of their base as seen in @Kasrkin-Example-Figure. Whilst the example above is somewhat minor in it's overlap, different models can be more extreme in their extension. As a result of this the system will need to be able to locate and identify an operative from only a partial view of the base, or the surroundings of the base, from a bird's eye view. The detection system will either need to be above the board if using visual detection methods or below the board if using, for example, an RFID method. This is due to the terrain potentialy surrounding an operative, so having a camera on each side of the board will not guarantee it is visible.
+
+The game is played on a 30" by 22" board, referred to as a "Killzone". The _Gallowdark_ ruleset instead uses a 27" by 24" board with the specialised terrain shown in @gallowdark-terrain. As stated previously, the terrain we are focusing on here are the thin walls with pillars connecting them. The terrain is all at the same height, but the operatives are shorter than the terrain. As a result, the system will need to find a solution to detect operatives behind terrain. From a birds eye view, the terrain will block part of the operative due to parallax. For this project, we will focus on using a half sized board to simplify this problem.
+
+#figure(
+  image("images/parallaxDiagram.svg", width:40%),
+  caption:[An example of the problem introduced by parallax. The camera is placed above the board offset from the operative. The operative is partially obstructed by terrain. The green triangle represents the parts visible to the camera. The red lines demonstrate the areas blocked by the terrain.]
+)
+
+The further away the camera is from the operative on the x axis, the more the terrain will block the operative. However, as the camera travels away on the y axis, the terrain will block less of the operative. For a camera implementation this would also mean we lose quality in the image. As a result, a camera based system would need to find an ideal distance from the board which provides enough quality in the image, whilst also being able to see enough of an operative if it is obscured by terrain.
 
 
+// TODO Put an IRL image in here to demostrate
+#pagebreak()
+=== Gameplay
 
+The gameplay of Kill Team focuses around a turn based system with a full game consisting of 4 rounds - called "turning points". Each player takes turns "activating" a single operative and performing actions with it. The number of actions available to an operative is defined by it's statistics #footnote("There are a lot of exceptions to this with abilities being able to modify the stats of themselves or other operatives, but for the sake of simplicity we are going to ignore this and assume stats are set."). Once an operative has performed it's maximum number of actions play is handed to the other player. That same operative may not be "activated" until every other operative, still in play, on their team has been activated. Once every operative on both teams has been activated the next turning point begins resetting the activation of each operative still in play. Once all 4 turning points have been completed the game ends and a winner is decided.
 
+This project is focussed on creating a digital representation of the board, and then implementing a few select rules from the game to demonstrate the system's capabilities. The rules for "movement" and "shooting" present themselves as good candidates for this due to both their complexity and frequency within the game.
+
+==== Movement
+
+There are two types of movement available: "normal move" and "dash". A normal move allows an operative to move a set distance as defined in it's statistics (typically this is 6"). A dash allows an operative to only move 3". Movement has several restrictions attatched.
+
++ Movement must not exceed the operative's movement characteristic.
++ Movement must be made in straight line increments. This means no curves but diagonals are fine.
+  + Increments can be less than 1" but are still treated as 1" for the purpose of total movement.
++ An operative cannot move through terrain unless it is a "small obstacle" (such as a barricade) #footnote("We will not be encountering small obstacles in this implementation.")
++ An operative may not move over the edge of the board or through any part of another operative's base.
++ An operative CAN perform a normal move and dash in the same turn.
++ An operative CAN perform a normal move OR dash and then perform a "shoot" action.
+
+This is quite a complex set of rules to enforce as a result this would be a good candidate for the system to assist with.
+
+==== Shooting
+
+=== Community
+
+#pagebreak()
 = Related Work
 
 == Previous Mixed Reality Tabletop Systems
 
 Some companies, such as _The Last Game Board_ @last-game-board and _Teburu_ @teburu, sell specialist game boards to provide a mixed reality experience. 
 
-_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17" x 17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350.
+_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17" x 17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350. It is also worth noting that this system has not recieved great reviews, with alpha users reporting: long load times, low FPS, graphical and sound glitches, lack of updates and even screens being 50% black.
 #figure(
-image("images/theLastGameBoard.png", width:80%),
+image("images/theLastGameBoard.png", width:70%),
 caption: [The Last Game Board touchscreen tabletop system @last-game-board])
 
 _Teburu_ @teburu instead takes an RFID based approach, providing a base mat that allows you to connect squares containing RFID receivers and game pieces containing an RFID chip. _Teburu_ connects to a tablet device to provide the digital experience as well as to multiple devices for individual player information. _Teburu_ games allow for game pieces to either be in predetermined positions or within a vague area i.e. within a room.
@@ -98,11 +147,11 @@ _Foundry Virtual Tabletop_ @foundry is an application used to create fully digit
     caption:([An example of  one of the _Material Plane_ bases. A miniature would be attached to the top. @material-plane-github.])
 )
 
-== Object Detection and Tracking Systems
+== Object Detection and Tracking Technologies
 
 Finding a method to detect and find the positions of miniatures on a game board, whilst not obstructing the game, is the main focus of this project. This section will outline the different technological approaches that could be taken to achieve this.
 
-== RFID
+=== RFID
 
 An RFID approach is the somewhat obvious solution. This would involve embedding RFID chips underneath the bases of the miniatures. Then some method of reading these chips would then need to be embedded either within or underneath the game board. There are a number of different approaches that could be taken to locating RFID chips which have been outlined by Steve Hinske and Marc Langheinrich @rfid-based in their work on a similar project.
 
@@ -167,6 +216,8 @@ Utilizing blob analysis would allow locating general position of miniatures (as 
 The computer vision method explored the most was utilizing coloured tags to identify miniatures.
 
 The use of coloured tags would also mean there would be access to specific measurements allowing for an accurate location to be discerned. However, some external modification to the the game board or miniatures would need to be made. The challenge here is finding a way to do this without obstructing the flow of the game or the models themselves.
+
+== Computer Vision
 
 === Fiducial Markers and Tag Detection
 
@@ -341,7 +392,7 @@ The GUI will be built in _PyQt_ @pyqt which is a python wrapper for the _Qt_ fra
 
 === Line of Sight
 
-==== Obsucring and Visable
+==== Obsucring and visible
 
 ==== Cover 
 

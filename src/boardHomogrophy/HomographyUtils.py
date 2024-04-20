@@ -3,7 +3,22 @@ import numpy as np
 from numpy import ndarray
 
 
-#Note: I did not write this code, I got it from pyimagesearch.com - GET SPECIFIC LINK
+#Note: I did not write this code, I got it from pyimagesearch.com - 
+
+# https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
+
+# This code is used to perform a perspective transform on an image
+# It takes 4 points on the image and uses this to transform the 4 points into a 
+# birds eye view rectangle of the image - essentially "flattening" it out
+
+# This could be improved by taking into consideration the aspect ratio of the destination image
+# https://stackoverflow.com/questions/38285229/calculating-aspect-ratio-of-perspective-transform-destination-image
+# As currently the transformed iamge can look squished or stretched
+# It would also simplify the image detection as the image would be less likely to stretch
+# meaning that circles will remain closer to circles rather than being stretched to ellipses
+# This paper goes into more detail: http://research.microsoft.com/en-us/um/people/zhang/papers/tr03-39.pdf
+# It also goes into how to deal with shadows and other issues you may encounter
+# Though it is somewhat outside the scope of this dissertation
 
 def order_points(pts):
 	# initialzie a list of coordinates that will be ordered
