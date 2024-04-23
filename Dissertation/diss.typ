@@ -10,6 +10,50 @@
     module: "COMP3003",
 )
 
+#let todo(body) = [
+  #let rblock = block.with(stroke: red, radius: 0.5em, fill: red.lighten(80%))
+  #let top-left = place.with(top + left, dx: 1em, dy: -0.35em)
+  #block(inset: (top: 0.35em), {
+    rblock(width: 100%, inset: 1em, body)
+    top-left(rblock(fill: white, outset: 0.25em, text(fill: red)[*TODO*]))
+  })
+  <todo>
+]
+
+#let outline-todos(title: [TODOS]) = {
+  heading(numbering: none, outlined: false, title)
+  locate(loc => {
+    let queried-todos = query(<todo>, loc)
+    let headings = ()
+    let last-heading
+    for todo in queried-todos {
+      let new-last-heading = query(selector(heading).before(todo.location()), loc).last()
+      if last-heading != new-last-heading {
+        headings.push((heading: new-last-heading, todos: (todo,)))
+         last-heading = new-last-heading
+      } else {
+        headings.last().todos.push(todo)
+      }
+    }
+
+    for head in headings {
+      link(head.heading.location())[
+        #numbering(head.heading.numbering, ..counter(heading).at(head.heading.location()))
+        #head.heading.body
+      ]
+      [ ]
+      box(width: 1fr, repeat[.])
+      [ ]
+      [#head.heading.location().page()]
+
+      linebreak()
+      pad(left: 1em, head.todos.map((todo) => {
+        list.item(link(todo.location(), todo.body.children.at(0).body))
+      }).join())
+    }
+  })
+}
+
 #pagebreak()
 #outline(title: "Table of Contents",depth: 3, indent: auto)
 
@@ -53,7 +97,7 @@ Developing a system that can digitally represent a physical _Kill Team_ board wo
 
 This project will focus on the development of a system that can track the position of miniature models and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement proof of concept visualisation of a few select game rules on the digital board to demonstrate that the tracking system provides the necessary information to process said rules.
 
-To determine the specific goals for this project, it is important to provide some more context on the gameplay and community surrounding _Kill Team_.
+To determine the specific goals for this project, it is important to provide some more context on the gameplay and community surrounding _Kill Team_. As this is a very complex game, we will be omitting a large percentage of the rules, focusing on the topics that will have an impact on the overall design or provide unique challenges.
 
 === Gameboard Components
 
@@ -63,10 +107,10 @@ A game of _Kill Team_ is comprised of two players, each with a group of "operati
 
 #figure(
   image("images/kasrkinExample.jpg", width:50%),
-  caption:[An example of a _Kasrkin_ _Kill Team_ operative on a 28.5mm base @kasrkin-image. The height of the operative is \~35mm exclusing the base. This project will focus on getting the system functional with the _Kasrkin_ models on 28.5mm bases.]
+  caption:[An example of a _Kasrkin_ _Kill Team_ operative on a 28.5mm base @kasrkin-image. The height of the operative is \~35mm excluding the base. This project will focus on getting the system functional with the _Kasrkin_ models on 28.5mm bases.]
 ) <Kasrkin-Example-Figure>
 
-It is worth noting that is is common for models to extend past the edge of their base as seen in @Kasrkin-Example-Figure. Whilst the example above is somewhat minor in it's overlap, different models can be more extreme in their extension. As a result of this the system will need to be able to locate and identify an operative from only a partial view of the base, or the surroundings of the base, from a bird's eye view. The detection system will either need to be above the board if using visual detection methods or below the board if using, for example, an RFID method. This is due to the terrain potentialy surrounding an operative, so having a camera on each side of the board will not guarantee it is visible.
+It is worth noting that is is common for models to extend past the edge of their base as seen in @Kasrkin-Example-Figure. Whilst the example above is somewhat minor in its overlap, different models can be more extreme in their extension. As a result of this the system will need to be able to locate and identify an operative from only a partial view of the base, or its surroundings, from a bird's eye view. The detection system will either need to be above the board if using visual detection methods or below the board if using, for example, an RFID method. This is due to the terrain potentialy surrounding an operative, so having a camera on each side of the board will not guarantee it is visible.
 
 The game is played on a 30" by 22" board, referred to as a "Killzone". The _Gallowdark_ ruleset instead uses a 27" by 24" board with the specialised terrain shown in @gallowdark-terrain. As stated previously, the terrain we are focusing on here are the thin walls with pillars connecting them. The terrain is all at the same height, but the operatives are shorter than the terrain. As a result, the system will need to find a solution to detect operatives behind terrain. From a birds eye view, the terrain will block part of the operative due to parallax. For this project, we will focus on using a half sized board to simplify this problem.
 
@@ -77,19 +121,21 @@ The game is played on a 30" by 22" board, referred to as a "Killzone". The _Gall
 
 The further away the camera is from the operative on the x axis, the more the terrain will block the operative. However, as the camera travels away on the y axis, the terrain will block less of the operative. For a camera implementation this would also mean we lose quality in the image. As a result, a camera based system would need to find an ideal distance from the board which provides enough quality in the image, whilst also being able to see enough of an operative if it is obscured by terrain.
 
-
-// TODO Put an IRL image in here to demostrate
+#todo("Put an IRL image in here to demostrate")
 #pagebreak()
 === Gameplay
 
-The gameplay of Kill Team focuses around a turn based system with a full game consisting of 4 rounds - called "turning points". Each player takes turns "activating" a single operative and performing actions with it. The number of actions available to an operative is defined by it's statistics #footnote("There are a lot of exceptions to this with abilities being able to modify the stats of themselves or other operatives, but for the sake of simplicity we are going to ignore this and assume stats are set."). Once an operative has performed it's maximum number of actions play is handed to the other player. That same operative may not be "activated" until every other operative, still in play, on their team has been activated. Once every operative on both teams has been activated the next turning point begins resetting the activation of each operative still in play. Once all 4 turning points have been completed the game ends and a winner is decided.
+The gameplay of Kill Team focuses around a turn based system with a full game consisting of 4 rounds - called "turning points". Each player takes turns "activating" a single operative and performing actions with it. The number of actions available to an operative is defined by it's statistics #footnote("There are a lot of exceptions to this with abilities being able to modify the stats of themselves or other operatives, but for the sake of simplicity we are going to ignore this and assume stats are set."). Once an operative has performed it's maximum number of actions, play is handed to the other player. That same operative may not be "activated" until every other operative, still in play, on their team has been activated. Once every operative on both teams has been activated the next turning point begins resetting the activation of each operative still in play. Once all 4 turning points have been completed the game ends and a winner is decided.
 
 This project is focussed on creating a digital representation of the board, and then implementing a few select rules from the game to demonstrate the system's capabilities. The rules for "movement" and "shooting" present themselves as good candidates for this due to both their complexity and frequency within the game.
+
+Please note that the explanations for these rules are abstracted from the _Kill Team Lite_ rules published publicly by Games Workshop @kt-lite-rules.
 
 ==== Movement
 
 There are two types of movement available: "normal move" and "dash". A normal move allows an operative to move a set distance as defined in it's statistics (typically this is 6"). A dash allows an operative to only move 3". Movement has several restrictions attatched.
 
+#set enum(numbering: "1.a.")
 + Movement must not exceed the operative's movement characteristic.
 + Movement must be made in straight line increments. This means no curves but diagonals are fine.
   + Increments can be less than 1" but are still treated as 1" for the purpose of total movement.
@@ -98,11 +144,82 @@ There are two types of movement available: "normal move" and "dash". A normal mo
 + An operative CAN perform a normal move and dash in the same turn.
 + An operative CAN perform a normal move OR dash and then perform a "shoot" action.
 
-This is quite a complex set of rules to enforce as a result this would be a good candidate for the system to assist with.
+This is quite a complex set of rules to enforce, making movement a good candidate for the system to assist with.
 
-==== Shooting
+#todo("Maybe add some images to demonstrate")
+==== Shooting and Line of Sight
+
+Operatives can be set to two states: "concealed" or "engaged". These states are used to determine whether an operative is a valid target or whether it is able to make offensive actions, such as shooting. An operatives state is denoted by a small triangle of orange card pointing to the model. The system will need a way to track the state of an operative, whether this be through detecting the orange markers or manually updating the state.
+
+Anecdotally, the _Kill Team_ line of sight rules tend to be the most complex part of the game and are constructed in such a way that experienced players can abuse them to gain an advantage such as one way shooting#footnote("This is a technique used to allow an attacker to be able to select a valid target but the defender is unable to fire back.").
+
+#figure(
+  image("images/orders.jpg",width:40%),
+  caption: [An example of the markers used to denote the state of an operative @order-image. Once an operative has been activated the marker is flipped.]
+)
+
+There are a set of requirements that must be met to determine whether a target is able to targeted by a shooting attack.
+We will use *attacker* to refer to the operative making the attack and *defender* to refer to the intended target.
+
+For a defender in the engaged state:
+
++ The defender must be *visible*.
++ The defender must be not *obscured*.
+
+For a defender in the concealed state:
+
++ The defender must be *visible*.
++ The defender must be not *obscured*.
++ The defender must be not *in cover*.
+
+_Kill Team_ defines *visible*, *obscured* and *in cover* very strictly. This is done using *cover / visibility lines* which are straight lines 1mm wide drawn from one point on an operative to another operative.
+
+===== Visible
+
+*Visible* is used to simulate whether a defender can be physically seen by an attacker
+
+For a defender to be (visible) the following must be true:
+
++ A visibility line can be drawn from the head of the attacker to any part of the defenders *model*, not including the base.
+
+===== Obscured
+
+*Obscured* is used to simulate whether a defender is blocked by large terrain, such as a wall, while also containing edge cases for operatives peeking round said terrain or attempting to use it directly as cover.
+
+When drawing cover lines the attacker picks one point on their base and draws two cover lines from that point to every point on the defenders base, to create a cone. In practice this means drawing two cover lines to the extremes of the defenders base.
+
+#todo("Going to need to put some examples in - maybe use the pre-existing ones? not sure if this is ok to use: https://www.reddit.com/r/killteam/comments/vukgpz/basic_line_of_sight_rule_slate_i_made_for_our/#lightbox")
+
+For a defender to be *obscured* the following must be true:
+
++ The defender is >2" from a point where a cover line crosses a terrain feature which is considered obscuring#footnote("For our use case the terrain walls in Gallowdark are all considered obscuring terrain.").
+  + If the attacker is \<1" from a point in which a cover line crosses a terrain feature, then that part of the feature is not obscuring.
+
+===== In Cover
+
+*In cover* simulates whether an operative is attempting to intentionally take cover behind piece of terrain. A concealed operative is hiding behind the terrain whereas an engaged operative is poking around / over it.
+
+For a defender to be *in cover* the following must be true:
+
++ The defender is >2" from the attacker
++ The defender is \<1" from a point where a cover line crosses a terrain feature.
+
+There are a few key takeaways from these rules.
+
++ It is important to know the positions of operatives and terrain.
++ The system will need to be able to know the size of an operative's base.
++ Rotation of operatives is not needed to be tracked (except for visiblity when determining *visible*).
++ Operatives need to be marked as concealed or engaged.
++ Accuracy is important to the system. Visiblity / cover lines being 1mm wide and distances measured in inches will require accurate measurements.
++ The system will need to asbtract the above rules whilst also being able to display the reasoning behind the application. For example, if a defender is obscured the system should show what is obscuring and from what point was the firing cone drawn.
 
 === Community
+
+Tabletop wargames require you to build and paint your own minitatures, because of this the target audience tends to be more of the creative type. Using this information we can allow some liberty in what they might need to do to utilise this system. For example, creating homemade tags is something that creatives might be more inclined to do as opposed to something more technical using RFID or infrared sensors. The whole system should be designed to be as accessible as possible to the target audience, requiring little to no specialised equipment.
+
+The minitatures are also not defined in their appearance. They can be painted in any scheme, be customised to have completely different looks or use entirely different models than what is intended#footnote("Known as proxying."). This means the tracking system needs to be ambivolent of what the model looks like, both in colour and silhouette.
+
+Since miniatures are highly customisable people tend to be very attatched to them. So one important requirement is to not be invasive to the minitature. This rules out requiring a certain paintjob, placing stickers on heads or putting QR codes above operatives. The system should aim to obscure models as little as possible and cause no damage.
 
 #pagebreak()
 = Related Work
@@ -111,7 +228,7 @@ This is quite a complex set of rules to enforce as a result this would be a good
 
 Some companies, such as _The Last Game Board_ @last-game-board and _Teburu_ @teburu, sell specialist game boards to provide a mixed reality experience. 
 
-_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17" x 17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350. It is also worth noting that this system has not recieved great reviews, with alpha users reporting: long load times, low FPS, graphical and sound glitches, lack of updates and even screens being 50% black.
+_The Last Game Board_ achieves this through utilizing the touch screen to recognise specific shapes on the bottom of miniatures to determine location and identity. _The Last Gameboard_ is 17" x 17", as a result the number of game systems which are compatible is limited. However, you can connect multiple systems together. The drawback of this is the price point for the system is rather high, with boards starting at \~\$350. It is also worth noting that this system has not recieved great reviews, with alpha users reporting: long load times, low FPS, graphical and sound glitches, lack of updates and even screens refusing to display half the screen for certain applications.
 #figure(
 image("images/theLastGameBoard.png", width:70%),
 caption: [The Last Game Board touchscreen tabletop system @last-game-board])
@@ -187,6 +304,8 @@ A potentially valid method utilizing RFID could be to use the approach outlined 
 // - Problematic when minitures will have similar paint schemes and poses - could be solved by looking at last known positions?
 // - Difficulty in keeping objects "unique"
 
+#todo("This should probably be improved upon - either by reading into deeplearning occlusion methods or recgonition methods of similar but different objects.")
+
 Modern object tracking systems are often based on a machine learning or deep learning approach. In this case a classifier model would be used to identify each unique miniature on a team, and then subsequently locate it within the game board. The biggest drawback to this approach is the amount of training data needed for each class in a classifier. According to _Darknet's_ documentation (a framework for neural-networks such as YOLO) @yolo each class should have ~2000 training images.
 
 Since each user will use their own miniatures, posed and painted in their own way, they would have to create their own dataset for their miniatures and train the model on them each time. As a user's miniatures are likely to follow a similar paint scheme, ML classification could potentially struggle to identify between miniatures from top down and far away if not enough training data is supplied.
@@ -217,7 +336,11 @@ The computer vision method explored the most was utilizing coloured tags to iden
 
 The use of coloured tags would also mean there would be access to specific measurements allowing for an accurate location to be discerned. However, some external modification to the the game board or miniatures would need to be made. The challenge here is finding a way to do this without obstructing the flow of the game or the models themselves.
 
+#todo("Actually talk about OpenCV")
+
 == Computer Vision
+
+#todo("Write up the papers on computer vision that were used.")
 
 === Fiducial Markers and Tag Detection
 
@@ -240,74 +363,164 @@ The use of coloured tags would also mean there would be access to specific measu
 
 = Project Description
 
-This project aims to create a system that can track tabletop miniatures, in a game of _Kill Team Gallowdark_, using only materials easily accessible to the average miniature war-gamer. Then, utilise this system to implement a "helper" program for the game, providing a digital representation of the physical game state as well as additional information to the players to assist in their decision making process and alleviate the burden of rules enforcement.
+This project aims to create a system that can track tabletop miniatures, in a game of _Kill Team Gallowdark_, using only materials easily accessible to the average miniature war-gamer. Then, utilise this system to create a digital representation of the game board. This digital representation will then be used to implement a few select game rules to demonstrate the system's capabilities and show that the tracking system provides the necessary information to process said rules.
 
-As a result, the project can be broken down into two main goals.
+The project can be broken down into two main goals.
 
 #set enum(numbering: "1.a.")
 + Detection of the models and terrain to create a virtual representation of the game board.
     + The position of the miniature must be tracked accurately.
-    + The system must be able to identify between different miniatures.
-    + The system must aim to be noninvasive to the miniatures.
-    + The system must be ambivalent to a model's shape and colour.
-    + The system must be able to complete this task whilst being accessible to the average miniature war-gamer.
+    + Be able to identify between different miniatures.
+    + Aim to be non-invasive to the miniatures.
+    + Be ambivalent to a model's shape and colour.
+    + Be able to complete this task whilst being accessible to the average miniature war-gamer. Not utilising any equipment the average wargamer would not have access to in their own home.
 + Implementing the game logic in the virtual board to guide players through the game.
-    + Allow users to select a model and a subsequent action (normal move, shoot, dash, capture objective).
+    + Allow users to select a model and which action they wish to preview.
     + Calculate the distance a model can move and display this on the virtual board.
-    + Account for terrain that blocks movement.
+      + Account for terrain that blocks movement.
     + Calculate the line of sight between the selected model and opposing models then display this on the virtual board.
-    + Account for terrain that blocks line of sight.
+      + Account for terrain that blocks line of sight.
+      + Display the reasoning behind the line of sight calculation.
+      + Display whether the target is obscured or in cover.
     + Display information about the selected model's odds to hit a target.
 
-== Model and Terrain Detection
-
-== Game Board Representation
+The methodology chosen to achieve these goals must meet the takeaways from the project background section. These requirements are not included here as they are more implementation specific instead of outlining the functionality of the project.
 
 
+#todo("I'm not entirely sure if this meets the aims of setting up the requirements. A large portion of this project was spent on researching the best methodology to actually use, so going in depth here on the specifics of implementation feels wrong.")
 
+
+#pagebreak()
 = Methodology and Design
 
-== Design
+== Tracking Methodology
 
-The general design of the system would place a webcam or camera above the game board. Miniatures would have easily recognisable tags attached to allow for easy identification via computer vision.
+We settled on using a computer vision and tag based approach to detect the models and terrain. This would utilise placing a camera above the center of the gameboard on an adjustable stand and using tags to locate the models and terrain.
 
-The tag would need to be unobstructive to the game (big enough to be seen by the camera but small enough as to not get in the way of the game whilst also not looking too "out of place"). This ruled out sticking QR codes on top of miniatures, or attaching them to wires a pointed upwards from a miniatures base. This meant a unique design was needed.
+This approach was chosen for a few key reasons. Firstly, it is the most accessible option to the target audience. The only components needed are a camera, a computer, a printer and some method to position a camera above a board. Unlike RFID, IR or custom table methods, the average war-gamer would have access to these components. 
 
-Before attempting find tags some viewpoint / perspective correction is needed. The end goal is to get a bird's-eye view of the game board, however a camera placed above the board will produce a slightly distorted view of the game board. This process would involve finding some set reference points on the board, in this case the corners, and using these to perform a perspective transform creating a top down view of the image. This means that when the tags are located their location can be provided directly to the game board display.
+Secondly, it is the most flexible option. A tag based system does not care about the shape or colour of the models, only the tags. This requirement meant that machine learning approaches would not be as viable as the potential variation in models used is too high. If we stuck to only supporting specific, unmodified models this may potentially work, but this would place a restriction on the target audience and in a subject such as miniature wargaming where customisation is so heavily valued, this would not be a good approach. As well as this given the unique paint schemes each player may use this would mean an ML model would need to be either trained specifically for each players kill team or be able to use a models silhouette to identify it. Both of these approaches either require users to make their own datasets and train the model themselves, a time consuming and technical task, or require a model that can identify a model from its silhouette, a complex task that would require a lot of training data and wouldn't be that accurate due to potential model customisations #footnote("On a personal note, ai is not an area that I have much interest in and something which is, at the time of writing, currently all the craze. So doing something a bit different to the 'obvious' approach seemed interesting.").
 
-The detection problem can be split into two components: locating and identifying the miniature. Tackling the location problem first seemed like the most sensible approach to begin with before moving onto identification.
+#todo("Some images demonstrating the same model with different paint schemes")
 
-In the end it was chosen to 3D print a small rim that could fit around the base of a miniature. This rim would be a high contrasting colour to the background and miniature. The benefits of 3D printing the rim is that the colours and dimensions are customizable to the user. Miniature war-gamers paint their models in a variety of different ways, so having a rim they can decide the colour of themselves keeps the system accessible to the target audience and open to many different miniature sizes and colours. 
+Building on this, maintaining a unique identification for an object is a key requirement but is difficult to implement using a machine learning approach. Kill Team's can utilise multiple of the same type of operative, as a result the system would need to be able to track each "unique" operative despite having the same appearance. This becomes problematic when occlusion is introduced. If we were to move an operative and at the same time cover or move another operative of the same type, it would be difficult to differentiate which one was which. A potential solution would be to utilise similar technology to facial recognition models, particularly looking at research into identifying the differences between identical twins.
+
+In contrast, a tag based system is ambivalent to the appearance of the model. This means the system is functional with any model, regardless of customisation which meets one of the main requirements of the project.
+
+#todo("Actually put the citation in for this")
+
+
+#todo("Unsure if the footnote here is too informal.")
+
+Finally, a tag based system will assist with accuracy. Getting the location and rotation of an aurco tag using pose estimation is a well documented process. This methodology can be applied to a tag design that will function well with miniatures and terrain.
+
+#todo("Grab some citation for 'well documented process'")
+
+
+This project will use openCV @openCV to process the video feed from the camera. This library contains great support for computer vision tasks and is available for both Python and C++. An alternative image processing suite would be _MATLAB_ but this is not directly compatible with other languages so would require a lot of extra work to integrate with a visualisation system.
+
+Python was chosen as the language for this project due to both prior knowledge and Python's loose type system contributing to the ability to produce quick working prototypes separate from the main project. C++ on the other hand would produce a more robust final product but would take longer to develop. As this project aims to serve as a proof of concept for the idea, Python fits the role better.
+
+
+
+=== Camera Setup
+
+A camera will have a view of the entire game board but will be distorted by two factors: Camera distortion and image distortion.
+
+
+#todo("Get an image of the camera setup over the gameboard - or is that better to go in implementation?")
+
+Camera distortion is caused by different camera designs having slightly different distortion in the images they produce due to the different lenses. This can be corrected by using a camera calibration method to produce a camera matrix and distortion coefficients which can be used to un-distort resultant images. Radial distortions result in the image having straight lines appear curved. Tangential distortions result in the image appearing tilted along an axis. OpenCv provides a simple method to calibrate a camera using a chessboard pattern. This produces the camera matrix and distortion coefficients which can be saved and used to un-distort images. It is important to note that each different camera will have a different distortion so will need to be calibrated separately.
+
+
+#todo("Image showing camera distortion from the openCV docs")
+
+
+
+Image distortion is caused by the actual location of the camera relative to the board. To correct this we can perform perspective correction. Taking a top down view of the board will not garuntee that the board will be rectangular in the image. For example, it is likey for the camera to not be perfectly level resulting in parts of the board appearing closer or longer than they actually are. To remedy this we can identify the four corners of the board and perform a perspective correction algorithm to produce a flattened version of the board. At the same time this will give us the boundaries of the board and crop the image.
+
+#todo("Once again put an image in showing how this actually works - at the same time should probably cover aruco markers earlier")
+
+The board corners will be located with aruco tags @arucoTags placed on the four corners.
+
+
+
+#todo("Whilst this project is using a half sized board to simplify the problem it is important to note how a full sized board would be handled. Throw in an image to show how two cameras help with parallax - might just leave this out as it's not something I got round to doing.")
+
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/perspectiveCorrection1.png",width:80%),
+     image("images/perspectiveCorrection0.png",width:80%),
+  ),
+  caption: [An example of perspective correction in #cite(<whiteboard-scanning>,form: "prose")]
+)
+
+
+
+=== Terrain Detection
+
+Terrain detection utilises a straightforward approach. As the shape of terrain is limited in _Kill Team Gallowdark_ to different constructions of pillar and wall. We can define a 2D model in the program to draw the terrain on the board. This means to detect terrain we only need to find a reference point to draw the model from, as opposed to needing to find the exact shape of the terrain. 
+
+This is achieved using aruco tags. As previously mentioned these allow us to perform pose estimation to find the location and rotation of the tag relative to the camera. Each type of terrain is defined by a unique aruco tag in a range. For example, pillar with one wall can sit in the id range 1-10, pillar with two walls in the id range 11-20 etc. Once we have identified the rotation, translation and scale of the tag we can apply these transformations to the model to draw the terrain on the board.
+
+=== Operative Detection and Identification
+
+Operative detection is more complicated. Unlike terrain we can't place aruco tags on top of models as this is obstructive to the game and would appear signficantly out of place. Instead we will design a tag to be placed around the base of the model.
+
+The tag must be able to provide two pieces of information: the position of the operative and which operative it is.
+
+==== Position
+
+As the models are placed on top of circular bases the position of the operative can be defined by the center point of the circle and the radius of it's base. As the base size of a model is set, and the board size is also known, we do not have to worry about finding the radius of the base. 
+
+The requirements for the tag to provide the position are as such:
+
++ Be unobstructive to the model.
++ Be easily producable.
++ Be easily findable by the camera.
++ Provide the center point of the operatives base.
++ Achieve all of the above whilst also being able to be occluded by both terrain and the model itself.
+  + Ideally the center point should be able to be found even with a quarter of the tag being visible.
+
+These requirements resulted in this tag design:
 
 #figure(
     image("images/circleYellow.jpg",width:50%,),
     caption: ([An example of the basic contrasting rim design.])
 )
 
-Some important observations here are that models may poke over the edge of the rim and models will block the rim due to parallax, so a rim detection system will need to find a full circle from only a partial amount of visible rim. When terrain is introduced this will cause further issues. The proposed fixes for this will be discussed later.
+To achieve this a high contrast rim will be placed around the base of the model. In this implemention we have chosen to use a bright yellow #footnote("Although this could be changed to any colour which strongly contrasts the game board provided the correct thresholds were provided."). 
 
-The next step was to find a way to detect the rim. The best solution found for this was _openCV_ @openCV. An alternative image processing suit would have been to utilise _MATLAB_, but _openCV_ can be used directly within _Python_. As a result, the final system could be written entirely within _Python_ signficantly streamlining the development process without needing to connect _MATLAB_ with an external program for the game board logic / display. 
+Utilising hough circle transforms @hough-circles in openCV we can easily find the center point of a provided circle. The "completeness" of the circle required to be determed as a ful circle can be easily adjusted to allow for occlusion.
 
-This led to the development of a processing method which will locate the center point of circles of a specific colour in a provided image. 
+Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image leaving only the yellow in the image.
 
-The image processing steps taken:
+#todo("Include images showing each step in this processing pipeline")
 
-// REMEMBER TO QUOTE THIS: https://docs.opencv.org/4.x/da/d53/tutorial_py_houghcircles.html
+From here we perform edge detection on the image to find the edges of the circles in the image. This is done as hough circle detection is a very computationally expensive process and by finding the edges of the circles first we are left with a wireframe of the circles which reduces the space the hough circle detection needs to search.
 
-+ Sort the image to only contain the colour of the rim (in this case yellow).
-+ Grayscale the image.
-+ Apply a blur to the image (this helps to remove noise from the image).
-+ Apply hough circle detection @hough-circles on the processed image.
-+ Draw the detected circles onto the original image.
+This leaves our processing pipeline as such:
 
-It is important to note that hough circle detection can easily mistake two close but separate circles as one circle. As a result of this, the hough circle detection function in _openCV_ has several arguments that will need to be tweaked as the system is developed.
++ Apply a gaussian blur to the image
++ Convert the image to HSV
++ Apply a threshold to only show the yellow colour space
++ Apply edge detection to the image
++ Apply hough circle detection to the image
 
-Through some testing we were able to locate singular circles even with the presence of terrain pieces blocking parts of the rim. 
+It is important to note that hough circle detection can easily mistake two close but separate circles as one circle.
+
+#todo("A description of how HSV space works and why it's used here would be very useful")
 
 #figure(
     image("images/detection.png",width:80%),
     caption: ([Circle detection on a gameboard with example terrain.])
 )
+
+==== Identification
+
+== Game Board Representation
 
 Parallax is a problem that still needs to be addressed. Through testing it was found that using a standard game board size, the parallax was too great to expect to locate a rim. As a result, we have settled on using a two camera solution. This solves the parallax problem by having each camera watch a different half of the game board.
 
@@ -601,18 +814,20 @@ However, I am happy with the progress made so far. Having completed the methodol
 === Detection Upgrades
 Hemming Distance
 
-== Development Reflections
+== LSEPI
+
+The main LSEPI issue you could see here is copyright issues as _Kill Team_ is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the _Kill Team Lite_ rule set previously mentioned. This is publicly available published by _Games Workshop_. One issue is that different "_Kill Teams_" (groups of operatives) will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published _Kill Team_ information. If this proves to be problematic then the game rules will be based off a very similar system _Firefight_ @one-page. This is published by _One Page Rules_, who produce free to use, public miniature war-game systems.
+
+=== Accessability 
+
+
+== Final Reflections
 
 Official openCV python documentation is somewhat lacking.
 
 === Design Approach
 
 
-== LSEPI
-
-The main LSEPI issue you could see here is copyright issues as _Kill Team_ is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the _Kill Team Lite_ rule set previously mentioned. This is publicly available published by _Games Workshop_. One issue is that different "_Kill Teams_" (groups of operatives) will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published _Kill Team_ information. If this proves to be problematic then the game rules will be based off a very similar system _Firefight_ @one-page. This is published by _One Page Rules_, who produce free to use, public miniature war-game systems.
-
-=== Accessability 
 
 
 

@@ -182,7 +182,7 @@ gallowdark-image:
 arucoTags:
   type: article
   title: "Automatic generation and detection of highly reliable fiducial markers under occlusion"
-  author: [Garrido-Jurado, S. and Muñoz-Salinas, R. and Madrid-Cuevas, F.J. and Marín-Jiménez, M.]
+  author: ["Garrido-Jurado S.", " Muñoz-Salinas R.", "Madrid-Cuevas F.J.", "Marín-Jiménez M."]
   doi: 10.1016/j.patcog.2014.01.005
   url: https://doi.org/10.1016/j.patcog.2014.01.005
   volume: 47
@@ -195,6 +195,23 @@ kasrkin-image:
   title: "Kill Team: Kasrkin"
   url: https://www.warhammer.com/en-GB/shop/kill-team-kasrkin-2023?queryID=4bbc70cecccea9006fc261421f8bc787
   author: Games Worksshop
+
+order-image:
+  type: article
+  title: "Sneaking and Spotting Are Just as Important as Shooting and Stabbing in the New Kill Team "
+  url: "https://www.warhammer-community.com/2021/08/11/sneaking-and-spotting-are-just-as-important-as-shooting-and-stabbing-in-the-new-kill-team/"
+  author: Warhammer Community
+
+whiteboard-scanning:
+  type: article
+  author: ["Zhengyou Zhang", "Li-Wei He"]
+  title: "Whiteboard Scanning and Image Enhancement"
+  date: 2006-06-15
+  page-range: 414-432
+  volume: 17
+  issue: 2
+  publisher: Elsevier Science Inc.
+  journal: Digital Signal Processing
 
 
 # https://www.researchgate.net/publication/282426080_Generation_of_fiducial_marker_dictionaries_using_Mixed_Integer_Linear_Programming
