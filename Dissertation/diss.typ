@@ -219,7 +219,7 @@ Tabletop wargames require you to build and paint your own minitatures, because o
 
 The minitatures are also not defined in their appearance. They can be painted in any scheme, be customised to have completely different looks or use entirely different models than what is intended#footnote("Known as proxying."). This means the tracking system needs to be ambivolent of what the model looks like, both in colour and silhouette.
 
-Since miniatures are highly customisable people tend to be very attatched to them. So one important requirement is to not be invasive to the minitature. This rules out requiring a certain paintjob, placing stickers on heads or putting QR codes above operatives. The system should aim to obscure models as little as possible and cause no damage.
+Since miniatures are highly customisable players tend to be very attatched to them. So one important requirement is to not be invasive to the miniature. This rules out requiring a certain paintjob, placing stickers on heads or putting QR codes above operatives. The system should aim to obscure models as little as possible and cause no damage.
 
 #pagebreak()
 = Related Work
@@ -465,6 +465,7 @@ Terrain detection utilises a straightforward approach. As the shape of terrain i
 
 This is achieved using aruco tags. As previously mentioned these allow us to perform pose estimation to find the location and rotation of the tag relative to the camera. Each type of terrain is defined by a unique aruco tag in a range. For example, pillar with one wall can sit in the id range 1-10, pillar with two walls in the id range 11-20 etc. Once we have identified the rotation, translation and scale of the tag we can apply these transformations to the model to draw the terrain on the board.
 
+
 === Operative Detection and Identification
 
 Operative detection is more complicated. Unlike terrain we can't place aruco tags on top of models as this is obstructive to the game and would appear signficantly out of place. Instead we will design a tag to be placed around the base of the model.
@@ -518,6 +519,9 @@ It is important to note that hough circle detection can easily mistake two close
     caption: ([Circle detection on a gameboard with example terrain.])
 )
 
+In extreme cases where the rim is heavily blocked by terrain the system will be unable to locate the model. However due to the nature of this project being aimed at following the _Kill Team Gallowdark_ rule set, the terrain pieces used are placed along a grid. This prevents a situation where a terrain piece is very close to the edge of a board with a miniature placed behind resulting in the miniature being blocked from view. 
+
+
 ==== Identification
 
 == Game Board Representation
@@ -526,7 +530,6 @@ Parallax is a problem that still needs to be addressed. Through testing it was f
 
 However, one problem with this approach is that calibration will be needed to ensure that the overlap between the cameras does not cause issues. This could be achieved by either calibrating the cameras to the game board, as it will be of a known size, by placing tags on each corner of the board. Alternatively the middle of the board could be marked with a piece of tape, or tags on the edges. This should then allow for the two images to be stitched together accurately.
 
-Due to the nature of this project being aimed at following the _Kill Team Gallowdark_ rule set, the terrain pieces used are placed along a grid. This prevents a situation where a terrain piece is very close to the edge of a board with a miniature placed behind resulting in the miniature being blocked from view. 
 
 // PROVIDE SOME IMAGE TO DESCRIBE THIS. CITE OPEN CV AND MATLAB
 
@@ -845,5 +848,6 @@ Official openCV python documentation is somewhat lacking.
 // volume = {5},
 // journal = {Personal Computing}
 // }
+
 
 

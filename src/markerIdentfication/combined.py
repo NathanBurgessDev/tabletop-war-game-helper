@@ -106,6 +106,8 @@ def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] |
     image = getTopDownView(img,pts)
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
+    if (marker_ids is None):
+        return None
     
     terrainList = []
     for i in range (0, len(marker_ids)):
@@ -474,7 +476,10 @@ def hsvPointInRange(hsvPoint, lower, upper):
 # sys     0m1.293s
 
 def getEncodingAtPoint(hsvImage, point):
-    
+    #TODO this really needs bounds checking
+    # If a part of the identifcation ring is outside of the image - when calculating the position of the non pink points
+    # THis will cause an error as its trying to look outside of the image
+    # Bounds checking is needed
     
     hsvPoint = hsvImage[point[1], point[0]]
     

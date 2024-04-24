@@ -8,11 +8,12 @@ from shapely import affinity
 class Terrain:
     verticies = []
     heavy = False
-    id = 0
+    id = None
     scaledPolygon = None
     def __init__(self, points: list[tuple[int,int]], heavy: bool = False, id: int = 0):
         if len(points) < 3:
             raise ValueError("Terrain object must have at least 3 points")
+        self.id = id
         self.verticies = points
         self.heavy = heavy
         self.polygonLineSegments = self.getPolygonLineSegments()

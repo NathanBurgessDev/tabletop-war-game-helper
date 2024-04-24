@@ -5,6 +5,7 @@ import cv2 as cv
 from math import sqrt
 # from pathlib import Path
 import path
+import time
 # path_root = Path(__file__).parents[2]
 # print(path_root)
 # sys.path.append('../')
@@ -13,6 +14,7 @@ sys.path.append(direction.parent.parent)
 from markerIdentfication.combined import ModelFinder
 from modelEncodings.encodingsInUse import Operative, OperativeList
 from terrain.TerrainObject import Terrain, TerrainLine, PillarDoubleWall
+from camera.Camera import Camera
 
 # Initialize Pygame
 pygame.init()
@@ -66,8 +68,6 @@ class GameBoard:
     def drawOperative(self, operative: Operative):
 
         pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
-        
-      
         # print("Operative Point")
         # print(self.translatePointToBoardSize(operative.position))
         # Draw the name of the operative
@@ -110,6 +110,7 @@ class GameBoard:
         
     def getImageToBoardHeightScale(self):
         return self.imageSize[0] / BOARD_HEIGHT
+    
     # This took a while to get working
     # We need to translate the circle center from the size of the image to the size of the baord
     # To do this we need to use a scale factor to translate the circle center and then move it to be relative to the 0,0 of the board display
@@ -142,7 +143,9 @@ class MainGame:
     def __init__(self, operativeList: OperativeList, testing: bool):
         self.operativeList = operativeList
         self.testingFlag = testing
+        self.camera = Camera(2)
         self.setupScreen()
+        self.currentFrame = self.camera.getFrame()
         if (testing):
             self.setupModelFinderTesting()
             self.setupGameBoardTesting()
@@ -152,13 +155,9 @@ class MainGame:
         self.gameLoop()
         
     def setupModelFinder(self):
-        filePath = "testImages/arucoWithWallAndBorder.jpg"
         
-        image = cv.imread(filePath)
-        image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-        
-        self.modelFinder = ModelFinder(image)
-        gameBoardData = self.modelFinder.identifyModels(image)
+        self.modelFinder = ModelFinder(self.currentFrame)
+        gameBoardData = self.modelFinder.identifyModels(self.currentFrame)
         return gameBoardData[1]
         
     def setupModelFinderTesting(self):
@@ -175,54 +174,75 @@ class MainGame:
     def setupGameBoardTesting(self):
         self.gameBoard = GameBoard(screen=self.screen)
         
+    def updateOperativeData(self):
+        gameBoardData = self.modelFinder.identifyModels(self.currentFrame)
+        self.gameBoard.imageSize = gameBoardData[1]
         
-    def gameLoop(self):
-        # print("game loop")
-        # print(self.gameBoard.getBoardToImageHeightScale())
-        # print(self.gameBoard.getBoardToImageWidthScale())
-        
-        
-        
-        # Testing purposes we do an inital update
-        if (not self.testingFlag):
-        
-            filePath = "testImages/arucoWithWallAndBorder.jpg"
-            
-            image = cv.imread(filePath)
-            image = cv.rotate(image, cv.ROTATE_90_CLOCKWISE)
-            
-            # gameBoardData = self.modelFinder.identifyModels(image,self.modelFinder.cornerPoints)
-            # self.gameBoard.imageSize = gameBoardData[1]
-            
-            # if (gameBoardData[0] != None):
-            #     operativeList.updateEncodingListPositions(gameBoardData[0])
-            
-            terrainData = self.modelFinder.identifyTerrain(image)
-            for terrain in terrainData:
-                print(terrain.cornerPointsAsTupleList)
-                if (terrain.id == 1):
-                    newTerrain = PillarDoubleWall(1)
-                    print(newTerrain.verticies[0])
-                    newTerrain.rotatePolygon(terrain.rotation)
-                    newTerrain.scalePolygon(3,3)
-                    
-                    print(terrain.cornerPointsAsTupleList[0])
-                    print(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[0]))
-                    
-                    translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
-                    newTerrain.translatePolygon(translation[0],translation[1])
-                    
-                    # for vertex in newTerrain.verticies:
-                    #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+        if (gameBoardData[0] != None):
+            for operative in gameBoardData[0]:
+                operative.circleCenter = self.gameBoard.translatePointToBoardSize(operative.circleCenter)
+            self.operativeList.updateEncodingListPositions(gameBoardData[0])
+                
+                
+    def updateTerrainData(self):
+         if (not self.testingFlag):
+            terrainData = self.modelFinder.identifyTerrain(self.currentFrame)
+            if (terrainData != None):
+                for terrain in terrainData:
+                    doesExist = False
+                    # If the terrain ID is already in the list we don't want to add it again
+                    # Just update the position
+                    for i, existingTerrain in enumerate(self.gameBoard.terrainList):
+                        if (existingTerrain.id == terrain.id):
+                            if (terrain.id <= 10):
+                                newTerrain = PillarDoubleWall(terrain.id)
+                       
+                                newTerrain.rotatePolygon(terrain.rotation)
+                                newTerrain.scalePolygon(3,3)
+                            
+                                translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
+                                newTerrain.translatePolygon(translation[0],translation[1])
+                                
+                                # for vertex in newTerrain.verticies:
+                                #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+                                    
+                                newTerrain.updatePolygon()
+                                self.gameBoard.terrainList[i] = newTerrain
+                                doesExist = True
+                                continue
                         
-                    newTerrain.updatePolygon()
+                    if (terrain.id <= 10 and not doesExist):
+                        
+                        newTerrain = PillarDoubleWall(terrain.id)
+                       
+                        newTerrain.rotatePolygon(terrain.rotation)
+                        newTerrain.scalePolygon(3,3)
                     
+                        translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
+                        newTerrain.translatePolygon(translation[0],translation[1])
+                        
+                        # for vertex in newTerrain.verticies:
+                        #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+                            
+                        newTerrain.updatePolygon()
+
+                        # newTerrain.rotatePolygon(terrain.rotation)
+                        self.gameBoard.addTerrain(newTerrain)
                     
+    
+                
+ 
                     
-                    # newTerrain.rotatePolygon(terrain.rotation)
-                    print(newTerrain.verticies)
-                    self.gameBoard.addTerrain(newTerrain)
-                    
+        
+        
+        
+        
+        
+    def gameLoop(self):    
+        
+        self.updateOperativeData()
+        self.updateTerrainData()
+       
                     
             
                 
@@ -240,8 +260,8 @@ class MainGame:
             self.gameBoard.addTerrain(terrain)
             
         # Transform the operatives to be within the board scale
-        for operative in self.operativeList.operatives:
-            operative.position = self.gameBoard.translatePointToBoardSize(operative.position)
+        # for operative in self.operativeList.operatives:
+        #     operative.position = self.gameBoard.translatePointToBoardSize(operative.position)
             
         #Transform the terrain to be within the board scale
         # for terrain in self.gameBoard.terrainList:
@@ -255,7 +275,13 @@ class MainGame:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
+                    self.camera.release()
                     sys.exit()
+            self.currentFrame = self.camera.getFrame()
+            
+            self.updateOperativeData()
+            self.updateTerrainData()
+            
 
             for operative in self.operativeList.operatives:
                 operative.obsured = False
@@ -269,15 +295,8 @@ class MainGame:
             #Draw terrain
             self.gameBoard.drawTerrain()
             
-            self.gameBoard.drawCircle((1267,911),5)
-            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2137,1747)),5)
-            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2269,1659)),5)
-            self.gameBoard.drawCircle(self.gameBoard.translatePointToBoardSize((2357,1747)),5) 
             
-            
-            self.gameBoard.drawYellowCircle(self.gameBoard.terrainList[0].verticies[0],5)
-            self.gameBoard.drawYellowCircle(self.gameBoard.terrainList[0].verticies[1],5)
-           
+    
             self.checkLineOfSight(10)
             
                 
