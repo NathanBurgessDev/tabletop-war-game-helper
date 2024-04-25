@@ -240,7 +240,8 @@ image("images/teburu.jpg", width:80%),
 caption:([The Teburu Game System @teburu-video showcasing _The Bad Karmas_ board game. The black board is the main game board. The squares above connect to the board below to transmit the RFID reader information back to the system for display.])
 )
 
-An RFID based approach is also used by Steve Hinske and Marc Langheinrich in their paper @rfid-based which places an antenna grid below the game board to detect RFID chips within models. This allowed them to find what chip is in range of what antenna, allowing them to find the general location of a game piece. This worked particularly well for larger models where you could put RFID chips far away from each-other on the model. Using the known positions of the chips and dimensions of the model combined with which antenna said chips are in range of allows you to determine an accurate position of each model. They also go into alternate RFID approaches which will be discussed later when outlining the chosen methodology.
+An RFID based approach is also used in "An RFID-based Infrastructure for Automatically Deter-
+mining the Position and Orientation of Game Objects in Tabletop Games" (#cite(<rfid-based>,form:"prose")) which places an antenna grid below the game board to detect RFID chips within models. This allowed them to find what chip is in range of what antenna, allowing them to find the general location of a game piece. This worked particularly well for larger models where you could put RFID chips far away from each-other on the model. Using the known positions of the chips and dimensions of the model combined with which antenna said chips are in range of allows you to determine an accurate position of each model. They also go into alternate RFID approaches which will be discussed later when outlining the chosen methodology.
 
 //  INSERT IMAGE
 #figure(
@@ -403,7 +404,7 @@ Secondly, it is the most flexible option. A tag based system does not care about
 
 #todo("Some images demonstrating the same model with different paint schemes")
 
-Building on this, maintaining a unique identification for an object is a key requirement but is difficult to implement using a machine learning approach. Kill Team's can utilise multiple of the same type of operative, as a result the system would need to be able to track each "unique" operative despite having the same appearance. This becomes problematic when occlusion is introduced. If we were to move an operative and at the same time cover or move another operative of the same type, it would be difficult to differentiate which one was which. A potential solution would be to utilise similar technology to facial recognition models, particularly looking at research into identifying the differences between identical twins.
+Building on this, maintaining a unique identification for an object is a key requirement but is difficult to implement using a machine learning approach. Kill Teams can utilise multiple of the same type of operative, as a result the system would need to be able to track each "unique" operative despite having the same appearance. This becomes problematic when occlusion is introduced. If we were to move an operative and at the same time cover or move another operative of the same type, it would be difficult to differentiate which one was which. A potential solution would be to utilise similar technology to facial recognition models, particularly looking at research into identifying the differences between identical twins.
 
 In contrast, a tag based system is ambivalent to the appearance of the model. This means the system is functional with any model, regardless of customisation which meets one of the main requirements of the project.
 
@@ -417,9 +418,7 @@ Finally, a tag based system will assist with accuracy. Getting the location and 
 #todo("Grab some citation for 'well documented process'")
 
 
-This project will use openCV @openCV to process the video feed from the camera. This library contains great support for computer vision tasks and is available for both Python and C++. An alternative image processing suite would be _MATLAB_ but this is not directly compatible with other languages so would require a lot of extra work to integrate with a visualisation system.
 
-Python was chosen as the language for this project due to both prior knowledge and Python's loose type system contributing to the ability to produce quick working prototypes separate from the main project. C++ on the other hand would produce a more robust final product but would take longer to develop. As this project aims to serve as a proof of concept for the idea, Python fits the role better.
 
 
 
@@ -466,8 +465,6 @@ Terrain detection utilises a straightforward approach. As the shape of terrain i
 
 This is achieved using aruco tags. As previously mentioned these allow us to perform pose estimation to find the location and rotation of the tag relative to the camera. Each type of terrain is defined by a unique aruco tag in a range. For example, pillar with one wall can sit in the id range 1-10, pillar with two walls in the id range 11-20 etc. Once we have identified the rotation, translation and scale of the tag we can apply these transformations to the model to draw the terrain on the board at the correct location.
 
-The rotation of the aruco tag is provided in the form of a rodrigues rotation vector. However, our model library requires a angle rotation. To convert between the two we convert the rotation vector to a rotation matrix and then to euler angles. From here we can extract the z axis rotation (as we are working in a 2D plane from top down) and take the negative to get the correct angle for our model.
-
 The terrain detection system returns a list of terrain objects with:
 + The position of the four tag corners
 + The rotation of the tag as an angle
@@ -506,7 +503,184 @@ To achieve this a high contrast rim will be placed around the base of the model.
 
 Utilising hough circle transforms @hough-circles in openCV we can easily find the center point of a provided circle. The "completeness" of the curve required to be determed as a full circle can be easily adjusted to allow for occlusion.
 
-Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image leaving only the yellow in the image.
+#figure(
+    image("images/detection.png",width:80%),
+    caption: ([Circle detection on a gameboard with example terrain.])
+)
+
+In extreme cases where the rim is heavily blocked by terrain the system will be unable to locate the model. However due to the nature of this project being aimed at following the _Kill Team Gallowdark_ rule set, the terrain pieces used are placed along a grid. This prevents a situation where a terrain piece is very close to the edge of a board with a miniature placed behind resulting in the miniature being blocked from view. 
+
+
+==== Identification
+
+The tag must also be able to provide a unique identifier for each model. The virtual gameboard will know which tag ID corresponds to which operative.  
+
+The method of identification on the tag must need to be functional whilst being occluded by terrain and the model itself. Ideally the tag should be able to be identified even if only a quarter of the tag is visible.
+
+Kill Teams are typically made up of 7 - 14 operatives. This means our tag must be able to represent at least 28 different options.
+
+To do this the following design was chosen:
+
+It is important to note that the encoding is read right to left and uses little-endian#footnote("This is a little bit unconventional. Whilst this would appear to be big-endian, unlike binary, the encoding starts at the left and reads right so we encounter the smallest bit first, making this little endian.") encoding. When reading clockwise the first bit we encounter is the smallest. When reading anti-clockwise the first bit we encounter is the largest.
+
+
+#figure(
+    image("images/crunched10.png",width:60%),
+    caption: ([A tag representing the ID: 10. The outer ring is split into quarters with five sections within. The first section is a high constrast colour to indicate the start of the encoding. The four proceeding sections are split into black and white to represent the binary ID of the model. This pattern then repeats around the rim of the tag so only a portion of the tag needs to be visible to determine the ID.])
+)
+
+Using 4 bits for identification allows for 16 different options. The first high contrast section colour can be changed to represent which team the model is on. This allows for 32 different options, more than enough for most Kill Team games.
+
+The tag can be scaled to fit the size of the base of the model which is placed over the white circle. For this implementation we will use paper printed tags. This is a simple and cheap solution that is easy to get consistent colouring with. A tag of a similiar design could be 3D printed with indents to paint in the colours.
+
+Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rim's from touching eachother. This is important as hough circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
+
+The high contrasting starting bit (shown here in magenta) is used to determine the starting point of the encoding. From here the system can then read clockwise and anti-clockwise to determine the binary ID. 
+
+
+
+#todo("Again this should be a flowchart")
+
+== Game Board Representation
+
+The interface is created using _Pygame_. This is a simple to use library that allows for the creation of 2D games. It is relatively lightweight and quick to develop with.
+
+#todo("pygame citation")
+
+The digital game board represents a 22" x 15" board. Which is half the size of a standard board. 
+
+=== Terrain and Operative Placement
+
+The size of the image will likely be different to the size of the digital gameboard. Due to this we need to scale the terrain and operative positions, provided by the tracking system, to match the scale of the gameboard.
+
+Operative positions are provided as a list of operative objects containing: the center point and the ID.
+
+The center point of the circle is scaled and translated to match the gameboard scale. As the base size of the model is known, we draw a circle of the correct sized at the scaled center point. This keeps our digital representation accurate to the rules representation.
+
+A list of operative ID's in use is stored. When an operative is detected, the ID is check to see if it is in use. If it is in use, we update the position of that ID. If it is not in use, we ignore the detection as it was likely an error.
+
+Terrain positions are provided as a list of terrain objects containing: the four corners of the tag, the rotation around the z axis relative to the camera and the id.
+
+To draw the terrain we apply a scale to the model to match the gameboard scale. We then apply the roation to the model before finally finding the translation between the tag corners and the correpsonding points on the model. We then apply this translation to all the vertices of the model to then draw the terrain.
+
+
+=== GUI design
+
+The GUI is made up of a main game board window and the surrounding area. The surrounding area is used to display information not directly affecting the game board. Such as an explanation of what the board is representing, the controls for the system and a button to remove an operative from play.
+
+The gameboard will display several things:
+
++ The operatives on the board, with their ID's and team colours.
++ Terrain coloured to represent whether it is light or heavy terrain.
++ Highlight the selected operative.
++ Once an operative is selected.
+  + The line of sight status of the opposing operatives.
+    + Opposing operatives who are in cover or obscured will be displayed in a different colour.
+    + The firing cones of the selected operative to these obscured / covered operatives are also be displayed.
+    + Inside the firing cones the points providing cover and obscurement are also displayed.
+
+
+#todo("Include Image of GUI")
+
+=== Line of Sight
+
+In this implementation we handle the two complex parts of line of sight - obscured and in cover.
+
+==== Cover Lines
+
+Both of these line of sight rules are based on the existence of terrain between the two models. The first thing we need to do is determine the sightline of a chosen operative to the opposing operatives. This is represented by two cover lines from a point on the attackers base to the extremes of the defenders base.
+
+#figure(
+  grid(
+    columns: 2,
+      image("images/singleCoverLine.png",width:60%),
+      image("images/coverLines.png",width:60%),
+  ),
+    caption: ([An example of cover lines being drawn. The left image shows the attaker (in blue) drawing a firing cone from one point on it's base, to the extremes of the defenders base. The right image shows how this has been done from both sides of the attacker to get the two widest possible valid firing cones.])
+)
+
+
+
+
+==== Obscuring and Covering Terrain
+
+Once we have the firing cones we can determine whether an operative is obscured or in cover. This is done by producing a list of terrain lines that fall within the firing cones. We then check if any of the points on the terrain lines satisfy the distance requirements from the attacker and / or the defender. If they do, the obscuring points / cover points are drawn onto the board to provide an explanation to the user.
+
+#todo("This also needs a screenshot showing the cover and obscuring points")
+
+
+
+
+
+=== Movement? 
+
+// Parallax is a problem that still needs to be addressed. Through testing it was found that using a standard game board size, the parallax was too great to expect to locate a rim. As a result, we have settled on using a two camera solution. This solves the parallax problem by having each camera watch a different half of the game board.
+
+// However, one problem with this approach is that calibration will be needed to ensure that the overlap between the cameras does not cause issues. This could be achieved by either calibrating the cameras to the game board, as it will be of a known size, by placing tags on each corner of the board. Alternatively the middle of the board could be marked with a piece of tape, or tags on the edges. This should then allow for the two images to be stitched together accurately.
+
+
+// PROVIDE SOME IMAGE TO DESCRIBE THIS. CITE OPEN CV AND MATLAB
+
+// MinDist - min distanceb etween the centers of two circles, 
+// param1 - sensitivity of the canny edge detection - 
+// param2 - how close to a full circle is needed for it to be detected - number of edge points needed to declare a circle.
+// minRadius + maxRadius - pretty self explanitory - closer or further to camera
+
+// - One potential tracking approach is explored by this video: 
+// https://www.youtube.com/watch?v=RaCwLrKuS1w
+// - Looks at a circle in the newest frame that is closest in position and size to the tracked circle in the last frame.
+// - We can exploit the fact that _Kill Team_ is turn based such that only one model can move at a time. Due to this we can compare the differences between the previous image of the game state and the current game state to indentify which model has been moved.
+// - This can assist in making up for shortcomings in the identifcation methods.
+
+// Once we have located a model we need to identify it. In our implementation of _Kill Team_ we will assume that each player will have up to 14 models on their team (known as "operatives"). As a result we will need to create an encoding capable of representing at least 28 different options.
+
+// Another rim will be placed around the bright contrast rim from before. This rim will be split into 6 sections. The first section will indicate the starting of the encoding and will use a unique colour. The other 5 sections will use 2 different colours to represent 1 or 0. Once a rim has been located, the system will then determine the orientation of the encoding circle. As the size is known, we can then rotate around the image of the encoding circle reading each section to eventually get a binary number. Each binary number will then represent a unique model on the board.
+
+// #figure(
+//     image("images/circle.png",width:60%),
+//     caption: ([An example of what the encoding circle could look like. The red section indicates the start of the encoding. The system would be able to determine which direction to read in based on the start encoding section being in the bottom or top half of the image.])
+// )
+
+// Another encoding method that was considered was to use one rim for both detection and identification. By using one rim of known colours, the image could be split into 3 images each containing only the colour of each segment. Each image would then be converted to black and white and recombined to create a singular image with the segments connected to create a full circle. After circle detection has been performed the system could then do the normal encoding reading. This approach would allow the rims of the miniatures to be significantly smaller and only require three contrasting colours.
+
+// One problem faced by this approach is that vision of the entire circle is needed to read the encoding, as a result if it is partially obscured then the system will be unable to identify the model.
+
+// This could be counteracted by splitting the encoding into quarters around the rim, so that as long as 1/4 of the encoding is visible, the system can correctly identify it. We can also exploit _Kill Team_ being a turn based game and simply compare the current game state with the previous game state to identify which pieces have been moved. A combination of active tracking and being able to determine which piece has moved, should allow for a robust system.
+
+// Terrain detection will be performed using two possible solutions, the user can either select predetermined terrain set ups or the system can detect the terrain pieces.
+
+// The current approach for terrain detection is to use QR codes on the top of each terrain piece. In _Gallowdark_ the size and shape of each terrain "module" is already known. As a result, the QR code can be used to determine the type of terrain and orientation. Then, since the terrain type has been established we already know the size and shape. So we can then fill it in on the virtual board.
+
+// Once the system has correctly identified and located each model and the terrain, a digital representation of the game board can be created.
+
+// #figure(
+//     image("images/board-suggestion.png"),
+//     caption: ([A proposed GUI for the game helper.])
+// ) <GUI>
+
+// In @GUI the red semi-circle represents the valid area of movement for a selected operative. This can be calculated by splitting the game board into a very small grid, we can then apply a path finding algorithm (Dijkstra's, A\* etc) to the grid from the operative's starting point. We can then calculate all grid positions reachable by using a movement value less than or equal to the current operatives available movement characteristic.
+
+// Red circles around opposing operatives show they are in line of sight. This would be calculated using simple ray casting. A white and red circle indicates a selected opposing operative. This is to calculate the statistics on the right hand side of the screen to be specific to the opposing operative.
+
+// The information for the selected operative is displayed below the game board. A user can select the action they have performed / want to perform on the right hand side.
+
+// The GUI will be built in _PyQt_ @pyqt which is a python wrapper for the _Qt_ framework. One potential stretch goal is for the GUI and the detection system to be separate entities. For example, the detection system should be able to detect and track pieces without input needed from the virtual game board i.e. which model is selected. This would allow for other detection systems to be swapped out in the future or for other applications to be developed using the detection system.
+
+= Implementation
+
+This project will use openCV @openCV to process the video feed from the camera. This library contains great support for computer vision tasks and is available for both Python and C++. An alternative image processing suite would be _MATLAB_ but this is not directly compatible with other languages so would require a lot of extra work to integrate with a visualisation system.
+
+Python was chosen as the language for this project due to both prior knowledge and Python's loose type system contributing to the ability to produce quick working prototypes separate from the main project. C++ on the other hand would produce a more robust final product but would take longer to develop. As this project aims to serve as a proof of concept for the idea, Python fits the role better.
+
+== Camera Setup
+
+=== Design and Calibration
+
+=== Homography
+
+== Model Detection
+
+Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
 
 #todo("Include images showing each step in this processing pipeline")
 
@@ -522,38 +696,15 @@ This leaves our processing pipeline as such:
 
 It is important to note that hough circle detection can easily mistake two close but separate circles as one circle.
 
-#todo("A description of how HSV space works and why it's used here would be very useful")
+==== Colour Thresholding
 
-#figure(
-    image("images/detection.png",width:80%),
-    caption: ([Circle detection on a gameboard with example terrain.])
-)
+=== Rim Detection
 
-In extreme cases where the rim is heavily blocked by terrain the system will be unable to locate the model. However due to the nature of this project being aimed at following the _Kill Team Gallowdark_ rule set, the terrain pieces used are placed along a grid. This prevents a situation where a terrain piece is very close to the edge of a board with a miniature placed behind resulting in the miniature being blocked from view. 
+==== Hough Circles
 
+=== Model Identification
 
-==== Identification
-
-The tag must also be able to provide a unique identifier for each model. The virtual gameboard will know which tag ID corresponds to which operative.  
-
-The method of identification on the tag must need to be functional whilst being occluded by terrain and the model itself. Ideally the tag should be able to be identified even if only a quarter of the tag is visible.
-
-Kill Team's are typically made up of 7 - 14 operatives. This means our tag must be able to represent at least 28 different options.
-
-To do this the following design was chosen:
-
-#figure(
-    image("images/crunched10.png",width:60%),
-    caption: ([A tag representing the ID: 10. The outer ring is split into quarters with five sections within. The first section is a high constrast colour to indicate the start of the encoding. The four proceeding sections are split into black and white to represent the binary ID of the model. This pattern then repeats around the rim of the tag so only a portion of the tag needs to be visible to determine the ID.])
-)
-
-Using 4 bits for identification allows for 16 different options. The first high contrast section colour can be changed to represent which team the model is on. This allows for 32 different options, more than enough for most Kill Team games.
-
-The tag can be scaled to fit the size of the base of the model which is placed over the white circle. For this implementation we will use paper printed tags. This is a simple and cheap solution that is easy to get consistent colouring with. A tag of a similiar design could be 3D printed with indents to paint in the colours.
-
-Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rim's from touching eachother. This is important as hough circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
-
-The high contrasting starting bit (here in magenta) is used to determine the starting point of the encoding. From here the system can then read clockwise and anti-clockwise to determine the binary ID. It is important to note that the encoding uses big-endian encoding. When reading clockwise the first bit we encounter is the smallest. When reading anti-clockwise the first bit we encounter is the largest.
+#todo("Include image showing how the encoding is found")
 
 The process to get the encoding is as follows:
 
@@ -598,102 +749,18 @@ Now that we have the colour values for each encoding bit in each quarter. We nee
 + Return the list of all the found circles and their encodings.
 
 
-
-#todo("Again this should be a flowchart")
-
-== Game Board Representation
-
-The interface is created using _Pygame_. This is a simple to use library that allows for the creation of 2D games. It is relatively lightweight and quick to develop with.
-
-#todo("pygame citation")
-
-The digital game board represents a 22" x 15" board. Which is half the size of a standard board. 
-
-=== Terrain and Operative Placement
-
-The size of the image will likely be different to the size of the digital gameboard. Due to this we need to scale the terrain and operative positions, provided by the tracking system, to match the scale of the gameboard.
-
-In the case of operatives, the center point of the circle is scaled to match the gameboard. As the base size of the model is known, we draw a circle of the correct sized at the scaled center point. This keeps our digital representation accurate to the rules representation.
-
-Terrain is slightly more complicated as it is defined as a series of 2D points to form a polygon. The terrain model is represented in mm sizes. The gameboard uses 3 pixels to represent 1mm. So we scale the terrain by 3x to match. We then rotate the terrain model to match the rotation of the tag 
-
-=== Line of Sight
-
-=== Movement? 
-
-// Parallax is a problem that still needs to be addressed. Through testing it was found that using a standard game board size, the parallax was too great to expect to locate a rim. As a result, we have settled on using a two camera solution. This solves the parallax problem by having each camera watch a different half of the game board.
-
-// However, one problem with this approach is that calibration will be needed to ensure that the overlap between the cameras does not cause issues. This could be achieved by either calibrating the cameras to the game board, as it will be of a known size, by placing tags on each corner of the board. Alternatively the middle of the board could be marked with a piece of tape, or tags on the edges. This should then allow for the two images to be stitched together accurately.
-
-
-// PROVIDE SOME IMAGE TO DESCRIBE THIS. CITE OPEN CV AND MATLAB
-
-// MinDist - min distanceb etween the centers of two circles, 
-// param1 - sensitivity of the canny edge detection - 
-// param2 - how close to a full circle is needed for it to be detected - number of edge points needed to declare a circle.
-// minRadius + maxRadius - pretty self explanitory - closer or further to camera
-
-// - One potential tracking approach is explored by this video: 
-// https://www.youtube.com/watch?v=RaCwLrKuS1w
-// - Looks at a circle in the newest frame that is closest in position and size to the tracked circle in the last frame.
-// - We can exploit the fact that _Kill Team_ is turn based such that only one model can move at a time. Due to this we can compare the differences between the previous image of the game state and the current game state to indentify which model has been moved.
-// - This can assist in making up for shortcomings in the identifcation methods.
-
-// Once we have located a model we need to identify it. In our implementation of _Kill Team_ we will assume that each player will have up to 14 models on their team (known as "operatives"). As a result we will need to create an encoding capable of representing at least 28 different options.
-
-// Another rim will be placed around the bright contrast rim from before. This rim will be split into 6 sections. The first section will indicate the starting of the encoding and will use a unique colour. The other 5 sections will use 2 different colours to represent 1 or 0. Once a rim has been located, the system will then determine the orientation of the encoding circle. As the size is known, we can then rotate around the image of the encoding circle reading each section to eventually get a binary number. Each binary number will then represent a unique model on the board.
-
-// #figure(
-//     image("images/circle.png",width:60%),
-//     caption: ([An example of what the encoding circle could look like. The red section indicates the start of the encoding. The system would be able to determine which direction to read in based on the start encoding section being in the bottom or top half of the image.])
-// )
-
-// Another encoding method that was considered was to use one rim for both detection and identification. By using one rim of known colours, the image could be split into 3 images each containing only the colour of each segment. Each image would then be converted to black and white and recombined to create a singular image with the segments connected to create a full circle. After circle detection has been performed the system could then do the normal encoding reading. This approach would allow the rims of the miniatures to be significantly smaller and only require three contrasting colours.
-
-// One problem faced by this approach is that vision of the entire circle is needed to read the encoding, as a result if it is partially obscured then the system will be unable to identify the model.
-
-// This could be counteracted by splitting the encoding into quarters around the rim, so that as long as 1/4 of the encoding is visible, the system can correctly identify it. We can also exploit _Kill Team_ being a turn based game and simply compare the current game state with the previous game state to identify which pieces have been moved. A combination of active tracking and being able to determine which piece has moved, should allow for a robust system.
-
-// Terrain detection will be performed using two possible solutions, the user can either select predetermined terrain set ups or the system can detect the terrain pieces.
-
-// The current approach for terrain detection is to use QR codes on the top of each terrain piece. In _Gallowdark_ the size and shape of each terrain "module" is already known. As a result, the QR code can be used to determine the type of terrain and orientation. Then, since the terrain type has been established we already know the size and shape. So we can then fill it in on the virtual board.
-
-// Once the system has correctly identified and located each model and the terrain, a digital representation of the game board can be created.
-
-#figure(
-    image("images/board-suggestion.png"),
-    caption: ([A proposed GUI for the game helper.])
-) <GUI>
-
-In @GUI the red semi-circle represents the valid area of movement for a selected operative. This can be calculated by splitting the game board into a very small grid, we can then apply a path finding algorithm (Dijkstra's, A\* etc) to the grid from the operative's starting point. We can then calculate all grid positions reachable by using a movement value less than or equal to the current operatives available movement characteristic.
-
-Red circles around opposing operatives show they are in line of sight. This would be calculated using simple ray casting. A white and red circle indicates a selected opposing operative. This is to calculate the statistics on the right hand side of the screen to be specific to the opposing operative.
-
-The information for the selected operative is displayed below the game board. A user can select the action they have performed / want to perform on the right hand side.
-
-The GUI will be built in _PyQt_ @pyqt which is a python wrapper for the _Qt_ framework. One potential stretch goal is for the GUI and the detection system to be separate entities. For example, the detection system should be able to detect and track pieces without input needed from the virtual game board i.e. which model is selected. This would allow for other detection systems to be swapped out in the future or for other applications to be developed using the detection system.
-
-= Implementation
-
-== Camera Setup
-
-=== Design and Calibration
-
-=== Homography
-
-== Model Detection
-
-==== Colour Thresholding
-
-=== Rim Detection
-
-==== Hough Circles
-
-=== Model Identification
-
 === Optimisations
 
 == Terrain Detection
+
+The rotation of the aruco tag is provided in the form of a rodrigues rotation vector. However, our model library requires a angle rotation. To convert between the two we convert the rotation vector to a rotation matrix and then to euler angles. From here we can extract the z axis rotation (as we are working in a 2D plane from top down) and take the negative to get the correct angle for our model.
+
+Terrain is slightly more complicated as it is defined as a series of 2D points to form a polygon. The terrain model is represented in mm sizes. The gameboard uses 3 pixels to represent 1mm. So we scale the terrain by 3x to match. We then rotate the terrain model to match the rotation of the tag. Finally we need to find the translation to move our model from model space into world space. This is done using the top left corner of the tag and the point which matches this on the model. We scale the tag corner position into world space from the image space and then subtract the model corner positon from the tag corner position to find the translation. From here, we can apply this translation to the terrain model to find the correct verticies to draw the terrain on the gameboard.
+
+A terrain's ID is stored when it is detected originally. When that same ID is detected again the position of the terrain is updated. If a new ID is detected, a new terrain object is created and added to the list of terrain objects.
+
+
+#todo("A description of how HSV space works and why it's used here would be very useful")
 
 == Game Board Representation
 
@@ -702,6 +769,43 @@ The GUI will be built in _PyQt_ @pyqt which is a python wrapper for the _Qt_ fra
 ==== Operatives
 
 === Line of Sight
+
+#figure(
+  image("images/findingCoverLines.svg",width:40%),
+  caption: ([The process for finding the cover line positions.])
+) <coverLines>
+
+As shown in @coverLines, the process for finding the cover lines is as follows:
+
++ Find the line equation between the two center points of the bases.
++ Find the perpendicular line to this line through each of the center points.
++ Find the intersection points of the perpenicular lines with the edges of the bases.
+
+This gives us enough information two form the two firing cones we need.
+
+
+The rules for obscured and in cover are very specific in their requirements as covered earlier. This allows us to exploit the specifics of the problem to simplify the process. As the line of sight rules are more complicated than simply whether an operative is visible to another operative we need a unique solution to this problem.
+
+Both obscured and in cover are determined by the distance between the attacker / defender and a point at which terrain is within the firing cone. 
+
+To do this we need to determine what terrain, if any, is within the firing cones. It is important to note that we are not just concerned with whether the terrain is within the firing cone, but also how close intersecting points are to operatives. As our terrain is defined as a series of 2D points to construct a polygon we need to rebuild any terrain lines that fall within or accross the firing cones.
+
+To do this we need to determine whether a terrain line satisfies a combination two conditions:
+
++ The start or end of the line falls within the firing cone.
++ The line intersects with the firing cone.
+
+
+#todo("A figure for this would probably reaaaaaly help")
+Using this we can rebuild a list of terrain lines that fall within the firing cones.
+
+The lines are determined as follows:
+
++ If a line satisfies none of these then it can be ignored. 
++ If it satisfies both points within the firing cone then we take both the start and end points.
++ If a line satisfies only one point within the firing cone then the line must also intersect with the firing cone. We then take the point within the firing cone and the point of intersection.
++ If a line intersect the firing cone at two points then we take both points of intersection.
+
 
 ==== Obsucring and visible
 

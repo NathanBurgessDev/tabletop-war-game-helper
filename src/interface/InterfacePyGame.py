@@ -240,24 +240,25 @@ class MainGame:
         
     def gameLoop(self):    
         
-        self.updateOperativeData()
-        self.updateTerrainData()
+        if (not self.testingFlag):
+            self.updateOperativeData()
+            self.updateTerrainData()
        
                     
             
                 
-        if (self.testingFlag):
-            # terrainVertecies = [(300,500),(300,550),(400,550),(400,500)]
-            # for vertex in terrainVertecies:
-            #     terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
-            terrain = PillarDoubleWall(1)
-            for vertex in terrain.verticies:
-                terrain.verticies[terrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
-            terrain.updateTerrain()
-            terrain.translatePolygon(750,300)
-            terrain.rotatePolygon(-75)
-            # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
-            self.gameBoard.addTerrain(terrain)
+        # if (self.testingFlag):
+        #     # terrainVertecies = [(300,500),(300,550),(400,550),(400,500)]
+        #     # for vertex in terrainVertecies:
+        #     #     terrainVertecies[terrainVertecies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+        #     terrain = PillarDoubleWall(1)
+        #     for vertex in terrain.verticies:
+        #         terrain.verticies[terrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
+        #     terrain.updateTerrain()
+        #     terrain.translatePolygon(750,300)
+        #     terrain.rotatePolygon(-75)
+        #     # terrain.addRectangle(self.gameBoard.imageInch ,self.gameBoard.imageInch/2 ,300,350)
+        #     self.gameBoard.addTerrain(terrain)
             
         # Transform the operatives to be within the board scale
         # for operative in self.operativeList.operatives:
@@ -279,8 +280,9 @@ class MainGame:
                     sys.exit()
             self.currentFrame = self.camera.getFrame()
             
-            self.updateOperativeData()
-            self.updateTerrainData()
+            if (not self.testingFlag):
+                self.updateOperativeData()
+                self.updateTerrainData()
             
 
             for operative in self.operativeList.operatives:
@@ -354,9 +356,9 @@ class MainGame:
                 
                 
                 
-                self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
-                self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
-                self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
+                # self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
+                # self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
+                # self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
                 
                 
                 minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
@@ -751,7 +753,7 @@ class MainGame:
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList,False)
+    game = MainGame(operativeList,True)
 
 
 
