@@ -757,11 +757,7 @@ class MainGame:
                 
         
         return ((finalXminus,finalYminus),(finalXplus,finalYplus))
-            
-   
-        
-        
-        
+    
 
 if __name__ == "__main__":
     operativeList = OperativeList()
