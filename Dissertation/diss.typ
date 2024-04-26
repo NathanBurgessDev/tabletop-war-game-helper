@@ -674,6 +674,9 @@ Python was chosen as the language for this project due to both prior knowledge a
 
 == Camera Setup
 
+
+#todo("Problems with QT and arch")
+
 === Design
 
 A full sized kill team board is 22" x 30". This is too large for a single camera to capture the entire board and still be able to see minitaures behind terrain.
@@ -719,7 +722,7 @@ OpenCV provides a simple method to calibrate a camera using a chessboard pattern
 )
 
 #figure(
-  image("images/calibrationWithLines.png",width:80%),
+  image("images/calibrationWithLines.jpg",width:80%),
   caption: ([An example of the image points found in calibration.])
 )
 

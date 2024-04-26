@@ -146,6 +146,7 @@ class MainGame:
         self.camera = Camera(2)
         self.setupScreen()
         self.currentFrame = self.camera.getFrame()
+        self.currentOperativeId = None
         if (testing):
             self.setupModelFinderTesting()
             self.setupGameBoardTesting()
@@ -278,6 +279,10 @@ class MainGame:
                     pygame.quit()
                     self.camera.release()
                     sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.handleOnClick(event)
+
+            
             self.currentFrame = self.camera.getFrame()
             
             if (not self.testingFlag):
@@ -297,7 +302,7 @@ class MainGame:
             #Draw terrain
             self.gameBoard.drawTerrain()
             
-            
+            print(self.currentOperativeId)
     
             self.checkLineOfSight(10)
             
@@ -318,9 +323,16 @@ class MainGame:
             
     
    
-       
+    def handleOnClick(self,event):
+        for operative in self.operativeList.operatives:
+            operativeBase = pygame.rect.Rect(operative.position[0] - operative.radius,operative.position[1] - operative.radius,operative.radius * 2,operative.radius * 2)
+            if (operativeBase.collidepoint(event.pos)):
+                self.currentOperativeId = operative.id
+                break
                 
     def checkLineOfSight(self, operativeID):
+        if operativeID == None:
+            return
         chosenOperative = self.operativeList.getModelById(operativeID)
      
         for operative in self.operativeList.operatives:
@@ -753,7 +765,7 @@ class MainGame:
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList,True)
+    game = MainGame(operativeList = operativeList,testing = False)
 
 
 
