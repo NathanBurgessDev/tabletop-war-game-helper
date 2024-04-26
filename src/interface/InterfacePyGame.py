@@ -42,7 +42,9 @@ GRAY = (128, 128, 128)
 MAGENTA = (255, 0, 255)
 ORANGE = (255, 165, 0)
 YELLOW = (255, 255, 0)
-
+LIGHT_GRAY = (211, 211, 211)
+ORANGE = (255, 165, 0)
+YELLOW_ORANGE = (255, 215, 0)
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
 CIRCLE_RADIUS = 14 * BOARD_SCALE
@@ -56,6 +58,10 @@ class BarycentricCoordinates:
 class GameBoard:
     gameBoardRect = pygame.Rect((SCREEN_WIDTH - BOARD_WIDTH) // 2, 50, BOARD_WIDTH, BOARD_HEIGHT)
     imageInch = None
+    concealedImage = pygame.image.load("assets/concealed-icon.png")
+    concealedImageCenter = (concealedImage.get_width() // 2, concealedImage.get_height() // 2)
+    engagedImage = pygame.image.load("assets/engaged-icon.png")
+    engagedImageCenter = (engagedImage.get_width() // 2, engagedImage.get_height() // 2)
     terrainList = []
     def __init__(self,screen,imageSize = (0,0)):
         if (imageSize == (0,0)):
@@ -66,10 +72,43 @@ class GameBoard:
             self.screen = screen
         
     def drawOperative(self, operative: Operative):
-
-        pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
+        
+        if (operative.selected):
+            pygame.draw.circle(self.screen, LIGHT_GRAY, operative.position, operative.radius+5)
+        
+        if (operative.obsured and operative.inCover):
+            pygame.draw.circle(self.screen, YELLOW_ORANGE, operative.position, operative.radius)
+            pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius-5)
+            
+        elif (operative.obsured):
+            pygame.draw.circle(self.screen, YELLOW, operative.position, operative.radius)
+            pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius-5)
+            
+        elif (operative.inCover):
+            pygame.draw.circle(self.screen, ORANGE, operative.position, operative.radius)
+            pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius-5)
+            
+        else:
+            pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
+            
+        if (operative.concealed):
+            self.screen.blit(self.concealedImage, (operative.position[0] - self.concealedImageCenter[0],operative.position[1]- self.concealedImageCenter[1]))
+        else:
+            self.screen.blit(self.engagedImage, (operative.position[0]- self.engagedImageCenter[0],operative.position[1] - self.engagedImageCenter[1]))
+        
+        
+        
         # print("Operative Point")
         # print(self.translatePointToBoardSize(operative.position))
+        # Draw the name of the operative
+        font = pygame.font.Font(None, 36)
+        text = font.render(operative.name, True, WHITE)
+        self.screen.blit(text, operative.position)
+        
+    def drawSelectedOperative(self,operative: Operative):
+        pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
+        pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius - 5)
+        
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
@@ -78,10 +117,15 @@ class GameBoard:
     def drawOperativeObscured(self, operative: Operative):
         pygame.draw.circle(self.screen, YELLOW, operative.position, operative.radius)
         
+        pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius - 5)
+        
+        
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
         self.screen.blit(text, operative.position)
+        
+    
         
     def drawCircle(self, circle: tuple[int,int], radius: int):
         pygame.draw.circle(self.screen, MAGENTA, (int(circle[0]),int(circle[1])), radius)
@@ -195,10 +239,13 @@ class MainGame:
                     # Just update the position
                     for i, existingTerrain in enumerate(self.gameBoard.terrainList):
                         if (existingTerrain.id == terrain.id):
+                            if (terrain.rotation == existingTerrain.angle + 3 or terrain.rotation == existingTerrain.angle - 3):
+                                continue
                             if (terrain.id <= 10):
                                 newTerrain = PillarDoubleWall(terrain.id)
                        
                                 newTerrain.rotatePolygon(terrain.rotation)
+                                newTerrain.angle = terrain.rotation
                                 newTerrain.scalePolygon(3,3)
                             
                                 translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
@@ -217,6 +264,7 @@ class MainGame:
                         newTerrain = PillarDoubleWall(terrain.id)
                        
                         newTerrain.rotatePolygon(terrain.rotation)
+                        newTerrain.angle = terrain.rotation
                         newTerrain.scalePolygon(3,3)
                     
                         translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
@@ -292,6 +340,7 @@ class MainGame:
 
             for operative in self.operativeList.operatives:
                 operative.obsured = False
+                operative.inCover = False
 
             # Clear the screen
             self.screen.fill(GRAY)
@@ -310,9 +359,6 @@ class MainGame:
 
             # Draw operatives on the game board        
             for operative in self.operativeList.operatives:
-                if (operative.obsured):
-                    self.gameBoard.drawOperativeObscured(operative)
-                else:
                     self.gameBoard.drawOperative(operative)
                     
             
@@ -328,6 +374,8 @@ class MainGame:
             operativeBase = pygame.rect.Rect(operative.position[0] - operative.radius,operative.position[1] - operative.radius,operative.radius * 2,operative.radius * 2)
             if (operativeBase.collidepoint(event.pos)):
                 self.currentOperativeId = operative.id
+                self.operativeList.resetOperativeSelection()
+                operative.selected = True
                 break
                 
     def checkLineOfSight(self, operativeID):
@@ -368,9 +416,9 @@ class MainGame:
                 
                 
                 
-                # self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
-                # self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
-                # self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
+                self.gameBoard.drawLine(plusTriangle[0],plusTriangle[1])
+                self.gameBoard.drawLine(plusTriangle[1],plusTriangle[2])
+                self.gameBoard.drawLine(plusTriangle[2],plusTriangle[0])
                 
                 
                 minusTriangle = [chosenOperativePoints[1],targetOperativePoints[0],targetOperativePoints[1]]
@@ -759,6 +807,7 @@ class MainGame:
         return ((finalXminus,finalYminus),(finalXplus,finalYplus))
     
 
+# sudo modprobe v4l2loopback
 if __name__ == "__main__":
     operativeList = OperativeList()
     game = MainGame(operativeList = operativeList,testing = False)

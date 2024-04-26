@@ -18,6 +18,7 @@ class Terrain:
         self.heavy = heavy
         self.polygonLineSegments = self.getPolygonLineSegments()
         self.linePointMembers = self.pointLineSegmentMembers()
+        self.angle = None
         
     def getPolygonLineSegments(self):
         lineSegments = []

@@ -930,6 +930,8 @@ Finding whether a line intersects with the firing cone is a bit trickier. Findin
 
 = Evaluation
 
+This section will discuss the results and limitations of the project. Section 7.1 will discuss how well the system performs in detecting models and terrain. Section 7.2 will discuss the effectiveness of the line of sight system. Section 7.3 will discuss the oeverall outcome of the project in relation to the initial goals set out in section 4.
+
 = Summary and Reflections 
 
 == Project Management
