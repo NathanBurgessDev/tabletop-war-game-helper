@@ -47,18 +47,18 @@ def calibrate():
 
     # joblib.dump(ret, "ret.joblib")
 
-    joblib.dump(mtx, "mtx.joblib")
-    print(mtx)
+    # joblib.dump(mtx, "mtx.joblib")
+    # print(mtx)
 
-    joblib.dump(dist, "dist.joblib")
-    print(dist)
+    # joblib.dump(dist, "dist.joblib")
+    # print(dist)
 
 
-    joblib.dump(rvecs, "rvecs.joblib")
-    print(rvecs)
+    # joblib.dump(rvecs, "rvecs.joblib")
+    # print(rvecs)
 
-    joblib.dump(tvecs, "tvecs.joblib")
-    print(tvecs)
+    # joblib.dump(tvecs, "tvecs.joblib")
+    # print(tvecs)
 
 
     cv.destroyAllWindows()

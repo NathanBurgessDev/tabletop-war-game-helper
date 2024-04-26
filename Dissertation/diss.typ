@@ -398,7 +398,7 @@ The methodology chosen to achieve these goals must meet the takeaways from the p
 
 We settled on using a computer vision and tag based approach to detect the models and terrain. This would utilise placing a camera above the center of the gameboard on an adjustable stand and using tags to locate the models and terrain.
 
-This approach was chosen for a few key reasons. Firstly, it is the most accessible option to the target audience. The only components needed are a camera, a computer, a printer and some method to position a camera above a board. Unlike RFID, IR or custom table methods, the average war-gamer would have access to these components. 
+This approach was chosen for a few key reasons. Firstly, it is the most accessible option to the target audience. The only components needed are a camera, a computer, a printer and some method to position a camera above a board. Unlike RFID, IR or custom table methods, the average war-gamer would have access to these components. One intention for this project is to prove this is a viable method utilising only a phone camera and a stand.
 
 Secondly, it is the most flexible option. A tag based system does not care about the shape or colour of the models, only the tags. This requirement meant that machine learning approaches would not be as viable as the potential variation in models used is too high. If we stuck to only supporting specific, unmodified models this may potentially work, but this would place a restriction on the target audience and in a subject such as miniature wargaming where customisation is so heavily valued, this would not be a good approach. As well as this given the unique paint schemes each player may use this would mean an ML model would need to be either trained specifically for each players kill team or be able to use a models silhouette to identify it. Both of these approaches either require users to make their own datasets and train the model themselves, a time consuming and technical task, or require a model that can identify a model from its silhouette, a complex task that would require a lot of training data and wouldn't be that accurate due to potential model customisations #footnote("On a personal note, ai is not an area that I have much interest in and something which is, at the time of writing, currently all the craze. So doing something a bit different to the 'obvious' approach seemed interesting.").
 
@@ -533,7 +533,7 @@ Using 4 bits for identification allows for 16 different options. The first high 
 
 The tag can be scaled to fit the size of the base of the model which is placed over the white circle. For this implementation we will use paper printed tags. This is a simple and cheap solution that is easy to get consistent colouring with. A tag of a similiar design could be 3D printed with indents to paint in the colours.
 
-Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rim's from touching eachother. This is important as hough circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
+Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rims from touching eachother. This is important as hough circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
 
 The high contrasting starting bit (shown here in magenta) is used to determine the starting point of the encoding. From here the system can then read clockwise and anti-clockwise to determine the binary ID. 
 
@@ -668,17 +668,98 @@ Once we have the firing cones we can determine whether an operative is obscured 
 
 = Implementation
 
-This project will use openCV @openCV to process the video feed from the camera. This library contains great support for computer vision tasks and is available for both Python and C++. An alternative image processing suite would be _MATLAB_ but this is not directly compatible with other languages so would require a lot of extra work to integrate with a visualisation system.
+This project will use openCV @openCV to process the video feed from the camera. This library contains great support for computer vision tasks and is available for both Python and C++. An alternative image processing suite would be _MATLAB_ but this is not directly compatible with other languages so would require a lot of extra work to integrate with a GUI.
 
 Python was chosen as the language for this project due to both prior knowledge and Python's loose type system contributing to the ability to produce quick working prototypes separate from the main project. C++ on the other hand would produce a more robust final product but would take longer to develop. As this project aims to serve as a proof of concept for the idea, Python fits the role better.
 
 == Camera Setup
 
-=== Design and Calibration
+=== Design
+
+A full sized kill team board is 22" x 30". This is too large for a single camera to capture the entire board and still be able to see minitaures behind terrain.
+
+
+#figure(
+  grid(
+    columns: 2,
+    grid.cell(figure(image("images/newCloseParallax.jpg",width:95%,), caption:([The board from up close.]))),
+    grid.cell(figure(image("images/farParallax.jpg",width:95%),caption:([The board from afar.]))),
+  ),
+    caption: ([An example of parallax. To get an image of the entire board the camera needs to be >1m away. Behind the wall a yellow rim representing the model base is present.])
+) <parallax>
+
+This introduces three problems:
++ Having an arm long enough to hold the camera this high above the board is impractical and sometimes impossible given a small room.
++ As the camera moves away from the board the quality of the board in the image will decrease. 
++ As the camera moves further away the colour of the board changes, as is visible in @parallax, this would make our colour thresholding less effective and require more complex solutions to colour correct the image.
+
+The solution to this is to utilise two cameras.
+
+#todo("Include a diagram of how this would work.")
+
+One camera would cover the left half of the board and the other the right. This would allow for each camera to be closer to the board, whilst minimising the parallax effect. The two images can then be stitched together to create a single image of the entire board.
+
+Whilst this was in the original plan, the project ended up focusing on creating a functional system for a half sized board so that, if there was time, a two camera solution could be implemented.
+
+The camera design we ended up with was a single camera on a cheap phone holder stand pointed straight down at the center of the board. 
+
+=== Calibration
+
+To solve the camera distortion problem we need to calibrate the camera. This involves applying a camera calibration matrix to resultant images to account for the intrisic properties of that specific camera design. There are two potential methods we could use. Most modern cameras have publically available lens profiles that can be used to correct the distortion @lensFun. Although these are aimed at use for photography or editing software, as a result they do not fit the format that OpenCV requires. The second method is to calibrate the camera ourselves.
+
+OpenCV provides a simple method to calibrate a camera using a chessboard pattern @openCV-calibration.
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/chessboard.jpg",width:80%),
+    image("images/chessboard2.jpg",width:80%),
+  ),
+    caption: ([Some of the images used in calibration.])
+)
+
+#figure(
+  image("images/calibrationWithLines.png",width:80%),
+  caption: ([An example of the image points found in calibration.])
+)
+
+A chessboard pattern is used as it is easy to find specific points of which the relative positions are known. In this case the corners between black and white squares are used. As we know the position of these points in the real world and also the points at the image, we can use this to calculate the camera matrix and distortion coefficients.
+
+In the case of the camera matrix the points are used to calculate the focal length and optical centers of the camera. These values are then stored in a camera matrix:
+
+#todo("Include the camera matrix")
+
+The matrix and distortion coefficents are used later as they are required for the perspective-n-point pose computation utilised in the aruco tag detection.
+
+Getting the calibration working took longer than expected. It is suggested to use around 15 images for calibration and when calibrating each image was taking 3 - 5 minutes each and then not returning a calibration matrix. It was later found that this was due to the length and width of the chessboard pattern being passed as the wrong size. This was fixed and calibration now took \<5 seconds in total. The length of calibration was due to OpenCV attempting to find a correctly size chessboard that was not present in the image.
 
 === Homography
 
-== Model Detection
+=== Video feed
+
+To make the system as accessible as possible we want to use a phone camera as the video input device. This would allow for the system to be used by the average war-gamer without needing to purchase any additional equipment. 
+
+To do this we used a program called _DroidCam_ @droidcam. This allows for a phone to connect either via USB or over wifi to a computer on the same network. The phone than acts as a webcam. The downside here is that droidcam is limited to 480p in the free version. Although, for the paid version the quality is increased to 1080p or even 4k if utilising the OBS plugin which you can then use to produce a virtual webcam.
+
+For this use case, 1080p is more than enough.
+
+This project was developed on a laptop running Arch linux with the 6.8.2 kernel. The phone used was an iPhone 13. As a result, when loading video input the system will use the linux method of video input. The camera is represented as a file found in /dev/videoX where X is the number of the camera. 0 is usually the built in camera and 2 is our external camera, though this can change depending on whether the external camera was connected on startup. This is easily changeable in the code in the _Camera_ object to instead take an int instead of a "/dev/videoX" string for use on a windows system.
+
+Getting video input from droidcam had two main issues. 
+
+The first was that the Arch package was broken. DroidCam makes use of the v4l2loopback kernal module to create a virtual webcam. As the video is not being produced by a physical capturecard a virtual device has to be used. When kernal 6.8 was released vl42loopback was broken. This left a few options to fix the issue. Either downgrade the kernal or compile the module from source with a community fix applied. Whilst the fix has been applied to the main branch it has not yet been released. Neither of these options were ideal. 
+
+Upon further examination it would appear that the default version for arch is: v4l2loopback-dkms 0.13.1-1 whereas droidcam makes use of a slightly different version: v4l2loopback-dc-dkms 1:2.1.2-1. According to the github page for DroidCam their version of v4l2loopback-dc-dkms has not been updated since 26/03/24. Arch kernal 6.8 was released on 29/03/24. It would also appear that DroidCam uses it's own branch of v4l2loopback as indicated by the "dc" in the package name.
+
+One user suggested to install the default branch of v4l2loopback instead. This still produced the same error, however after some further research it was found that running _sudo modprobe v4l2loopback_ would fix the issue as the module was not being loaded on startup.
+
+The second issue was in getting the video feed to output in 1080p. The windows version of DroidCam has a dropdown box to select the resolution of the video feed. The linux version does not. DroidCam does however provide a tutorial on how to change the resolution of the video feed.
+
+This tutorial assumed the user was using v4l2loopback-dc-dkms. As we were using the default v4l2loopback-dkms the tutorial was not applicable. Luckily, after some digging it was found that DroidCam did have a tutorial for the default version of v4l2loopback. This involved changing the length and width values in _~/.config/droidcam_. 
+
+Once this was complete the video feed was outputting in 1080p with surpringly low latency over wireless connection on Eduroam.
+
+=== Rim Detection Pipeline
 
 Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
 
@@ -695,10 +776,6 @@ This leaves our processing pipeline as such:
 + Apply hough circle detection to the image giving us a list of detected circle center points and their radii.
 
 It is important to note that hough circle detection can easily mistake two close but separate circles as one circle.
-
-==== Colour Thresholding
-
-=== Rim Detection
 
 ==== Hough Circles
 
@@ -770,6 +847,7 @@ A terrain's ID is stored when it is detected originally. When that same ID is de
 
 === Line of Sight
 
+==== Firing Cones
 #figure(
   image("images/findingCoverLines.svg",width:40%),
   caption: ([The process for finding the cover line positions.])
@@ -781,8 +859,34 @@ As shown in @coverLines, the process for finding the cover lines is as follows:
 + Find the perpendicular line to this line through each of the center points.
 + Find the intersection points of the perpenicular lines with the edges of the bases.
 
-This gives us enough information two form the two firing cones we need.
+This gives us enough information to form the two firing cones we need.
 
+Getting the firing cones is a simple process in theory but getting a functional implementation took significantly longer than expected. 
+
+Finding the line equation between the two center points is a simple process. Getting the perpendicular gradient had some issues. Python had some problems with taking the reciprocal of a float. when the gradient was \<0.01 we lose precision when the reciprocal is aken which caused innacuracies down the line#footnote("As an example 0.0333333333 would give a reciprocal of -30.0."). These innacuracies were compounded by some premature rounding of the gradient and other values from floats to ints. A divide by 0 error was also encountered when the gradient was 0. This would occure when an operatives was directly above or next to another operative.
+
+Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to python code which took several days to notice. This was compounded by the base being scaled up to the gameboard size at a later point in the process. As the intersections were found in the image space, when the base was scaled up for the gameboard the intersection points were scaled up as well. The problem with this is that the intersections on a circle do not scale linearly. Increasing the size of a circle by 5 units does not move the intersection 5 units in x and y.
+
+The thinking behind this was that the firing cones would be more accurate if they were done off of the direct information provided by the tracking system, rather than after they had been translated and slightly squished. This was a mistake as this not only caused lots of avoidable trip ups, but the accuracy lost would've been negligible as everything on the board gets scaled to the same size anyway.
+
+Images also utilise 0,0 as the top left corner. This made verifying and converting the algebra to code more difficult.
+
+The resultant code for finding the intersection points is as follows:
+
+```python
+xPositive = (h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
+
+xNegative =  (h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
+```
+
+As you can probably see, this is not the most readable code. This is included to show the reader why this took so long to find problems with and derive. Breaking this down into smaller, more readable parts wouldn't have been much more helpful in debugging as this is simply the equation for the intersects between a line and a circle. It was not a problem where knowing values at each stage would've helped.
+
+A separate methodology was used based on a wolfram alpha solution. Although it was overlooked that the solution was specific to the circle being at 0,0.
+
+All of these problems existed simultaneously so debugging ended up being an extremely difficult and time consuming process.
+
+
+==== Terrain Within Firing Cones
 
 The rules for obscured and in cover are very specific in their requirements as covered earlier. This allows us to exploit the specifics of the problem to simplify the process. As the line of sight rules are more complicated than simply whether an operative is visible to another operative we need a unique solution to this problem.
 
@@ -790,11 +894,10 @@ Both obscured and in cover are determined by the distance between the attacker /
 
 To do this we need to determine what terrain, if any, is within the firing cones. It is important to note that we are not just concerned with whether the terrain is within the firing cone, but also how close intersecting points are to operatives. As our terrain is defined as a series of 2D points to construct a polygon we need to rebuild any terrain lines that fall within or accross the firing cones.
 
-To do this we need to determine whether a terrain line satisfies a combination two conditions:
+We can determine whether a terrain line is within the firing cone if it satisfies any combination of the following two conditions:
 
 + The start or end of the line falls within the firing cone.
 + The line intersects with the firing cone.
-
 
 #todo("A figure for this would probably reaaaaaly help")
 Using this we can rebuild a list of terrain lines that fall within the firing cones.
@@ -804,10 +907,20 @@ The lines are determined as follows:
 + If a line satisfies none of these then it can be ignored. 
 + If it satisfies both points within the firing cone then we take both the start and end points.
 + If a line satisfies only one point within the firing cone then the line must also intersect with the firing cone. We then take the point within the firing cone and the point of intersection.
-+ If a line intersect the firing cone at two points then we take both points of intersection.
++ If a line intersects the firing cone at two points then we take both points of intersection.
+
+This leaves us with a list of lines that fall within the firing cone. 
+
+Finding whether a point falls within the firing cone is done by calculating the barycentric coordinates of the point in relation to the triangle formed between the two points on the defender and the single point on the attacker. If alpha beta and gamma are all between 0 and 1, then that point falls within the triangle.
+
+Finding whether a line intersects with the firing cone is a bit trickier. Finding the intersection of a line and another line is easy. However, finding the intersection between two line segments is more complicated.
+
+#todo("barycentric coordinate explanation")
 
 
-==== Obsucring and visible
+
+
+==== Obscuring
 
 ==== Cover 
 

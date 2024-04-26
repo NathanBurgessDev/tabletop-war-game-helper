@@ -213,6 +213,22 @@ whiteboard-scanning:
   publisher: Elsevier Science Inc.
   journal: Digital Signal Processing
 
+lensFun:
+  type: repository
+  title: LensFun
+  url: https://lensfun.github.io/lenslist/
+  author: Andrew Zabolotny
+
+openCV-calibration:
+  type: repository
+  title: Camera Calibration
+  url: https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html
+  author: Bradski, G.
+
+droidcam:
+  type: repository
+  title: DroidCam
+  url: https://www.dev47apps.com/
 
 # https://www.researchgate.net/publication/282426080_Generation_of_fiducial_marker_dictionaries_using_Mixed_Integer_Linear_Programming
 
