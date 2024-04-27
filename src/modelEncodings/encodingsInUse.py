@@ -78,6 +78,17 @@ class OperativeList:
         for modelEncoding in modelEncodingList:
             model = self.getModelByEncoding(modelEncoding.encoding)
             if model != None:
+                teleportFlag = False
+                for operative in self.operatives:
+                    # Bandaid fix to prevent operatives teleporting to eachothers positions when mis-identified
+                    # basically if an operative is already at the position of the model we are trying to move to
+                    # we dont move the model
+                    # This should prevent mis-identified operatives from stealing eachothers positions
+                    if (self.getDistanceBetweenPoints(operative.position, modelEncoding.circleCenter) < 15):
+                        teleportFlag = True
+                        break
+                if teleportFlag:
+                    continue
                 if self.getDistanceBetweenPoints(model.position, modelEncoding.circleCenter) > 15:
                     model.position = modelEncoding.circleCenter
 

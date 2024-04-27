@@ -103,7 +103,9 @@ class GameBoard:
         # Draw the name of the operative
         font = pygame.font.Font(None, 36)
         text = font.render(operative.name, True, WHITE)
-        self.screen.blit(text, operative.position)
+        text_rect = text.get_rect(center = (operative.position[0], operative.position[1] - operative.radius - 10))
+        self.screen.blit(text, text_rect)
+        return 
         
     def drawSelectedOperative(self,operative: Operative):
         pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
@@ -161,6 +163,7 @@ class GameBoard:
     # As opposed to the 0,0 of the screen
     # Spent a while on this cause imageSize is in the format (height, width) and I was using it as (width, height)
     def translatePointToBoardSize(self, point: tuple[int,int]) -> tuple[int,int]:
+        # print(((SCREEN_WIDTH - BOARD_WIDTH) // 2))
         newX = (point[0] * (self.getBoardToImageWidthScale())) + ((SCREEN_WIDTH - BOARD_WIDTH) // 2)
         newY = (point[1] * (self.getBoardToImageHeightScale())) + 50
         return (int(newX), int(newY))
@@ -185,6 +188,7 @@ class GameBoard:
 
 class MainGame:
     def __init__(self, operativeList: OperativeList, testing: bool):
+        self.gameBoard: GameBoard = None
         self.operativeList = operativeList
         self.testingFlag = testing
         self.camera = Camera(2)
@@ -269,6 +273,7 @@ class MainGame:
                     
                         translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
                         newTerrain.translatePolygon(translation[0],translation[1])
+                        print(newTerrain.verticies[0])
                         
                         # for vertex in newTerrain.verticies:
                         #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
@@ -351,7 +356,7 @@ class MainGame:
             #Draw terrain
             self.gameBoard.drawTerrain()
             
-            print(self.currentOperativeId)
+            # print(self.currentOperativeId)
     
             self.checkLineOfSight(10)
             
@@ -360,10 +365,11 @@ class MainGame:
             # Draw operatives on the game board        
             for operative in self.operativeList.operatives:
                     self.gameBoard.drawOperative(operative)
+                    print(operative.position)
                     
             
             
-
+           
             # Update the display
             pygame.display.flip()
             

@@ -76,7 +76,7 @@ In this document, there are #total-words words all up.
 
 = Introduction and Motivation
 
-Tabletop war-gaming is a popular hobby that is quickly gaining popularity, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
+Tabletop war-gaming is a popular hobby which has recently seen a surge in popularity during the COVID-19 pandemic, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
 
 Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules. This complexity can be off putting to new players. Many tabletop / boardgames suffer from a players first few games taking significantly longer than is advertised due to needing to constantly check the rules.
 
@@ -110,7 +110,7 @@ A game of _Kill Team_ is comprised of two players, each with a group of "operati
   caption:[An example of a _Kasrkin_ _Kill Team_ operative on a 28.5mm base @kasrkin-image. The height of the operative is \~35mm excluding the base. This project will focus on getting the system functional with the _Kasrkin_ models on 28.5mm bases.]
 ) <Kasrkin-Example-Figure>
 
-It is worth noting that is is common for models to extend past the edge of their base as seen in @Kasrkin-Example-Figure. Whilst the example above is somewhat minor in its overlap, different models can be more extreme in their extension. As a result of this the system will need to be able to locate and identify an operative from only a partial view of the base, or its surroundings, from a bird's eye view. The detection system will either need to be above the board if using visual detection methods or below the board if using, for example, an RFID method. This is due to the terrain potentialy surrounding an operative, so having a camera on each side of the board will not guarantee it is visible.
+It is worth noting that is is common for models to extend past the edge of their base as seen in @Kasrkin-Example-Figure. Whilst the example above is somewhat minor in its overlap, different models can be more extreme in their extension. As a result of this the system will need to be able to locate and identify an operative from only a partial view of the base, or its surroundings, from a bird's eye view. The detection system will either need to be above the board if using visual detection methods or below the board if using, for example, an RFID method. This is due to the terrain potentialy surrounding an operative, so having a camera on each side of the board will not guarantee it is visible as can be seen in @gallowdark-terrain.
 
 The game is played on a 30" by 22" board, referred to as a "Killzone". The _Gallowdark_ ruleset instead uses a 27" by 24" board with the specialised terrain shown in @gallowdark-terrain. As stated previously, the terrain we are focusing on here are the thin walls with pillars connecting them. The terrain is all at the same height, but the operatives are shorter than the terrain. As a result, the system will need to find a solution to detect operatives behind terrain. From a birds eye view, the terrain will block part of the operative due to parallax. For this project, we will focus on using a half sized board to simplify this problem.
 
@@ -930,7 +930,126 @@ Finding whether a line intersects with the firing cone is a bit trickier. Findin
 
 = Evaluation
 
-This section will discuss the results and limitations of the project. Section 7.1 will discuss how well the system performs in detecting models and terrain. Section 7.2 will discuss the effectiveness of the line of sight system. Section 7.3 will discuss the oeverall outcome of the project in relation to the initial goals set out in section 4.
+This section will discuss the results and limitations of the project. Section 7.1 will discuss how well the system performs in tracking models and terrain. Section 7.2 will discuss the overall outcome of the project in relation to the initial goals set out in section 4.
+
+
+== Tracking System
+
+The first test involves comparing the position of the detected models on the board to the actual position of the models.
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/unDistorted.png",width:95%),
+    image("images/distorted.png",width:95%),
+  ),
+    caption: ([The actual board and the transformed board.])
+) <evaluation-tracking>
+
+#figure(
+  image("images/trackingEvaluation.png",width:60%),
+    caption: ([The digital game board of @evaluation-tracking])
+) <gameboard-evaluation-tracking>
+
+The tracking system provided the coordinates of (754,771) for for "Ten Team Two" (pictured in blue) and (1642,581)  for "Five Team One" (pictured in red) as seen in @gameboard-evaluation-tracking.  These values are including the translation to fit the PyGame window, which is 279 pixels in the x direction and 50 in the y. Each pixel represents 3mm.
+
+The equation to convert from the PyGame coordinates to the real world is as follows:
+
+let $a$ and $b$ be the gameboard coordinates for x and y respectively. Let $x$ and $y$ be the actual coordinates for x and y respectively. 
+
+$ x = ( a - 279) / 3$
+
+$ y = (b - 50) / 3$
+
+These values represent the mm from the top left corner of the board in the x and y directions respectively.
+
+#figure(
+table(
+  columns: (auto,auto, auto, auto,auto,auto),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [*Operative Name*],[*PyGame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
+  ),
+  [
+    Ten Team Two (blue)
+  ],
+  [(754,771)],
+  [(475,721)],
+  [(158,240)],
+  [(160,235)],
+  [(2,5)],
+  [
+    Five Team One (red)
+  ],
+  [(1642,581)],
+  [(1363,531)],
+  [(454,177)],
+  [(459,181)],
+  [(5,4)],
+),
+caption: [Results of the tracking system from @evaluation-tracking]
+)
+
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/trackingCorners.png",width:95%),
+    image("images/trackingCornersGameBoard.png",width:95%),
+  ),
+    caption: ([Tracking at the corners of the board to see how distance affects detection.])
+  )<evaluation-tracking-corners>
+
+
+#figure(
+table(
+  columns: (auto,auto, auto, auto,auto,auto),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [*Operative Name*],[*PyGame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
+  ),
+  [Ten Team Two (blue)],
+  [(352,1113)],
+  [(73,1063)],
+  [(24,354)],
+  [(27,349)],
+  [(3,5)],
+  [Five Team One (red)],
+  [(1886,118)],
+  [(1607,68)],
+  [(536,23)],
+  [(535,24)],
+  [(1,1)],
+),
+caption: [Results of the tracking system from @evaluation-tracking-corners #footnote("The small blue circle in the right image is the board center point.")]
+) 
+
+#todo("review results")
+
+The next test will look at how well the system can track operatives with the models present.
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/trackingWithModels.png",width:95%),
+    image("images/trackingCornersGameBoard.png",width:95%),
+  ),
+    caption: ([Tracking with models present.])
+  )<evaluation-tracking-models>
+)
+
+In @evaluation-tracking-models the system correctly identified the red team model but failed to identify the blue team model. The tracking system determined that the blue team model was ID: 0 or ID: 4.This is likely due to the blue team model being partially cropped out of the image and containing black on the model. As a result when checking for the binary parts of the model are interfering.
+
+However as seen in @five-frames the system was able to eventually identify the blue team model. This presents a limitation of the current system. As the system does not have a confidence value for the identification, it will simply return any valid identification it can find. This will result in problems when more models are present as the system will be likely to move a model into another when mis-identifications are present. A potential fix for this would be to utilise a system using hemming distance to better identify models with partial data. This will be expanded upon in Section 8.2: Future Work and Reflections. A bandaid fix was applied that would prevent the system from placing a model in the same position as a model that was already present. Whilst this isn't a particularly robust solution it does prevent the system from placing two models in the same position.
+
+// or to implement a "smart" method based on the previous game state. This method would exploit the fact that only one model can move at a time and that the system can compare the current game state to the previous game state to determine which model has moved. This could utilise image segmentation to remove the terrain and gameboard from the previous image and then compare the remaining data with the current image to help determine which model has moved. This would still require an tag based system to assist but would be a more robust solution.
+
+#figure(
+  image("images/trackingWithModelsFrameFive.png",width:60%),
+    caption: ([The same setup as @evaluation-tracking-models but 5 frames later])
+) <five-frames>
 
 = Summary and Reflections 
 

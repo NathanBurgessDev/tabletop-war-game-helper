@@ -105,13 +105,15 @@ class ModelFinder:
 def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] | None:
     image = getTopDownView(img,pts)
     
+    # cv.imshow("image", image)
+    # cv.waitKey(0)
+    
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
     if (marker_ids is None):
         return None
     
     terrainList = []
     for i in range (0, len(marker_ids)):
-        print(marker_corners[i])
         terrainList.append(TerrainTag(marker_ids[i],marker_corners[i],cameraMatrix,dist))
    
     if (len(terrainList) <= 0):
@@ -481,6 +483,9 @@ def getEncodingAtPoint(hsvImage, point):
     # THis will cause an error as its trying to look outside of the image
     # Bounds checking is needed
     
+    if (point[1] >= hsvImage.shape[0] or point[0] >= hsvImage.shape[1]):
+        return 0
+        
     hsvPoint = hsvImage[point[1], point[0]]
     
     
