@@ -65,6 +65,7 @@ class OperativeList:
     
     # Converts a binary encoding to a base 10 number
     def convertEncodingToId(self, encoding: list[int]) -> int:
+        encoding.reverse()
         finalEncoding = 0
         currentBitSize = 0
         for bit in encoding:
@@ -76,6 +77,7 @@ class OperativeList:
     # We want to be able to update the positions of models in the encoding list
     def updateEncodingListPositions(self, modelEncodingList: list[ModelEncoding]):
         for modelEncoding in modelEncodingList:
+            # print(modelEncoding.encoding)
             model = self.getModelByEncoding(modelEncoding.encoding)
             if model != None:
                 teleportFlag = False
@@ -120,10 +122,13 @@ class OperativeList:
         # Team One
         self.addOperative(Operative(id = 5,name = "Five Team One",radius=42,team=1,alive=True,position=(400,200),concealed=False, inCover=False))
         # self.addEncoding(Operative(id = 2,name = "Two Team One",radius=14,team=1,alive=True,position=(300,300),obscured=False))
+        self.addOperative(Operative(id = 9,name = "Nine Team One",radius=42,team=1,alive=True,position=(300,300),concealed=False,inCover=False))
+        self.addOperative(Operative(id = 12,name = "Twelve Team One",radius=42,team=1,alive=True,position=(200,200),concealed=False,inCover=False))
         
         #Team Two
-        # self.addEncoding(Operative(id = 13,name = "Thirteen Team Two",radius=14,team=2,alive=True,position=(400,400),obscured=False))
+        self.addOperative(Operative(id = 13,name = "Thirteen Team Two",radius=42,team=2,alive=True,position=(400,400),concealed=False,inCover=False))
         self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=42,team=2,alive=True,position=(500,500),concealed=False,inCover=False))
+        self.addOperative(Operative(id = 3,name = "Three Team Two",radius=42,team=2,alive=True,position=(600,600),concealed=False,inCover=False))
         
         
     def scaleRadius(self, scale):

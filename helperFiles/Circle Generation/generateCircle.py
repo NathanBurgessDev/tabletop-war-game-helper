@@ -9,7 +9,7 @@ for i in range (0,20):
     
 sizes_gender = [1]
 weight_gender = [189,315,270,212,125,145,200,80]
-colors = ['#FF10F0', '#FFFFFF', '#000000', '#FFFFFF','#000000']
+colors = ['#FF10F0', '#000000', '#000000', '#FFFFFF','#FFFFFF']
 colors_gender = ['#FFFF00']
  
 # Plot

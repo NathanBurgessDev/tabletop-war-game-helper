@@ -44,7 +44,7 @@ ORANGE = (255, 165, 0)
 YELLOW = (255, 255, 0)
 LIGHT_GRAY = (211, 211, 211)
 ORANGE = (255, 165, 0)
-YELLOW_ORANGE = (255, 215, 0)
+GREEN = (0, 255, 0)
 # Circle radius
 # Spent a while being confused - found out I was using radius not diameter
 CIRCLE_RADIUS = 14 * BOARD_SCALE
@@ -77,7 +77,7 @@ class GameBoard:
             pygame.draw.circle(self.screen, LIGHT_GRAY, operative.position, operative.radius+5)
         
         if (operative.obsured and operative.inCover):
-            pygame.draw.circle(self.screen, YELLOW_ORANGE, operative.position, operative.radius)
+            pygame.draw.circle(self.screen, GREEN, operative.position, operative.radius)
             pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius-5)
             
         elif (operative.obsured):
@@ -273,7 +273,7 @@ class MainGame:
                     
                         translation = newTerrain.findXandYTranslation(self.gameBoard.translatePointToBoardSize(terrain.cornerPointsAsTupleList[3]),newTerrain.verticies[0])
                         newTerrain.translatePolygon(translation[0],translation[1])
-                        print(newTerrain.verticies[0])
+                        # print(newTerrain.verticies[0])
                         
                         # for vertex in newTerrain.verticies:
                         #     newTerrain.verticies[newTerrain.verticies.index(vertex)] = self.gameBoard.translatePointToBoardSize(vertex)
@@ -326,11 +326,14 @@ class MainGame:
         
         while True:
             
+            # cv.imshow("Frame", self.currentFrame)
+            # cv.waitKey(25)
             # Event handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     self.camera.release()
+                    cv.destroyAllWindows()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.handleOnClick(event)
@@ -358,14 +361,14 @@ class MainGame:
             
             # print(self.currentOperativeId)
     
-            self.checkLineOfSight(10)
+            self.checkLineOfSight(self.currentOperativeId)
             
                 
 
             # Draw operatives on the game board        
             for operative in self.operativeList.operatives:
                     self.gameBoard.drawOperative(operative)
-                    print(operative.position)
+                    # print(operative.position)
                     
             
             

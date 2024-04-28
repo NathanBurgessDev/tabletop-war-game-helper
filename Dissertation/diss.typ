@@ -80,7 +80,7 @@ Tabletop war-gaming is a popular hobby which has recently seen a surge in popula
 
 Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw-size. One of their more popular systems, _Warhammer 40k_, has a core rule-book of 60 pages @40k-rules and the simplified version of another game system, _Kill Team_, is a rather dense three page spread @kt-lite-rules. This complexity can be off putting to new players. Many tabletop / boardgames suffer from a players first few games taking significantly longer than is advertised due to needing to constantly check the rules.
 
-As well as this, new players are likely to take longer to make decisions as they are not familiar with the game's mechanics of what constitutes a "good" move (sometimes referred to as "analysis paralysis"). This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that seemingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
+As well as this, new players are likely to take longer to make decisions as they are not familiar with the game's mechanics of what constitutes a "good" move #footnote("sometimes referred to as 'analysis paralysis'") . This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that seemingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
 
 _Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. These a selection of actions are: moving to another location, shooting at an enemy, melee combat and capturing an objective. The game uses dice to determine the results of your models engaging in combat with each other with the required rolls being determined by the statistics of each "operative" (a miniature) involved and the terrain.
 
@@ -131,20 +131,20 @@ This project is focussed on creating a digital representation of the board, and 
 
 Please note that the explanations for these rules are abstracted from the _Kill Team Lite_ rules published publicly by Games Workshop @kt-lite-rules.
 
-==== Movement
+// ==== Movement
 
-There are two types of movement available: "normal move" and "dash". A normal move allows an operative to move a set distance as defined in it's statistics (typically this is 6"). A dash allows an operative to only move 3". Movement has several restrictions attatched.
+// There are two types of movement available: "normal move" and "dash". A normal move allows an operative to move a set distance as defined in it's statistics (typically this is 6"). A dash allows an operative to only move 3". Movement has several restrictions attatched.
 
-#set enum(numbering: "1.a.")
-+ Movement must not exceed the operative's movement characteristic.
-+ Movement must be made in straight line increments. This means no curves but diagonals are fine.
-  + Increments can be less than 1" but are still treated as 1" for the purpose of total movement.
-+ An operative cannot move through terrain unless it is a "small obstacle" (such as a barricade) #footnote("We will not be encountering small obstacles in this implementation.")
-+ An operative may not move over the edge of the board or through any part of another operative's base.
-+ An operative CAN perform a normal move and dash in the same turn.
-+ An operative CAN perform a normal move OR dash and then perform a "shoot" action.
+// #set enum(numbering: "1.a.")
+// + Movement must not exceed the operative's movement characteristic.
+// + Movement must be made in straight line increments. This means no curves but diagonals are fine.
+//   + Increments can be less than 1" but are still treated as 1" for the purpose of total movement.
+// + An operative cannot move through terrain unless it is a "small obstacle" (such as a barricade) #footnote("We will not be encountering small obstacles in this implementation.")
+// + An operative may not move over the edge of the board or through any part of another operative's base.
+// + An operative CAN perform a normal move and dash in the same turn.
+// + An operative CAN perform a normal move OR dash and then perform a "shoot" action.
 
-This is quite a complex set of rules to enforce, making movement a good candidate for the system to assist with.
+// This is quite a complex set of rules to enforce, making movement a good candidate for the system to assist with.
 
 #todo("Maybe add some images to demonstrate")
 ==== Shooting and Line of Sight
@@ -756,10 +756,6 @@ Upon further examination it would appear that the default version for arch is: v
 
 One user suggested to install the default branch of v4l2loopback instead. This still produced the same error, however after some further research it was found that running _sudo modprobe v4l2loopback_ would fix the issue as the module was not being loaded on startup.
 
-The second issue was in getting the video feed to output in 1080p. The windows version of DroidCam has a dropdown box to select the resolution of the video feed. The linux version does not. DroidCam does however provide a tutorial on how to change the resolution of the video feed.
-
-This tutorial assumed the user was using v4l2loopback-dc-dkms. As we were using the default v4l2loopback-dkms the tutorial was not applicable. Luckily, after some digging it was found that DroidCam did have a tutorial for the default version of v4l2loopback. This involved changing the length and width values in _~/.config/droidcam_. 
-
 Once this was complete the video feed was outputting in 1080p with surpringly low latency over wireless connection on Eduroam.
 
 === Rim Detection Pipeline
@@ -937,13 +933,18 @@ This section will discuss the results and limitations of the project. Section 7.
 
 The first test involves comparing the position of the detected models on the board to the actual position of the models.
 
+The second test involves checking how well the system can track multiple models at once.
+
+As this is a live system, the tests will be performed in real time. This is difficult to demonstrate in a report so screenshots will be provided to show the results of the tests along with a description of observations. These observations can be better seen in the supplied demonstration video.
+
+=== Accuracy
 #figure(
   grid(
     columns: 2,
     image("images/unDistorted.png",width:95%),
     image("images/distorted.png",width:95%),
   ),
-    caption: ([The actual board and the transformed board.])
+    caption: ([The actual board and the transformed board #footnote("It is important to note that the binary decoding for these tests was reversed - this has since been fixed. But the encodings on the rings are swapped as they're symmetrical.").])
 ) <evaluation-tracking>
 
 #figure(
@@ -951,17 +952,17 @@ The first test involves comparing the position of the detected models on the boa
     caption: ([The digital game board of @evaluation-tracking])
 ) <gameboard-evaluation-tracking>
 
-The tracking system provided the coordinates of (754,771) for for "Ten Team Two" (pictured in blue) and (1642,581)  for "Five Team One" (pictured in red) as seen in @gameboard-evaluation-tracking.  These values are including the translation to fit the PyGame window, which is 279 pixels in the x direction and 50 in the y. Each pixel represents 3mm.
+The tracking system provided the coordinates of (754,771) for "Ten Team Two" (pictured in blue) and (1642,581)  for "Five Team One" (pictured in red) as seen in @gameboard-evaluation-tracking.  These values are including the translation to fit the Pygame window, which is 279 pixels in the x direction and 50 in the y. Each pixel represents 3mm. (0,0) is considered to be at the top left corner of the board with y increasing downwards.
 
-The equation to convert from the PyGame coordinates to the real world is as follows:
+The equation to convert from the Pygame coordinates to the real world is as follows:
 
-let $a$ and $b$ be the gameboard coordinates for x and y respectively. Let $x$ and $y$ be the actual coordinates for x and y respectively. 
+Let $a$ and $b$ be the gameboard coordinates for x and y respectively. Let $x$ and $y$ be the actual, real world coordinates for x and y respectively. 
 
 $ x = ( a - 279) / 3$
 
 $ y = (b - 50) / 3$
 
-These values represent the mm from the top left corner of the board in the x and y directions respectively.
+These values represent the position in mm from the top left corner of the board in the x and y directions respectively.
 
 #figure(
 table(
@@ -969,10 +970,10 @@ table(
   inset: 10pt,
   align: horizon,
   table.header(
-    [*Operative Name*],[*PyGame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
+    [*Operative Name*],[*Pygame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
   ),
   [
-    Ten Team Two (blue)
+    ID: Ten, Team Two (blue)
   ],
   [(754,771)],
   [(475,721)],
@@ -980,7 +981,7 @@ table(
   [(160,235)],
   [(2,5)],
   [
-    Five Team One (red)
+    ID: Five, Team One (red)
   ],
   [(1642,581)],
   [(1363,531)],
@@ -1008,15 +1009,15 @@ table(
   inset: 10pt,
   align: horizon,
   table.header(
-    [*Operative Name*],[*PyGame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
+    [*Operative Name*],[*Pygame*], [*Gameboard*], [*Real World*],[*Actual*],[*Difference*],
   ),
-  [Ten Team Two (blue)],
+  [ID: Ten, Team Two (blue)],
   [(352,1113)],
   [(73,1063)],
   [(24,354)],
   [(27,349)],
   [(3,5)],
-  [Five Team One (red)],
+  [ID: Five, Team One (red)],
   [(1886,118)],
   [(1607,68)],
   [(536,23)],
@@ -1026,7 +1027,7 @@ table(
 caption: [Results of the tracking system from @evaluation-tracking-corners #footnote("The small blue circle in the right image is the board center point.")]
 ) 
 
-#todo("review results")
+These results are very promising. The tracking system seems to be able to accurately determine the position of the models on the board down to 5mm. This is a very good result. The tags were marked on the center of the base when taking the real world measurements. Although, these were not perfectly centered. A visulisation of the accuracy can be better seen in @six-real-overlay.
 
 The next test will look at how well the system can track operatives with the models present.
 
@@ -1034,22 +1035,96 @@ The next test will look at how well the system can track operatives with the mod
   grid(
     columns: 2,
     image("images/trackingWithModels.png",width:95%),
-    image("images/trackingCornersGameBoard.png",width:95%),
+    image("images/tracingWithModelsBoard.png",width:95%),
   ),
     caption: ([Tracking with models present.])
   )<evaluation-tracking-models>
-)
+
 
 In @evaluation-tracking-models the system correctly identified the red team model but failed to identify the blue team model. The tracking system determined that the blue team model was ID: 0 or ID: 4.This is likely due to the blue team model being partially cropped out of the image and containing black on the model. As a result when checking for the binary parts of the model are interfering.
 
-However as seen in @five-frames the system was able to eventually identify the blue team model. This presents a limitation of the current system. As the system does not have a confidence value for the identification, it will simply return any valid identification it can find. This will result in problems when more models are present as the system will be likely to move a model into another when mis-identifications are present. A potential fix for this would be to utilise a system using hemming distance to better identify models with partial data. This will be expanded upon in Section 8.2: Future Work and Reflections. A bandaid fix was applied that would prevent the system from placing a model in the same position as a model that was already present. Whilst this isn't a particularly robust solution it does prevent the system from placing two models in the same position.
+However, as seen in @five-frames the system was able to eventually identify the blue team model. This presents a limitation of the current system. As the system does not have a confidence value for the identification, it will simply return any valid identification it can find. This will result in problems when more models are present as the system will be likely to move a model into another when mis-identifications are present. A potential fix for this would be to utilise a system using hemming distance to better identify models with partial data. This will be expanded upon in Section 8.2. A temporary fix was applied that would prevent the system from placing a model in the same position as a model that was already present. Whilst this isn't a particularly robust solution, it does prevent the system from placing two models in the same position. 
 
 // or to implement a "smart" method based on the previous game state. This method would exploit the fact that only one model can move at a time and that the system can compare the current game state to the previous game state to determine which model has moved. This could utilise image segmentation to remove the terrain and gameboard from the previous image and then compare the remaining data with the current image to help determine which model has moved. This would still require an tag based system to assist but would be a more robust solution.
+
+
 
 #figure(
   image("images/trackingWithModelsFrameFive.png",width:60%),
     caption: ([The same setup as @evaluation-tracking-models but 5 frames later])
 ) <five-frames>
+
+#pagebreak()
+=== Multiple Tag Tracking
+
+
+#figure(
+  grid(
+  columns: 2,
+  image("images/sixModelTest.png",width:95%),
+  image("images/sixModelScreen.png",width:95%),
+),
+  caption: ([The game board with 6 models present.])
+)<six-real>
+
+
+#figure(
+  image("images/sixModelScreenOverlay.png",width: 60%),
+  caption: ([The images if @six-terrain overlaid on eachother])
+)<six-real-overlay>
+
+As seen in @six-real-overlay, the system was able to track all six models present. The system is able to track multiple tags, with the correct identification, at the same time with high levels of accuracy. Although, it would appear that as the tags move further up, the accuracy dwindles slightly, this can be seen in "Nine Team One" in @six-real-overlay.
+
+=== Tracking With Terrain
+
+#figure(
+  grid(
+    columns: 2,
+     image("images/sixModelTerrain.png",width: 95%),
+    image("images/sixModelTerrainBoard.png",width: 95%),
+  ),
+  caption: ([The game board with 6 models and terrain present.])
+) <six-terrain>
+
+
+#figure(
+  image("images/sixModelTerrainOverlay.png",width: 60%),
+  caption: ([The images if @six-terrain overlaid on eachother])
+)<six-terrain-overlay>
+
+
+As seen in @six-terrain-overlay, the system is able to track both models and terrain simultaneously. However, the terrain appears to be slightly tilted to the right. This is likely due to the position of the aruco tag on the terrain being slightly offset. As well as this, you can see that the top left corner of the aruco tag and the top left hand corner of the terrain pillar are not well lined up. This will contribute to the mis-positioning of the terrain. Although in relation to the models and the center of the board, the terrain is in a good position.
+
+#figure(
+  image("images/terrainObscured.png",width: 60%),
+  caption: ([The game board with a model obscured by terrain.])
+) <terrain-obscured>
+
+#figure(
+  image("images/terrainObscuredBoard.png",width: 60%),
+  caption: ([The digital game board with a model obscured by terrain.])
+) <terrain-obscured-board>
+
+In @terrain-obscured-board the system was unable to find the obscured model. The use of black terrain is likely causing the system to find 0s in the binary encoding, making identification difficult when combined with the blocking of the starting bits. However, as seen in @terrain-obscured-roated when rotating the model the system is able to find a correct identification.
+
+#figure(
+  image("images/terrainObscuredRotated.png",width: 60%),
+  caption: ([The digital game board after the model was rotated.])
+) <terrain-obscured-roated>
+
+
+Another problem is present which is visible in @terrain-obscured-roated. The roll of the terrain is not being accounted for, resulting in an incorrect positioning. A potential fix for this will be discussed in section 8.2.
+
+#figure(
+  image("images/terrainProblem.png",width:60%),
+  caption: ([ @terrain-obscured overlayed with @terrain-obscured-board ])
+)
+
+=== Summary 
+
+Some testing was done to compare the usefullness of the visualisation of the gameboard This involved playing a solo round of kill team with the system with four operatives. Overall, the system was able to track and identify minitaures to a satisfactory level. There were a few times where the system would take a while to find a model but this was usually fixable with some rotating and slight shifting. However, terrain ended up being problematic. The system could get the rough area of terrain but struggled to get the exact position, combined with the terrain shifting slightly whilst stationary, this made the experience less enjoyable. The terrain shifting is likely caused by a lack of distance checking when updating terrain. Whilst the terrain rotation must be greater than a constant value to be updated, this was overlooked for the position. Some different approaches to remedy this will be discussed in section 8.2.
+
+The line of sight visualisation was satisfactory, displaying in cover or obscured to a degree that appeared realistic.
 
 = Summary and Reflections 
 
@@ -1252,6 +1327,8 @@ However, I am happy with the progress made so far. Having completed the methodol
 
 === Detection Upgrades
 Hemming Distance
+
+aruco tag roll + pitch
 
 == LSEPI
 
