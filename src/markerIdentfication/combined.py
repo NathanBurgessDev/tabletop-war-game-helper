@@ -105,8 +105,8 @@ class ModelFinder:
 def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] | None:
     image = getTopDownView(img,pts)
     
-    cv.imshow("image", image)
-    cv.waitKey(25)
+    # cv.imshow("image", image)
+    # cv.waitKey(25)
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
     if (marker_ids is None):

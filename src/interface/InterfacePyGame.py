@@ -106,6 +106,12 @@ class GameBoard:
         text_rect = text.get_rect(center = (operative.position[0], operative.position[1] - operative.radius - 10))
         self.screen.blit(text, text_rect)
         return 
+    
+    def drawButton(self, rect: pygame.rect.Rect):
+        pygame.draw.rect(self.screen, RED, rect)
+        font = pygame.font.Font(None, 36)
+        text = font.render("Remove Operative", True, WHITE)
+        self.screen.blit(text, (rect.x + 10, rect.y + 10))
         
     def drawSelectedOperative(self,operative: Operative):
         pygame.draw.circle(self.screen, operative.getColourRGB(), operative.position, operative.radius)
@@ -194,6 +200,7 @@ class MainGame:
         self.camera = Camera(2)
         self.setupScreen()
         self.currentFrame = self.camera.getFrame()
+        self.removeOperativeButton = pygame.rect.Rect(300, 1200, 250, 50)
         self.currentOperativeId = None
         if (testing):
             self.setupModelFinderTesting()
@@ -356,6 +363,9 @@ class MainGame:
             # Draw the game board
             self.gameBoard.drawGameBoard()
             
+            # Draw any buttons
+            self.gameBoard.drawButton(self.removeOperativeButton)
+            
             #Draw terrain
             self.gameBoard.drawTerrain()
             
@@ -379,6 +389,11 @@ class MainGame:
     
    
     def handleOnClick(self,event):
+        if (self.removeOperativeButton.collidepoint(event.pos)):
+            self.operativeList.removeOperative(self.currentOperativeId)
+            self.currentOperativeId = None
+            return
+        
         for operative in self.operativeList.operatives:
             operativeBase = pygame.rect.Rect(operative.position[0] - operative.radius,operative.position[1] - operative.radius,operative.radius * 2,operative.radius * 2)
             if (operativeBase.collidepoint(event.pos)):
@@ -819,7 +834,7 @@ class MainGame:
 # sudo modprobe v4l2loopback
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList = operativeList,testing = False)
+    game = MainGame(operativeList = operativeList,testing = True)
 
 
 

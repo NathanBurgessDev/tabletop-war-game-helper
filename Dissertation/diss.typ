@@ -74,7 +74,7 @@ In this document, there are #total-words words all up.
 
 = Abstract 
 
-= Introduction and Motivation
+= Introduction and Project Intention
 
 Tabletop war-gaming is a popular hobby which has recently seen a surge in popularity during the COVID-19 pandemic, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
 
@@ -82,24 +82,25 @@ Some of the most popular war-gaming systems are produced by _Games Workshop_ @gw
 
 As well as this, new players are likely to take longer to make decisions as they are not familiar with the game's mechanics of what constitutes a "good" move #footnote("sometimes referred to as 'analysis paralysis'") . This can be exacerbated by the game's reliance on dice rolls to determine the outcome of actions. Meaning that seemingly "optimal" moves do not always result in favourable outcomes, causing an extended learning period for an already complex game.
 
-_Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. These a selection of actions are: moving to another location, shooting at an enemy, melee combat and capturing an objective. The game uses dice to determine the results of your models engaging in combat with each other with the required rolls being determined by the statistics of each "operative" (a miniature) involved and the terrain.
+_Kill Team_ is a miniature war-game known as a "skirmish" game. This means the game is played on a smaller scale with only \~20 miniatures on the table at one time. The aim of the game is to compete over objectives on the board for points. Each player takes turns activating a miniature and performing actions with it. The game uses dice to determine the results of your models engaging in combat with each other with the required rolls being determined by the statistics of each "operative" (a miniature) involved and the terrain.
 
 #figure(
     image("images/gallowdark.jpg", width:80%),
     caption:([An example of the _Kill Team_ tabletop game using the _Gallowdark_ terrain. The terrain we will focus on here are the flat walls and pillars. @gallowdark-image])
 ) <gallowdark-terrain>
 
-Video games help on-board new players by having the rules enforced by the game itself. This project aims to bring a similar methodology to tabletop war-gaming, specifically the _Kill Team Lite_ @kt-lite-rules  system using the _Gallowdark_ setting. The _Kill Team Lite_ rules are publicly available from _Games Workshop's_ website and is designed to be played on a smaller scale to other war games, making it a good candidate for a proof of concept. As well as this, the _Gallowdark_ @gallowdark setting streamlines the terrain used and removes verticality from the game, making implementation much simpler.
+Video games help on-board new players by having the rules enforced by the game itself. For example, a digital chess game will tell you when you are in check. A physical chess game requires players to recognise when they are in check themselves. This project aims to bring a similar methodology to tabletop war-gaming, specifically the _Kill Team Lite_ @kt-lite-rules  system using the _Gallowdark_ setting. The _Kill Team Lite_ rules are publicly available from _Games Workshop's_ website and is designed to be played on a smaller scale to other war games, making it a good candidate for a proof of concept. As well as this, the _Gallowdark_ @gallowdark setting streamlines the terrain used and removes verticality from the game, making implementation much simpler.
 
 Developing a system that can digitally represent a physical _Kill Team_ board would allow for the creation of tools to assist players. For example, a digital game helper would remove the burden of rules enforcement from the players and onto the system, allowing players to focus on the game itself or allow players to make more informed game decisions by being able to preview the options available to them. This could also be utilised to record a game and view a replay or be used for content creation to make accurate board representations to viewers with digital effects.
 
-== Project Intention and Background
-
 This project will focus on the development of a system that can track the position of miniature models and terrain pieces on a _Kill Team_ board which can subsequently be displayed digitally. From here, we aim to implement proof of concept visualisation of a few select game rules on the digital board to demonstrate that the tracking system provides the necessary information to process said rules.
+
+= Background
 
 To determine the specific goals for this project, it is important to provide some more context on the gameplay and community surrounding _Kill Team_. As this is a very complex game, we will be omitting a large percentage of the rules, focusing on the topics that will have an impact on the overall design or provide unique challenges.
 
-=== Gameboard Components
+
+== Gameboard Components
 
 Before looking at the game rules, we will first break down the physical components of the gameboard to determine what needs to be tracked and problems that may arrise from this.
 
@@ -123,7 +124,7 @@ The further away the camera is from the operative on the x axis, the more the te
 
 #todo("Put an IRL image in here to demostrate")
 #pagebreak()
-=== Gameplay
+== Gameplay
 
 The gameplay of Kill Team focuses around a turn based system with a full game consisting of 4 rounds - called "turning points". Each player takes turns "activating" a single operative and performing actions with it. The number of actions available to an operative is defined by it's statistics #footnote("There are a lot of exceptions to this with abilities being able to modify the stats of themselves or other operatives, but for the sake of simplicity we are going to ignore this and assume stats are set."). Once an operative has performed it's maximum number of actions, play is handed to the other player. That same operative may not be "activated" until every other operative, still in play, on their team has been activated. Once every operative on both teams has been activated the next turning point begins resetting the activation of each operative still in play. Once all 4 turning points have been completed the game ends and a winner is decided.
 
@@ -147,7 +148,7 @@ Please note that the explanations for these rules are abstracted from the _Kill 
 // This is quite a complex set of rules to enforce, making movement a good candidate for the system to assist with.
 
 #todo("Maybe add some images to demonstrate")
-==== Shooting and Line of Sight
+=== Shooting and Line of Sight
 
 Operatives can be set to two states: "concealed" or "engaged". These states are used to determine whether an operative is a valid target or whether it is able to make offensive actions, such as shooting. An operatives state is denoted by a small triangle of orange card pointing to the model. The system will need a way to track the state of an operative, whether this be through detecting the orange markers or manually updating the state.
 
@@ -155,7 +156,7 @@ Anecdotally, the _Kill Team_ line of sight rules tend to be the most complex par
 
 #figure(
   image("images/orders.jpg",width:40%),
-  caption: [An example of the markers used to denote the state of an operative @order-image. Once an operative has been activated the marker is flipped.]
+  caption: [An example of the markers used to denote the state of an operative @order-image. The board will need to be able to mark operatives as appropriate and display this to the user.]
 )
 
 There are a set of requirements that must be met to determine whether a target is able to targeted by a shooting attack.
@@ -174,7 +175,6 @@ For a defender in the concealed state:
 
 _Kill Team_ defines *visible*, *obscured* and *in cover* very strictly. This is done using *cover / visibility lines* which are straight lines 1mm wide drawn from one point on an operative to another operative.
 
-===== Visible
 
 *Visible* is used to simulate whether a defender can be physically seen by an attacker
 
@@ -182,7 +182,6 @@ For a defender to be (visible) the following must be true:
 
 + A visibility line can be drawn from the head of the attacker to any part of the defenders *model*, not including the base.
 
-===== Obscured
 
 *Obscured* is used to simulate whether a defender is blocked by large terrain, such as a wall, while also containing edge cases for operatives peeking round said terrain or attempting to use it directly as cover.
 
@@ -195,8 +194,6 @@ For a defender to be *obscured* the following must be true:
 + The defender is >2" from a point where a cover line crosses a terrain feature which is considered obscuring#footnote("For our use case the terrain walls in Gallowdark are all considered obscuring terrain.").
   + If the attacker is \<1" from a point in which a cover line crosses a terrain feature, then that part of the feature is not obscuring.
 
-===== In Cover
-
 *In cover* simulates whether an operative is attempting to intentionally take cover behind piece of terrain. A concealed operative is hiding behind the terrain whereas an engaged operative is poking around / over it.
 
 For a defender to be *in cover* the following must be true:
@@ -204,16 +201,18 @@ For a defender to be *in cover* the following must be true:
 + The defender is >2" from the attacker
 + The defender is \<1" from a point where a cover line crosses a terrain feature.
 
-There are a few key takeaways from these rules.
+=== Key Takeaways
+
+The above rules outline what information the system will need to be able to track and display to the user. It also highlights the complexity of the rules to justify the reasonings behind this project.
 
 + It is important to know the positions of operatives and terrain.
 + The system will need to be able to know the size of an operative's base.
 + Rotation of operatives is not needed to be tracked (except for visiblity when determining *visible*).
 + Operatives need to be marked as concealed or engaged.
 + Accuracy is important to the system. Visiblity / cover lines being 1mm wide and distances measured in inches will require accurate measurements.
-+ The system will need to asbtract the above rules whilst also being able to display the reasoning behind the application. For example, if a defender is obscured the system should show what is obscuring and from what point the firing cone was drawn.
++ The system will need to abstract the above rules whilst also being able to display the reasoning behind the application. For example, if a defender is obscured the system should show what is obscuring and from what point the firing cone was drawn.
 
-=== Community
+== Community
 
 Tabletop wargames require you to build and paint your own minitatures, because of this the target audience tends to be more of the creative type. Using this information we can allow some liberty in what they might need to do to utilise this system. For example, creating homemade tags is something that creatives might be more inclined to do as opposed to something more technical using RFID or infrared sensors. The whole system should be designed to be as accessible as possible to the target audience, requiring little to no specialised equipment.
 
@@ -271,7 +270,7 @@ Finding a method to detect and find the positions of miniatures on a game board,
 
 === RFID
 
-An RFID approach is the somewhat obvious solution. This would involve embedding RFID chips underneath the bases of the miniatures. Then some method of reading these chips would then need to be embedded either within or underneath the game board. There are a number of different approaches that could be taken to locating RFID chips which have been outlined by Steve Hinske and Marc Langheinrich @rfid-based in their work on a similar project.
+An RFID based approach appeared to be a good solution initially. This would involve embedding RFID chips underneath the bases of the miniatures. Then some method of reading these chips would then need to be embedded either within or underneath the game board. There are a number of different approaches that could be taken to locating RFID chips which have been outlined by Steve Hinske and Marc Langheinrich @rfid-based in their work on a similar project.
 
 RFID solutions would require either an antenna grid underneath the game board or multiple individual RFID readers. This would be a viable option as hiding an antenna grid below a board is a relatively simple and unobstructive task. The same goes for hiding RFID readers beneath a table.
 
@@ -501,7 +500,7 @@ These requirements resulted in this tag design:
 
 To achieve this a high contrast rim will be placed around the base of the model. In this implemention we have chosen to use a bright yellow #footnote("Although this could be changed to any colour which strongly contrasts the game board provided the correct thresholds were provided."). 
 
-Utilising hough circle transforms @hough-circles in openCV we can easily find the center point of a provided circle. The "completeness" of the curve required to be determed as a full circle can be easily adjusted to allow for occlusion.
+Utilising Hough Circle transforms @hough-circles in openCV we can easily find the center point of a provided circle. The "completeness" of the curve required to be determed as a full circle can be easily adjusted to allow for occlusion.
 
 #figure(
     image("images/detection.png",width:80%),
@@ -533,7 +532,7 @@ Using 4 bits for identification allows for 16 different options. The first high 
 
 The tag can be scaled to fit the size of the base of the model which is placed over the white circle. For this implementation we will use paper printed tags. This is a simple and cheap solution that is easy to get consistent colouring with. A tag of a similiar design could be 3D printed with indents to paint in the colours.
 
-Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rims from touching eachother. This is important as hough circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
+Having an outer rim provides two benefits. Firstly, it allows for the identification bits to be placed further away from the model, making it less likely to be obscured. Secondly, it acts as a barrier to prevent the yellow rims from touching eachother. This is important as Hough Circle detection can easily mistake two close but separate circles as one, larger circle or multiple smaller circles.
 
 The high contrasting starting bit (shown here in magenta) is used to determine the starting point of the encoding. From here the system can then read clockwise and anti-clockwise to determine the binary ID. 
 
@@ -672,7 +671,7 @@ This project will use openCV @openCV to process the video feed from the camera. 
 
 Python was chosen as the language for this project due to both prior knowledge and Python's loose type system contributing to the ability to produce quick working prototypes separate from the main project. C++ on the other hand would produce a more robust final product but would take longer to develop. As this project aims to serve as a proof of concept for the idea, Python fits the role better.
 
-== Camera Setup
+== Model Tracking
 
 
 #todo("Problems with QT and arch")
@@ -688,13 +687,16 @@ A full sized kill team board is 22" x 30". This is too large for a single camera
     grid.cell(figure(image("images/newCloseParallax.jpg",width:95%,), caption:([The board from up close.]))),
     grid.cell(figure(image("images/farParallax.jpg",width:95%),caption:([The board from afar.]))),
   ),
-    caption: ([An example of parallax. To get an image of the entire board the camera needs to be >1m away. Behind the wall a yellow rim representing the model base is present.])
+    caption: ([An example of parallax.])
 ) <parallax>
+
+As seen in @parallax to get an image of the entire board the camera needs to be >1m away. Behind the wall a yellow rim representing the model base is present.
 
 This introduces three problems:
 + Having an arm long enough to hold the camera this high above the board is impractical and sometimes impossible given a small room.
-+ As the camera moves away from the board the quality of the board in the image will decrease. 
-+ As the camera moves further away the colour of the board changes, as is visible in @parallax, this would make our colour thresholding less effective and require more complex solutions to colour correct the image.
++ The quality of the board in the image will decrease. 
++ The colour of the board changes, as is visible in @parallax, this would make our colour thresholding less effective and require more complex solutions to colour correct the image.
++ The image distortion will have a greater effect on the image. A small deviation from being level will have a greater effect on the image the further away the camera is.
 
 The solution to this is to utilise two cameras.
 
@@ -705,6 +707,27 @@ One camera would cover the left half of the board and the other the right. This 
 Whilst this was in the original plan, the project ended up focusing on creating a functional system for a half sized board so that, if there was time, a two camera solution could be implemented.
 
 The camera design we ended up with was a single camera on a cheap phone holder stand pointed straight down at the center of the board. 
+
+
+=== Video feed
+
+To make the system as accessible as possible we want to use a phone camera as the video input device. This would allow for the system to be used by the average war-gamer without needing to purchase any additional equipment. 
+
+To do this we used a program called _DroidCam_ @droidcam. This allows for a phone to connect either via USB or over wifi to a computer on the same network. The phone than acts as a webcam. The downside here is that droidcam is limited to 480p in the free version. Although, for the paid version the quality is increased to 1080p or even 4k if utilising the OBS plugin which you can then use to produce a virtual webcam.
+
+For this use case, 1080p is more than enough.
+
+This project was developed on a Arch linux with the 6.8.2 kernel. The phone used was an iPhone 13. As a result, when loading video input the system will use the linux method of video input. The camera is represented as a file found in /dev/videoX where X is the number of the camera. 0 is usually the built in camera and 2 is our external camera, though this can change depending on whether the external camera was connected on startup. This is easily changeable in the code in the _Camera_ object to instead take an int instead of a "/dev/videoX" string for use on a windows system.
+
+Getting video input from droidcam had two main issues. 
+
+The first was that the Arch package was broken. DroidCam makes use of the v4l2loopback kernal module to create a virtual webcam. As the video is not being produced by a physical capturecard a virtual device has to be used. When kernal 6.8 was released vl42loopback was broken. This left a few options to fix the issue. Either downgrade the kernal or compile the module from source with a community fix applied. Whilst the fix has been applied to the main branch it has not yet been released. Neither of these options were ideal. 
+
+Upon further examination it would appear that the default version for arch is: v4l2loopback-dkms 0.13.1-1 whereas droidcam makes use of a slightly different version: v4l2loopback-dc-dkms 1:2.1.2-1. According to the github page for DroidCam their version of v4l2loopback-dc-dkms has not been updated since 26/03/24. Arch kernal 6.8 was released on 29/03/24. It would also appear that DroidCam uses it's own branch of v4l2loopback as indicated by the "dc" in the package name.
+
+One user suggested to install the default branch of v4l2loopback instead. This still produced the same error, however after some further research it was found that running _sudo modprobe v4l2loopback_ would fix the issue as the module was not being loaded on startup.
+
+Once this was complete the video feed was outputting in 1080p with surpringly low latency over wireless connection on Eduroam.
 
 === Calibration
 
@@ -738,33 +761,65 @@ Getting the calibration working took longer than expected. It is suggested to us
 
 === Homography
 
-=== Video feed
+Solving image distortion requires the use of homography. We want an image of the gameboard to be from a perfect top down view. But as the camera is not directly above the center of the board, along with the camera not being perfectly level and distortion from the distance of the camera to the board, the board in the image will appear to be distorted. To correct this we need to find the transformation from the plane in the image to the plane as it should appear. This is known as performating a perspective transform, or perspective correction.
 
-To make the system as accessible as possible we want to use a phone camera as the video input device. This would allow for the system to be used by the average war-gamer without needing to purchase any additional equipment. 
+#figure(
+  image("images/openCVHomography.jpg",width:60%),
+  caption: ([An example of perspective removal / correction from the OpenCV documentation @openCV-perspective.])
+)
 
-To do this we used a program called _DroidCam_ @droidcam. This allows for a phone to connect either via USB or over wifi to a computer on the same network. The phone than acts as a webcam. The downside here is that droidcam is limited to 480p in the free version. Although, for the paid version the quality is increased to 1080p or even 4k if utilising the OBS plugin which you can then use to produce a virtual webcam.
+To perform this transform to our gameboard we first need to find the four corners of the board. Ideally this would be done either through the use of aruco tags or through segmenting the board from the background. Board detection will be covered in section 7.1.5.
 
-For this use case, 1080p is more than enough.
+From these four corners we can form a trapezoid. Using this trapezoid, we can then find the height and width of the final rectangle #footnote("This will be the largest height and width of the rectangle"). With the new height and width we can then find the perspective transform with OpenCV's getPerspectiveTransform function that correctly maps the trapezoid to the rectangle with minimal distortion. We can then apply this transform using OpenCV's warpPerspective function to get a top down view of the board. This can be seen in @homography and @homography-extreme
 
-This project was developed on a laptop running Arch linux with the 6.8.2 kernel. The phone used was an iPhone 13. As a result, when loading video input the system will use the linux method of video input. The camera is represented as a file found in /dev/videoX where X is the number of the camera. 0 is usually the built in camera and 2 is our external camera, though this can change depending on whether the external camera was connected on startup. This is easily changeable in the code in the _Camera_ object to instead take an int instead of a "/dev/videoX" string for use on a windows system.
+#figure(
+  grid(
+    columns: 2,
+    image("images/homographyFlat.png",width:95%),
+    image("images/homographyFlatTransform.png",width:95%),
+  ),
+  caption: ([An example of perspective correction.])
+) <homography>
 
-Getting video input from droidcam had two main issues. 
+#figure(
+  grid(
+    columns: 2,
+    image("images/homographyTestCurve.png",width:95%),
+    image("images/homographyTestCurvedResult.png",width:95%),
+  ),
+  caption: ([A more extreme example of perspective correction.])
+  )<homography-extreme>
 
-The first was that the Arch package was broken. DroidCam makes use of the v4l2loopback kernal module to create a virtual webcam. As the video is not being produced by a physical capturecard a virtual device has to be used. When kernal 6.8 was released vl42loopback was broken. This left a few options to fix the issue. Either downgrade the kernal or compile the module from source with a community fix applied. Whilst the fix has been applied to the main branch it has not yet been released. Neither of these options were ideal. 
 
-Upon further examination it would appear that the default version for arch is: v4l2loopback-dkms 0.13.1-1 whereas droidcam makes use of a slightly different version: v4l2loopback-dc-dkms 1:2.1.2-1. According to the github page for DroidCam their version of v4l2loopback-dc-dkms has not been updated since 26/03/24. Arch kernal 6.8 was released on 29/03/24. It would also appear that DroidCam uses it's own branch of v4l2loopback as indicated by the "dc" in the package name.
 
-One user suggested to install the default branch of v4l2loopback instead. This still produced the same error, however after some further research it was found that running _sudo modprobe v4l2loopback_ would fix the issue as the module was not being loaded on startup.
+=== Board Detection
 
-Once this was complete the video feed was outputting in 1080p with surpringly low latency over wireless connection on Eduroam.
+An attempt was made at segmenting the board from the background as can be seen in @boardDetection.
 
-=== Rim Detection Pipeline
+This approach utilised canny edge detection to find the separation between the board and the background and then HoughLines to find lines in the image. We then attempt to find a large rectangle from the provided lines. The image also has to be scaled down significantly for this to run in a reasonable time. Alternative approaches were taken using both contour detection and harris corner detection. However, these were not successful.
+
+Contour detection appeared promising though the detailing on the board meant contours were incomplete. Attempts to fill the contours were made but unsuccessful. Automatic board detection was abandoned in favour of manually selecting the corners of the board on startup. The easiest solution would be to use aruco tags, but due to time constraints this was not implemented.
+
+#figure(
+  grid(
+    columns: 2,
+    image("images/boardDetection.png",width:80%),
+    image("images/boardDetectionOrig.png",width:80%),
+  ),
+    caption: ([An attempt at segmenting the board from the background.]
+)) <boardDetection>
+
+
+
+=== Tag Detection
 
 Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
 
 #todo("Include images showing each step in this processing pipeline")
 
-From here we perform edge detection on the image to find the edges of the circles in the image. This is done as hough circle detection is a very computationally expensive process and by finding the edges of the circles first we are left with a wireframe of the circles which reduces the space the hough circle detection needs to search.
+From here we perform edge detection on the image to find the edges of the circles in the image. This is helps speed up the circle detection. This leaves us with a wireframe of the circles. We can then apply Hough Circle detection to the image to find the center points of the circles and their radii. OpenCV provides a simple function to do this.
+
+#todo("Talk about fine tuning the parameters")
 
 This leaves our processing pipeline as such:
 
@@ -772,11 +827,22 @@ This leaves our processing pipeline as such:
 + Convert the image to HSV
 + Apply a threshold to only show the yellow colour space
 + Apply edge detection to the image
-+ Apply hough circle detection to the image giving us a list of detected circle center points and their radii.
++ Apply Hough Circle detection to the image giving us a list of detected circle center points and their radii.
 
-It is important to note that hough circle detection can easily mistake two close but separate circles as one circle.
+It is important to note that Hough Circle transform can easily mistake two close but separate circles as one circle.
 
 ==== Hough Circles
+
+OpenCV's implementation of Hough Circle transform makes up the backbone of the model tracking system, giving us the bases of each model.
+
+The Hough Circle transform works by taking in a radius and drawing circles of that radius around each edge detected in the image. The result is an accumulator array where the highest values are where the most circles drawn by the transform intersect. This position is taken as the center of the circle.
+
+#figure(
+  image("images/HoughCircles.png",width:60%),
+  caption: ([An example of Hough Circle detection and the accumulator produced. @hough-circles-explained.])
+)
+
+In OpenCV this functionality is expanded to allow for both a range of radii and a minimum distance between the centers of circles.
 
 === Model Identification
 
@@ -787,7 +853,7 @@ The process to get the encoding is as follows:
 #todo("This should be a flowchart")
 #todo("Should also have a figure showing the resultant image at each step.")
 
-+ Take the circle centers and radii from the hough circle detection.
++ Take the circle centers and radii from the Hough Circle detection.
 + Using the same transformed image as before, but unblurred and unthresholded:
   + Convert the image to HSV.
   + Apply a gaussian blur.
@@ -862,15 +928,19 @@ This gives us enough information to form the two firing cones we need.
 
 Getting the firing cones is a simple process in theory but getting a functional implementation took significantly longer than expected. 
 
-Finding the line equation between the two center points is a simple process. Getting the perpendicular gradient had some issues. Python had some problems with taking the reciprocal of a float. when the gradient was \<0.01 we lose precision when the reciprocal is aken which caused innacuracies down the line#footnote("As an example 0.0333333333 would give a reciprocal of -30.0."). These innacuracies were compounded by some premature rounding of the gradient and other values from floats to ints. A divide by 0 error was also encountered when the gradient was 0. This would occure when an operatives was directly above or next to another operative.
+Finding the line equation between the two center points is a simple process. Getting the perpendicular gradient had some issues. Python had some problems with taking the reciprocal of a float. 
 
-Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to python code which took several days to notice. This was compounded by the base being scaled up to the gameboard size at a later point in the process. As the intersections were found in the image space, when the base was scaled up for the gameboard the intersection points were scaled up as well. The problem with this is that the intersections on a circle do not scale linearly. Increasing the size of a circle by 5 units does not move the intersection 5 units in x and y.
+// when the gradient was \<0.01 we lose precision when the reciprocal is aken which caused innacuracies down the line#footnote("As an example 0.0333333333 would give a reciprocal of -30.0."). These innacuracies were compounded by some premature rounding of the gradient and other values from floats to ints. A divide by 0 error was also encountered when the gradient was 0. This would occure when an operatives was directly above or next to another operative.
 
-The thinking behind this was that the firing cones would be more accurate if they were done off of the direct information provided by the tracking system, rather than after they had been translated and slightly squished. This was a mistake as this not only caused lots of avoidable trip ups, but the accuracy lost would've been negligible as everything on the board gets scaled to the same size anyway.
+Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to python code which took several days to notice. 
 
-Images also utilise 0,0 as the top left corner. This made verifying and converting the algebra to code more difficult.
+The resultant code for finding the intersection points between the perpendicular line and one circle: #footnote("This is the quadratic formula with the line and circle equation substituted in."):
 
-The resultant code for finding the intersection points is as follows:
+let $m$ be the perpendicular gradient of the line between the two center points of the bases,
+$c$ be the y intercept of the perpendicular line. 
+$h$ be the x coordinate of the center point of the circle,
+$k$ be the y coordinate of the center point of the circle,
+and $r$ be the radius of the circle.
 
 ```python
 xPositive = (h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
@@ -878,11 +948,18 @@ xPositive = (h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2
 xNegative =  (h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
 ```
 
-As you can probably see, this is not the most readable code. This is included to show the reader why this took so long to find problems with and derive. Breaking this down into smaller, more readable parts wouldn't have been much more helpful in debugging as this is simply the equation for the intersects between a line and a circle. It was not a problem where knowing values at each stage would've helped.
+As you can probably see, this is not the most readable code and combined with converting between image space prematurely made getting this section functional difficult.
 
-A separate methodology was used based on a wolfram alpha solution. Although it was overlooked that the solution was specific to the circle being at 0,0.
 
-All of these problems existed simultaneously so debugging ended up being an extremely difficult and time consuming process.
+// This was compounded by the base being scaled up to the gameboard size at a later point in the process. As the intersections were found in the image space, when the base was scaled up for the gameboard the intersection points were scaled up as well. The problem with this is that the intersections on a circle do not scale linearly. Increasing the size of a circle by 5 units does not move the intersection 5 units in x and y.
+
+// The thinking behind this was that the firing cones would be more accurate if they were done off of the direct information provided by the tracking system, rather than after they had been translated and slightly squished. This was a mistake as this not only caused lots of avoidable trip ups, but the accuracy lost would've been negligible as everything on the board gets scaled to the same size anyway.
+
+// Images also utilise 0,0 as the top left corner. This made verifying and converting the algebra to code more difficult.
+
+
+A separate methodology was used based on a wolfram alpha solution. Although it was overlooked that the solution was specific to the circle being at 0,0. So this was scrapped.
+
 
 
 ==== Terrain Within Firing Cones
@@ -1051,7 +1128,7 @@ However, as seen in @five-frames the system was able to eventually identify the 
 
 #figure(
   image("images/trackingWithModelsFrameFive.png",width:60%),
-    caption: ([The same setup as @evaluation-tracking-models but 5 frames later])
+    caption: ([The same setup as @evaluation-tracking-models but 5 frames later.])
 ) <five-frames>
 
 #pagebreak()
@@ -1070,7 +1147,7 @@ However, as seen in @five-frames the system was able to eventually identify the 
 
 #figure(
   image("images/sixModelScreenOverlay.png",width: 60%),
-  caption: ([The images if @six-terrain overlaid on eachother])
+  caption: ([The images in @six-real overlaid on eachother.])
 )<six-real-overlay>
 
 As seen in @six-real-overlay, the system was able to track all six models present. The system is able to track multiple tags, with the correct identification, at the same time with high levels of accuracy. Although, it would appear that as the tags move further up, the accuracy dwindles slightly, this can be seen in "Nine Team One" in @six-real-overlay.
@@ -1089,7 +1166,7 @@ As seen in @six-real-overlay, the system was able to track all six models presen
 
 #figure(
   image("images/sixModelTerrainOverlay.png",width: 60%),
-  caption: ([The images if @six-terrain overlaid on eachother])
+  caption: ([The images in @six-terrain overlaid on eachother.])
 )<six-terrain-overlay>
 
 

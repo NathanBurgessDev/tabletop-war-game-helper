@@ -230,6 +230,18 @@ droidcam:
   title: DroidCam
   url: https://www.dev47apps.com/
 
+openCV-perspective:
+  type: repository
+  title: Basic concepts of the homography
+  url: https://docs.opencv.org/4.x/d9/dab/tutorial_homography.html#tutorial_homography_Demo2
+
+hough-circles-explained:
+  type: repository
+  title: Hough Circle Transform
+  url: https://github.com/tkorting/youtube/blob/master/how-circle-hough-transform-works/main.py
+  author: Thales Sehn Körting
+
+
 # https://www.researchgate.net/publication/282426080_Generation_of_fiducial_marker_dictionaries_using_Mixed_Integer_Linear_Programming
 
 # https://cvg.cit.tum.de/_media/members/demmeln/loipfuehrer2022ma.pdf

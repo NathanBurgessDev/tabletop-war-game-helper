@@ -110,6 +110,12 @@ class OperativeList:
             
     def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
         return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
+    
+    def removeOperative(self, id):
+        for operative in self.operatives:
+            if operative.id == id:
+                self.operatives.remove(operative)
+                break
       
     # Somewhat annoyingly the radius is relative to the DISPLAYED board size
     # and the position is relative to the ACTUAL board size

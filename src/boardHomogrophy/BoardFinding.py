@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import ndarray
 import cv2 as cv
-
+# import HomographyUtils
 
 # When we take the original image there are likely to be parts of the image which contain the surroundings of the board.
 # When displaying the board we want our 0,0 coordinate to correlate with the top left corner of the board.
@@ -41,9 +41,17 @@ def getFourCornersCoordinates(image: ndarray):
 
 
 if __name__ == "__main__":
+    ()
+    # img = cv.imread("testImages/homographyTest.jpg")
+    # # resize the image as its 4k
+    # img = cv.resize(img, (int(img.shape[1]/2), int(img.shape[0]/2.5)))
+    # pts = getFourCornersCoordinates(img)
+    # pts = np.array(pts, dtype = "float32")
+    # newImg = HomographyUtils.four_point_transform(img, pts)
+    # cv.imshow("Image", img)
+    # cv.imshow("New Image", newImg)
+    # cv.waitKey(0)
     
-    img = cv.imread("Identification/paperTestCorners.jpg")
-    print(getFourCornersCoordinates(img))
     
 # 2 Corners
 # Take Rectangle
