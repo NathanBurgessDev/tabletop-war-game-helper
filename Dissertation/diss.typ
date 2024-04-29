@@ -400,7 +400,7 @@ We settled on using a computer vision and tag based approach to detect the model
 
 This approach was chosen for a few key reasons. Firstly, it is the most accessible option to the target audience. The only components needed are a camera, a computer, a printer and some method to position a camera above a board. Unlike RFID, IR or custom table methods, the average war-gamer would have access to these components. One intention for this project is to prove this is a viable method utilising only a phone camera and a stand.
 
-Secondly, it is the most flexible option. A tag based system does not care about the shape or colour of the models, only the tags. This requirement meant that machine learning approaches would not be as viable as the potential variation in models used is too high. If we stuck to only supporting specific, unmodified models this may potentially work, but this would place a restriction on the target audience and in a subject such as miniature wargaming where customisation is so heavily valued, this would not be a good approach. As well as this given the unique paint schemes each player may use this would mean an ML model would need to be either trained specifically for each players kill team or be able to use a models silhouette to identify it. Both of these approaches either require users to make their own datasets and train the model themselves, a time consuming and technical task, or require a model that can identify a model from its silhouette, a complex task that would require a lot of training data and wouldn't be that accurate due to potential model customisations #footnote("On a personal note, ai is not an area that I have much interest in and something which is, at the time of writing, currently all the craze. So doing something a bit different to the 'obvious' approach seemed interesting.").
+Secondly, it is the most flexible option. A tag based system does not care about the shape or colour of the models, only the tags. This requirement meant that machine learning approaches would not be as viable as the potential variation in models used is too high. If we stuck to only supporting specific, unmodified models this may potentially work, but this would place a restriction on the target audience and in a subject such as miniature wargaming where customisation is so heavily valued, this would not be a good approach. As well as this given the unique paint schemes each player may use this would mean an ML model would need to be either trained specifically for each players kill team or be able to use a models silhouette to identify it. Both of these approaches either require users to make their own datasets and train the model themselves, a time consuming and technical task, or require a model that can identify a model from its silhouette, a complex task that would require a lot of training data and wouldn't be that accurate due to potential model customisations.
 
 #todo("Some images demonstrating the same model with different paint schemes")
 
@@ -410,24 +410,11 @@ In contrast, a tag based system is ambivalent to the appearance of the model. Th
 
 #todo("Actually put the citation in for this")
 
-
-#todo("Unsure if the footnote here is too informal.")
-
 Finally, a tag based system will assist with accuracy. Getting the location and rotation of an aurco tag using pose estimation is a well documented process. This methodology can be applied to a tag design that will function well with miniatures and terrain.
-
-#todo("Grab some citation for 'well documented process'")
-
-
-
-
-
 
 === Camera Setup
 
 A camera will be placed above the center of the gameboard looking downwards providing a view of the entire game board. The image will be distorted by two factors: Camera distortion and image distortion.
-
-
-#todo("Get an image of the camera setup over the gameboard - or is that better to go in implementation?")
 
 Camera distortion is caused by different camera designs having slightly different distortion in the images they produce due to the different lenses. This can be corrected by using a camera calibration method to produce a camera matrix and distortion coefficients which can be used to un-distort resultant images. Radial distortions result in the image having straight lines appear curved. Tangential distortions result in the image appearing tilted along an axis. OpenCV provides a simple method to calibrate a camera using a chessboard pattern. This produces the camera matrix and distortion coefficients which can be saved and used to un-distort images. It is important to note that each different camera will have a different distortion so will need to be calibrated separately.
 
@@ -439,14 +426,6 @@ Camera distortion is caused by different camera designs having slightly differen
 Image distortion is caused by the location of the camera relative to the board. To correct this we can perform perspective correction. Taking a top down view of the board will not garuntee that the board will be rectangular in the image. For example, it is likey for the camera to not be perfectly level resulting in parts of the board appearing closer or longer than they actually are. To remedy this we can identify the four corners of the board and perform a perspective correction algorithm to produce a flattened version of the board. At the same time this will give us the boundaries of the board and crop the image.
 
 #todo("Once again put an image in showing how this actually works - at the same time should probably cover aruco markers earlier")
-
-The board corners will be located with aruco tags @arucoTags placed on the four corners.
-#todo("Not sure if I leave this in cause I did not get around to doing it")
-
-
-
-#todo("Whilst this project is using a half sized board to simplify the problem it is important to note how a full sized board would be handled. Throw in an image to show how two cameras help with parallax - might just leave this out as it's not something I got round to doing.")
-
 
 #figure(
   grid(
@@ -579,6 +558,10 @@ The gameboard will display several things:
     + The firing cones of the selected operative to these obscured / covered operatives are also be displayed.
     + Inside the firing cones the points providing cover and obscurement are also displayed.
 
+#figure(
+  image("images/board-suggestion.png",width:60%),
+  caption: ([An example of what the GUI could look like #footnote("The final GUI can be seen in the video and evaluation section.").])
+)
 
 #todo("Include Image of GUI")
 
@@ -605,8 +588,6 @@ Both of these line of sight rules are based on the existence of terrain between 
 ==== Obscuring and Covering Terrain
 
 Once we have the firing cones we can determine whether an operative is obscured or in cover. This is done by producing a list of terrain lines that fall within the firing cones. We then check if any of the points on the terrain lines satisfy the distance requirements from the attacker and / or the defender. If they do, the obscuring points / cover points are drawn onto the board to provide an explanation to the user.
-
-#todo("This also needs a screenshot showing the cover and obscuring points")
 
 // Parallax is a problem that still needs to be addressed. Through testing it was found that using a standard game board size, the parallax was too great to expect to locate a rim. As a result, we have settled on using a two camera solution. This solves the parallax problem by having each camera watch a different half of the game board.
 
@@ -668,9 +649,6 @@ Python was chosen as the language for this project due to both prior knowledge a
 
 == Model Tracking
 
-
-#todo("Problems with QT and arch")
-
 === Design
 
 A full sized kill team board is 22" x 30". This is too large for a single camera to capture the entire board and still be able to see minitaures behind terrain.
@@ -685,7 +663,7 @@ A full sized kill team board is 22" x 30". This is too large for a single camera
     caption: ([An example of parallax.])
 ) <parallax>
 
-As seen in @parallax to get an image of the entire board the camera needs to be >1m away. Behind the wall a yellow rim representing the model base is present.
+As seen in @parallax, to get an image of the entire board, the camera needs to be >1m away. Behind the wall, a yellow rim representing the model base is present.
 
 This introduces three problems:
 + Having an arm long enough to hold the camera this high above the board is impractical and sometimes impossible given a small room.
@@ -706,9 +684,9 @@ The camera design we ended up with was a single camera on a cheap phone holder s
 
 === Video feed
 
-To make the system as accessible as possible we want to use a phone camera as the video input device. This would allow for the system to be used by the average war-gamer without needing to purchase any additional equipment. 
+To make the system as accessible as possible, we want to use a phone camera as the video input device. This would allow for the system to be used by the average war-gamer without needing to purchase any additional equipment. 
 
-To do this we used a program called _DroidCam_ @droidcam. This allows for a phone to connect either via USB or over wifi to a computer on the same network. The phone than acts as a webcam. The downside here is that droidcam is limited to 480p in the free version. Although, for the paid version the quality is increased to 1080p or even 4k if utilising the OBS plugin which you can then use to produce a virtual webcam.
+To do this, we used a program called _DroidCam_ @droidcam. This allows for a phone to connect either via USB or over wifi to a computer on the same network. The phone then acts as a webcam. The downside here is that droidcam is limited to 480p in the free version. Although, for the paid version the quality is increased to 1080p or even 4k if utilising the OBS plugin which you can then use to produce a virtual webcam.
 
 For this use case, 1080p is more than enough.
 
@@ -716,13 +694,13 @@ This project was developed on a Arch linux with the 6.8.2 kernel. The phone used
 
 Getting video input from droidcam had two main issues. 
 
-The first was that the Arch package was broken. DroidCam makes use of the v4l2loopback kernal module to create a virtual webcam. As the video is not being produced by a physical capturecard a virtual device has to be used. When kernal 6.8 was released vl42loopback was broken. This left a few options to fix the issue. Either downgrade the kernal or compile the module from source with a community fix applied. Whilst the fix has been applied to the main branch it has not yet been released. Neither of these options were ideal. 
+The first was that the Arch package was broken. DroidCam makes use of the v4l2loopback kernel module to create a virtual webcam. As the video is not being produced by a physical capturecard a virtual device has to be used. When kernel 6.8 was released vl42loopback was broken. This left a few options to fix the issue. Either downgrade the kernel or compile the module from source with a community fix applied. Whilst the fix has been applied to the main branch it has not yet been released. Neither of these options were ideal. 
 
-Upon further examination it would appear that the default version for arch is: v4l2loopback-dkms 0.13.1-1 whereas droidcam makes use of a slightly different version: v4l2loopback-dc-dkms 1:2.1.2-1. According to the github page for DroidCam their version of v4l2loopback-dc-dkms has not been updated since 26/03/24. Arch kernal 6.8 was released on 29/03/24. It would also appear that DroidCam uses it's own branch of v4l2loopback as indicated by the "dc" in the package name.
+Upon further examination it would appear that the default version for Arch is: v4l2loopback-dkms 0.13.1-1 whereas droidcam makes use of a slightly different version: v4l2loopback-dc-dkms 1:2.1.2-1. According to the github page for DroidCam ,their version of v4l2loopback-dc-dkms has not been updated since 26/03/24. Arch kernal 6.8 was released on 29/03/24. It would also appear that DroidCam uses its own branch of v4l2loopback as indicated by the "dc" in the package name.
 
 One user suggested to install the default branch of v4l2loopback instead. This still produced the same error, however after some further research it was found that running _sudo modprobe v4l2loopback_ would fix the issue as the module was not being loaded on startup.
 
-Once this was complete the video feed was outputting in 1080p with surpringly low latency over wireless connection on Eduroam.
+Once this was complete, the video feed was outputting in 1080p with low latency over wireless connection on Eduroam.
 
 === Calibration
 
@@ -744,7 +722,7 @@ OpenCV provides a simple method to calibrate a camera using a chessboard pattern
   caption: ([An example of the image points found in calibration.])
 )
 
-A chessboard pattern is used as it is easy to find specific points of which the relative positions are known. In this case the corners between black and white squares are used. As we know the position of these points in the real world and also the points at the image, we can use this to calculate the camera matrix and distortion coefficients.
+A chessboard pattern is used as it is easy to find specific points of which the relative positions are known. In this case, the corners between black and white squares are used. As we know the position of these points in the real world and also the points at the image, we can use this to calculate the camera matrix and distortion coefficients.
 
 In the case of the camera matrix the points are used to calculate the focal length and optical centers of the camera. These values are then stored in a camera matrix:
 
@@ -752,7 +730,7 @@ In the case of the camera matrix the points are used to calculate the focal leng
 
 The matrix and distortion coefficents are used later as they are required for the perspective-n-point pose computation utilised in the aruco tag detection.
 
-Getting the calibration working took longer than expected. It is suggested to use around 15 images for calibration and when calibrating each image was taking 3 - 5 minutes each and then not returning a calibration matrix. It was later found that this was due to the length and width of the chessboard pattern being passed as the wrong size. This was fixed and calibration now took \<5 seconds in total. The length of calibration was due to OpenCV attempting to find a correctly size chessboard that was not present in the image.
+Getting the calibration working took longer than expected. It is suggested to use around 15 images for calibration and when calibrating, each image was taking 3 - 5 minutes each and then not returning a calibration matrix. It was later found that this was due to the length and width of the chessboard pattern being passed as the wrong size. This was fixed and calibration now took \<5 seconds in total. The length of calibration was due to OpenCV attempting to find a correctly size chessboard that was not present in the image.
 
 === Homography
 
@@ -808,11 +786,11 @@ Contour detection appeared promising though the detailing on the board meant con
 
 === Tag Detection
 
-Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by bluring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
+Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by blurring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
 
 #todo("Include images showing each step in this processing pipeline")
 
-From here we perform edge detection on the image to find the edges of the circles in the image. This is helps speed up the circle detection. This leaves us with a wireframe of the circles. We can then apply Hough Circle detection to the image to find the center points of the circles and their radii. OpenCV provides a simple function to do this.
+From here, we perform edge detection on the image to find the edges of the circles in the image. This is helps speed up the circle detection. This leaves us with a wireframe of the circles. We can then apply Hough Circle detection to the image to find the center points of the circles and their radii. OpenCV provides a simple function to do this.
 
 #todo("Talk about fine tuning the parameters")
 
@@ -837,9 +815,9 @@ The Hough Circle transform works by taking in a radius and drawing circles of th
   caption: ([An example of Hough Circle detection and the accumulator produced. @hough-circles-explained.])
 )
 
-In OpenCV this functionality is expanded to allow for both a range of radii, a minimum distance between the centers of circles and the minimum accumulator value needed to declare a circle center.  This minimum value allows for the transform to find incomplete circles. This is useful for our implementation as the yellow rims around the bases of the models are not always visible.
+In OpenCV, this functionality is expanded to allow for both a range of radii, a minimum distance between the centers of circles and the minimum accumulator value needed to declare a circle center.  This minimum value allows for the transform to find incomplete circles. This is useful for our implementation as the yellow rims around the bases of the models are not always visible.
 
-There is a problem with the use of Hough Circle detection. The perspective transform applied to the image can cause the circles to appear more like ellipses as they move away from the center. This change is quite minor but in an ideal system we would utilise an ellipse or oval detection method instead. Though these implementations are not as readily available and would require more work to implement.
+There is a problem with the use of Hough Circle detection. The perspective transform applied to the image can cause the circles to appear more like ellipses as they move away from the center. This change is quite minor but in an ideal system we would utilise an ellipse or oval detection method instead. However, these implementations are not as readily available and would require more work to implement.
 
 A large portion of this project was spent on finding and testing different approaches to detect the circles that was: robust, fast and allowed for identification to be done easily. Attempts were made using blob and contour detection, but these were not successful. Contour detection was not able to deal with occlusion well and blob detection struggled when the circles came close together.
 
@@ -892,11 +870,31 @@ Now that we have the colour values for each encoding bit in each quarter. We nee
 
 === Optimisations
 
+At this point in the project the detection system was running, but it was exceptionally slow. Each detection (including image loading) was taking nearly 3 seconds as can be seen in @optimisation-rotate. This was not acceptable for real time or even turn based system. The issue was found to be rotating the image to find the encoding bits. Instead of finding the coordinates of the encoding bits of each circle, the entire image was being rotated and the same coordinates check. This was a very expensive operation. Changing this to rotate the coordinates and not the image made significant time saves.
+
+#figure(
+table(
+  columns: (auto, auto, auto,auto),
+  inset: 10pt,
+  align: horizon,
+  table.header(
+    [],[*Real* (s)],[*User* (s)], [*Sys* (s)],
+  ),
+  [Before],[2.290],[3.089],[1.195],
+  [After],[0.678],[1.374],[1.293],
+),
+caption: ([The time taken for a single detection before and after rotation optimisation.])
+) <optimisation-rotate>
+
+After chasing down several other instances of entire image operations, the time taken for a single detection was reduced to be mostly unnoticable. Providing the python runtime would unfortunately not provide much information here as at this point, the program was just running the detection so a majority of the time was spent on overhead and image loading.
+
 == Terrain Detection
 
 As mentioned previously, terrain detection is done using aruco tags. The aruco tags are placed on top of the pillars of the terrain so that the corners of the pillar align with the black corners of the tag.
 
 OpenCV provides methods for performing pose estimation on aruco tags.
+
+#todo("Explain aruco tags")
 
 #figure(
   image("images/poseEstimation.png",width:60%),
@@ -911,25 +909,25 @@ Terrain is slightly more complicated as it is defined as a series of 2D points t
 
 We scale the tag corner position into world space from the image space and then subtract the model corner positon from the tag corner position to find the translation. From here, we can apply this translation to the terrain model to find the correct verticies to draw the terrain on the gameboard.
 
-A terrain's ID is stored when it is detected originally. When that same ID is detected again the position of the terrain is updated. If a new ID is detected, a new terrain object is created and added to the list of terrain objects.
+A terrain's ID is stored when it is detected originally. When that same ID is detected again, the position of the terrain is updated. If a new ID is detected, a new terrain object is created and added to the list of terrain objects.
 
 Terrain detection caused more issues than expected. The main issue came from getting the rotation of the terrain. Converting from a rotation vector to euler angles was a process that ended up taking a long time to get right. However, the main problem came from doing the pose estimation.
 
-Semi recently, OpenCV was updated to include a new method for pose estimation, deprecating the old method. This new method was not as well documented as a result. The new method also added some levels of complexity. Previously, OpenCV had a dedicated function for pose estimation. Now, this functionality was baked into solvePnP. This made the research done prior on implementing pose estimation redundant. Eventually a workaround was produced that allowed for the correct rotation to be found.
+Semi recently, OpenCV was updated to include a new method for pose estimation, deprecating the old method. This new method was not as well documented as a result. The new method also added some levels of complexity. Previously, OpenCV had a dedicated function for pose estimation. Now, this functionality was moved into solvePnP. This made the research done prior on implementing pose estimation redundant. Eventually, a workaround was produced that allowed for the correct rotation to be found.
 
 #todo("A description of how HSV space works and why it's used here would be very useful")
 
 == Game Board Representation
 
-Originally the plan was to use Qt for the GUI. However, this was abandoned for several reasons. Firstly, running Qt in a virtual environment on Arch caused issues for a while. Despite being installed it simply would crash on startup. This was run into when trying to display images in OpenCV as it uses Qt for the GUI. This was solved by updating to Qt6 and then reverting to Qt5.
+Originally, the plan was to use Qt for the GUI. However, this was abandoned for several reasons. Firstly, running Qt in a virtual environment on Arch caused issues for a while. Despite being installed, it simply would crash on startup. This was run into when trying to display images in OpenCV as it uses Qt for the GUI. This was solved by updating to Qt6 and then reverting to Qt5.
 
-Secondly, when attempting to use Qt for the GUI, it would not display as desired. Qt is a very complex library and as a result getting simple GUI elements to display as desired was incredibly difficult. One of the main issues was trying to display the circles for the operatives. When placing a circle button in Qt it would place as desired, but adding multiple circles at the top of the screen would cause everything to shift. I suspect this is due to Qt being aimed at more generic user interfaces, rather than the specific use case of displaying a game board. 
+Secondly, when attempting to use Qt for the GUI, it would not display as desired. Qt is a very complex library and as a result getting simple GUI elements to display as desired was incredibly difficult. One of the main issues was trying to display the circles for the operatives. When placing a circle button in Qt it would place as desired, but adding multiple circles at the top of the screen would cause everything to shift. This is likely due to Qt being aimed at more generic user interfaces, rather than the specific use case of displaying a game board. 
 
-At the realisation that this project was closer to building a game than a general interface the decision was made to switch to Pygame. Though a few other options were considered, such as Pyglet, Pygame was chosen due to it's simplicity and abundance of documentation.
+At the realisation that this project was closer to building a game than a general interface, the decision was made to switch to Pygame. Though a few other options were considered, such as Pyglet, Pygame was chosen due to its simplicity and abundance of documentation.
 
 === Linking of detected models and terrain to the virtual board
 
-When a model is detected it's ID is checked against a list of IDs in use. If the ID is in use, the position of the operative in the list is updated. Before the position is updated the coordinates from the image are translated to fit the board. This involves finding the scale between the virtual board and the board in the image as well as moving the coordinates to treat 0,0 as the top left corner of the virtual board and not the top left hand corner of the window.
+When a model is detected, its ID is checked against a list of IDs in use. If the ID is in use, the position of the operative in the list is updated. Before the position is updated, the coordinates from the image are translated to fit the board. This involves finding the scale between the virtual board and the board in the image as well as moving the coordinates to treat 0,0 as the top left corner of the virtual board and not the top left hand corner of the window.
 
 If the ID is not in use, the tag is ignored. This is to prevent false positives from being added to the board. 
 
@@ -976,23 +974,6 @@ Finding the line equation between the two center points is a simple process. Get
 
 Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to python code which took several days to notice. 
 
-The resultant code for finding the intersection points between the perpendicular line and one circle: #footnote("This is the quadratic formula with the line and circle equation substituted in."):
-
-let $m$ be the perpendicular gradient of the line between the two center points of the bases,
-$c$ be the y intercept of the perpendicular line. 
-$h$ be the x coordinate of the center point of the circle,
-$k$ be the y coordinate of the center point of the circle,
-and $r$ be the radius of the circle.
-
-```python
-xPositive = (h-m*c+m*k + sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
-
-xNegative =  (h-m*c+m*k - sqrt(-(m**2 * h**2)+ 2 *(m*k*h)-2*(m*c*h)+ (m**2 * r**2) + 2*(c*k) + r ** 2 - c**2 - k**2))/(1+m**2)
-```
-
-As you can probably see, this is not the most readable code and combined with converting between image space prematurely made getting this section functional difficult.
-
-
 // This was compounded by the base being scaled up to the gameboard size at a later point in the process. As the intersections were found in the image space, when the base was scaled up for the gameboard the intersection points were scaled up as well. The problem with this is that the intersections on a circle do not scale linearly. Increasing the size of a circle by 5 units does not move the intersection 5 units in x and y.
 
 // The thinking behind this was that the firing cones would be more accurate if they were done off of the direct information provided by the tracking system, rather than after they had been translated and slightly squished. This was a mistake as this not only caused lots of avoidable trip ups, but the accuracy lost would've been negligible as everything on the board gets scaled to the same size anyway.
@@ -1000,15 +981,15 @@ As you can probably see, this is not the most readable code and combined with co
 // Images also utilise 0,0 as the top left corner. This made verifying and converting the algebra to code more difficult.
 
 
-A separate methodology was used based on a wolfram alpha solution. Although it was overlooked that the solution was specific to the circle being at 0,0. So this was scrapped.
+A separate methodology was used based on a wolfram alpha solution. Although it was overlooked that the solution was specific to the circle being at 0,0 so this solution could not be used.
 
 
 
 ==== Terrain Within Firing Cones
 
-Originally the plan was to use a raycasting method to find the line of sight. But this had two main problems. Firstly, it made getting the information required for obscured and in cover more difficult than it needed to be. As we are concered with the distances of many points within the firing cones a raycasting implementation would need to be done past terrain after contact with the firing cone. Secondly, it would require a 2D array representation of the game board to be created. This would require some kind of rasterisation of terrain and operatives to build. This would be very computationally intensive for a suboptimal solution.
+Originally the plan was to use a raycasting method to find the line of sight. This had two main problems. Firstly, it made getting the information required for obscured and in cover more difficult than it needed to be. As we are concerned with the distances of many points within the firing cones, a raycasting implementation would need to be done past terrain after contact with the firing cone. Secondly, it would require a 2D array representation of the game board to be created. This would require some kind of rasterisation of terrain and operatives to build. This would be very computationally intensive for a suboptimal solution.
 
-The rules for obscured and in cover are very specific in their requirements as covered earlier. This allows us to exploit the specifics of the problem to simplify the process. As the line of sight rules are more complicated than simply whether an operative is visible to another operative we need a unique solution to this problem.
+The rules for obscured and in cover are very specific in their requirements as covered earlier. This allows us to exploit the specifics of the problem to simplify the process. As the line of sight rules are more complicated than simply whether an operative is visible to another operative, we need a unique solution to this problem.
 
 We can break the problem down into several parts:
 
@@ -1039,19 +1020,14 @@ The lines are determined as follows:
 
 This leaves us with a list of lines that fall within the firing cone. 
 
-Finding whether a point falls within the firing cone is done by calculating the barycentric coordinates of the point in relation to the triangle formed between the two points on the defender and the single point on the attacker. If alpha beta and gamma are all between 0 and 1, then that point falls within the triangle.
+Finding whether a point falls within the firing cone is done by calculating the barycentric coordinates of the point in relation to the triangle formed between the two points on the defender and the single point on the attacker. If alpha, beta, and gamma are all between 0 and 1, then that point falls within the triangle.
 
-Finding whether a line intersects with the firing cone is a bit trickier. Finding the intersection of a line and another line is easy. However, finding the intersection between two line segments is more complicated.
-
-#todo("barycentric coordinate explanation")
+Finding whether a line intersects with the firing cone is a bit trickier. Finding the intersection of a line and another line is easy. However, finding the intersection between two line segments is more complicated. This is because the intersection point of two lines can be outside of the line segments. Whilst an algorithm existed to solve this, it had several bugs that needed to be fixed.
 
 
+Now that we have a list of lines that fall within the firing cone we can find the closest point on each line to an operative. If the point meets the obscured or in cover requirements then we check if the requirements are also met for the attacker / defender. If they are, then we set the defender to be obscured or in cover.
 
-
-==== Obscuring
-
-==== Cover 
-
+Finding the closest point on a line to another point is a deceptively difficult problem. The solution ended up using some vector algebra to project the point onto the line using a pre-existing algorithm.
 
 = Evaluation
 
@@ -1463,7 +1439,7 @@ aruco tag roll + pitch
 
 The main LSEPI issue you could see here is copyright issues as _Kill Team_ is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the _Kill Team Lite_ rule set previously mentioned. This is publicly available published by _Games Workshop_. One issue is that different "_Kill Teams_" (groups of operatives) will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published _Kill Team_ information. If this proves to be problematic then the game rules will be based off a very similar system _Firefight_ @one-page. This is published by _One Page Rules_, who produce free to use, public miniature war-game systems.
 
-=== Accessability 
+=== Accessibility 
 
 
 == Final Reflections
