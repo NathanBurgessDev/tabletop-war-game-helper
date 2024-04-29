@@ -107,10 +107,16 @@ class GameBoard:
         self.screen.blit(text, text_rect)
         return 
     
-    def drawButton(self, rect: pygame.rect.Rect):
+    def drawRemoveButton(self, rect: pygame.rect.Rect):
         pygame.draw.rect(self.screen, RED, rect)
         font = pygame.font.Font(None, 36)
         text = font.render("Remove Operative", True, WHITE)
+        self.screen.blit(text, (rect.x + 10, rect.y + 10))
+        
+    def drawSwapStateButton(self, rect: pygame.rect.Rect):
+        pygame.draw.rect(self.screen, RED, rect)
+        font = pygame.font.Font(None, 36)
+        text = font.render("Swap State", True, WHITE)
         self.screen.blit(text, (rect.x + 10, rect.y + 10))
         
     def drawSelectedOperative(self,operative: Operative):
@@ -201,6 +207,7 @@ class MainGame:
         self.setupScreen()
         self.currentFrame = self.camera.getFrame()
         self.removeOperativeButton = pygame.rect.Rect(300, 1200, 250, 50)
+        self.swapOperativeState = pygame.rect.Rect(300, 1300, 250, 50)
         self.currentOperativeId = None
         if (testing):
             self.setupModelFinderTesting()
@@ -364,7 +371,8 @@ class MainGame:
             self.gameBoard.drawGameBoard()
             
             # Draw any buttons
-            self.gameBoard.drawButton(self.removeOperativeButton)
+            self.gameBoard.drawRemoveButton(self.removeOperativeButton)
+            self.gameBoard.drawSwapStateButton(self.swapOperativeState)
             
             #Draw terrain
             self.gameBoard.drawTerrain()
@@ -392,6 +400,10 @@ class MainGame:
         if (self.removeOperativeButton.collidepoint(event.pos)):
             self.operativeList.removeOperative(self.currentOperativeId)
             self.currentOperativeId = None
+            return
+        
+        if (self.swapOperativeState.collidepoint(event.pos)):
+            self.operativeList.swapOperativeState(self.currentOperativeId)
             return
         
         for operative in self.operativeList.operatives:

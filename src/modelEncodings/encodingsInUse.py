@@ -116,6 +116,12 @@ class OperativeList:
             if operative.id == id:
                 self.operatives.remove(operative)
                 break
+
+    def swapOperativeState(self, id):
+        for operative in self.operatives:
+            if operative.id == id:
+                operative.concealed = not operative.concealed
+                break
       
     # Somewhat annoyingly the radius is relative to the DISPLAYED board size
     # and the position is relative to the ACTUAL board size
@@ -126,14 +132,14 @@ class OperativeList:
         
         #Test with 5, 2, 13, 10
         # Team One
-        self.addOperative(Operative(id = 5,name = "Five Team One",radius=42,team=1,alive=True,position=(400,200),concealed=False, inCover=False))
+        self.addOperative(Operative(id = 5,name = "Five Team One",radius=42,team=1,alive=True,position=(400,200),concealed=True, inCover=False))
         # self.addEncoding(Operative(id = 2,name = "Two Team One",radius=14,team=1,alive=True,position=(300,300),obscured=False))
-        self.addOperative(Operative(id = 9,name = "Nine Team One",radius=42,team=1,alive=True,position=(300,300),concealed=False,inCover=False))
-        self.addOperative(Operative(id = 12,name = "Twelve Team One",radius=42,team=1,alive=True,position=(200,200),concealed=False,inCover=False))
+        # self.addOperative(Operative(id = 9,name = "Nine Team One",radius=42,team=1,alive=True,position=(300,300),concealed=False,inCover=False))
+        # self.addOperative(Operative(id = 12,name = "Twelve Team One",radius=42,team=1,alive=True,position=(200,200),concealed=False,inCover=False))
         
         #Team Two
-        self.addOperative(Operative(id = 13,name = "Thirteen Team Two",radius=42,team=2,alive=True,position=(400,400),concealed=False,inCover=False))
-        self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=42,team=2,alive=True,position=(500,500),concealed=False,inCover=False))
+        # self.addOperative(Operative(id = 13,name = "Thirteen Team Two",radius=42,team=2,alive=True,position=(400,400),concealed=False,inCover=False))
+        # self.addOperative(Operative(id = 10,name = "Ten Team Two",radius=42,team=2,alive=True,position=(500,500),concealed=False,inCover=False))
         self.addOperative(Operative(id = 3,name = "Three Team Two",radius=42,team=2,alive=True,position=(600,600),concealed=False,inCover=False))
         
         

@@ -1,6 +1,6 @@
 #import "interimTemplate.typ": *
 
-#set page(numbering: "1",number-align: center)
+
 #show: diss-title.with(
     title: "Mixed Reality Tabletop War Game Assistant",
     author: "Nathan Burgess",
@@ -56,7 +56,8 @@
 
 #pagebreak()
 #outline(title: "Table of Contents",depth: 3, indent: auto)
-
+#set page(numbering: "1",number-align: center)
+#counter(page).update(1)
 // Number all headings
 #set heading(numbering: "1.1.")
 
@@ -607,12 +608,6 @@ Once we have the firing cones we can determine whether an operative is obscured 
 
 #todo("This also needs a screenshot showing the cover and obscuring points")
 
-
-
-
-
-=== Movement? 
-
 // Parallax is a problem that still needs to be addressed. Through testing it was found that using a standard game board size, the parallax was too great to expect to locate a rim. As a result, we have settled on using a two camera solution. This solves the parallax problem by having each camera watch a different half of the game board.
 
 // However, one problem with this approach is that calibration will be needed to ensure that the overlap between the cameras does not cause issues. This could be achieved by either calibrating the cameras to the game board, as it will be of a known size, by placing tags on each corner of the board. Alternatively the middle of the board could be marked with a piece of tape, or tags on the edges. This should then allow for the two images to be stitched together accurately.
@@ -842,7 +837,11 @@ The Hough Circle transform works by taking in a radius and drawing circles of th
   caption: ([An example of Hough Circle detection and the accumulator produced. @hough-circles-explained.])
 )
 
-In OpenCV this functionality is expanded to allow for both a range of radii and a minimum distance between the centers of circles.
+In OpenCV this functionality is expanded to allow for both a range of radii, a minimum distance between the centers of circles and the minimum accumulator value needed to declare a circle center.  This minimum value allows for the transform to find incomplete circles. This is useful for our implementation as the yellow rims around the bases of the models are not always visible.
+
+There is a problem with the use of Hough Circle detection. The perspective transform applied to the image can cause the circles to appear more like ellipses as they move away from the center. This change is quite minor but in an ideal system we would utilise an ellipse or oval detection method instead. Though these implementations are not as readily available and would require more work to implement.
+
+A large portion of this project was spent on finding and testing different approaches to detect the circles that was: robust, fast and allowed for identification to be done easily. Attempts were made using blob and contour detection, but these were not successful. Contour detection was not able to deal with occlusion well and blob detection struggled when the circles came close together.
 
 === Model Identification
 
@@ -895,20 +894,63 @@ Now that we have the colour values for each encoding bit in each quarter. We nee
 
 == Terrain Detection
 
-The rotation of the aruco tag is provided in the form of a rodrigues rotation vector. However, our model library requires a angle rotation. To convert between the two we convert the rotation vector to a rotation matrix and then to euler angles. From here we can extract the z axis rotation (as we are working in a 2D plane from top down) and take the negative to get the correct angle for our model.
+As mentioned previously, terrain detection is done using aruco tags. The aruco tags are placed on top of the pillars of the terrain so that the corners of the pillar align with the black corners of the tag.
 
-Terrain is slightly more complicated as it is defined as a series of 2D points to form a polygon. The terrain model is represented in mm sizes. The gameboard uses 3 pixels to represent 1mm. So we scale the terrain by 3x to match. We then rotate the terrain model to match the rotation of the tag. Finally we need to find the translation to move our model from model space into world space. This is done using the top left corner of the tag and the point which matches this on the model. We scale the tag corner position into world space from the image space and then subtract the model corner positon from the tag corner position to find the translation. From here, we can apply this translation to the terrain model to find the correct verticies to draw the terrain on the gameboard.
+OpenCV provides methods for performing pose estimation on aruco tags.
+
+#figure(
+  image("images/poseEstimation.png",width:60%),
+  caption: ([An example of pose estimation on an aruco tag.])
+)
+
+Pose estimation will give us a matrix which tells us the rotation and translation of the tag in reference to the location of the camera.
+
+The rotation of the aruco tag is provided in the form of a rodrigues rotation vector. However, our model library requires an angle to perform a rotation. To convert between the two, we convert the rotation vector to a rotation matrix and then to euler angles. From here we can extract the z axis rotation (as we are working in a 2D plane from top down) and take the negative to get the correct angle for our model.
+
+Terrain is slightly more complicated as it is defined as a series of 2D points to form a polygon. The terrain model is represented in mm sizes. The gameboard uses 3 pixels to represent 1mm. So we scale the terrain by 3x to match. We then rotate the terrain model to match the rotation of the tag. Finally we need to find the translation to move our model from model space into world space. This is done using the top left corner of the tag and the point which matches this on the model.
+
+We scale the tag corner position into world space from the image space and then subtract the model corner positon from the tag corner position to find the translation. From here, we can apply this translation to the terrain model to find the correct verticies to draw the terrain on the gameboard.
 
 A terrain's ID is stored when it is detected originally. When that same ID is detected again the position of the terrain is updated. If a new ID is detected, a new terrain object is created and added to the list of terrain objects.
 
+Terrain detection caused more issues than expected. The main issue came from getting the rotation of the terrain. Converting from a rotation vector to euler angles was a process that ended up taking a long time to get right. However, the main problem came from doing the pose estimation.
+
+Semi recently, OpenCV was updated to include a new method for pose estimation, deprecating the old method. This new method was not as well documented as a result. The new method also added some levels of complexity. Previously, OpenCV had a dedicated function for pose estimation. Now, this functionality was baked into solvePnP. This made the research done prior on implementing pose estimation redundant. Eventually a workaround was produced that allowed for the correct rotation to be found.
 
 #todo("A description of how HSV space works and why it's used here would be very useful")
 
 == Game Board Representation
 
-=== Linking of Detected models and terrain to the virtual board
+Originally the plan was to use Qt for the GUI. However, this was abandoned for several reasons. Firstly, running Qt in a virtual environment on Arch caused issues for a while. Despite being installed it simply would crash on startup. This was run into when trying to display images in OpenCV as it uses Qt for the GUI. This was solved by updating to Qt6 and then reverting to Qt5.
 
-==== Operatives
+Secondly, when attempting to use Qt for the GUI, it would not display as desired. Qt is a very complex library and as a result getting simple GUI elements to display as desired was incredibly difficult. One of the main issues was trying to display the circles for the operatives. When placing a circle button in Qt it would place as desired, but adding multiple circles at the top of the screen would cause everything to shift. I suspect this is due to Qt being aimed at more generic user interfaces, rather than the specific use case of displaying a game board. 
+
+At the realisation that this project was closer to building a game than a general interface the decision was made to switch to Pygame. Though a few other options were considered, such as Pyglet, Pygame was chosen due to it's simplicity and abundance of documentation.
+
+=== Linking of detected models and terrain to the virtual board
+
+When a model is detected it's ID is checked against a list of IDs in use. If the ID is in use, the position of the operative in the list is updated. Before the position is updated the coordinates from the image are translated to fit the board. This involves finding the scale between the virtual board and the board in the image as well as moving the coordinates to treat 0,0 as the top left corner of the virtual board and not the top left hand corner of the window.
+
+If the ID is not in use, the tag is ignored. This is to prevent false positives from being added to the board. 
+
+As the game board is meant to be a strict representation of the rules, the base size of the model is defined within the program. This helps to ensure consistency between base sizes that would otherwise be difficult to maintain.
+
+Operatives are also drawn with their team colours, state (concealed or engaged) and names.
+
+#figure(
+  image("images/stateExample.png",width:60%),
+  caption: ([An example of the operatives and their state on the game board.])
+)
+
+The relationship between models on the physical and virtual game board will be covered more in depth in section 8.1.
+
+One issue that was encountered was that OpenCV uses y,x coordinates when indexing an image or getting the length and width. This caused some significant confusion when trying to find the required scaling between the image and the board.
+
+Terrain functions in a similar way to operatives. Although, terrain does not need to be declared beforehand. When a new terrain ID is detected, a new terrain object is created and added to the list of terrain objects. If a terrain ID is detected that is already in use, the position and rotation of the terrain is updated.
+
+The position of the terrain is based off of the top left hand corner of the aruco tag.
+
+The terrain positioning ended up being broken for a while due to the terrain model being defined upside down. This meant that the top left hand corner of the tag was being matched to the bottom left hand corner of the terrain model.
 
 === Line of Sight
 
@@ -964,11 +1006,21 @@ A separate methodology was used based on a wolfram alpha solution. Although it w
 
 ==== Terrain Within Firing Cones
 
+Originally the plan was to use a raycasting method to find the line of sight. But this had two main problems. Firstly, it made getting the information required for obscured and in cover more difficult than it needed to be. As we are concered with the distances of many points within the firing cones a raycasting implementation would need to be done past terrain after contact with the firing cone. Secondly, it would require a 2D array representation of the game board to be created. This would require some kind of rasterisation of terrain and operatives to build. This would be very computationally intensive for a suboptimal solution.
+
 The rules for obscured and in cover are very specific in their requirements as covered earlier. This allows us to exploit the specifics of the problem to simplify the process. As the line of sight rules are more complicated than simply whether an operative is visible to another operative we need a unique solution to this problem.
+
+We can break the problem down into several parts:
+
++ Building the firing cone.
++ Determining what terrain is within the firing cone
+  + Creating a list of lines within the firing cone. 
++ For each line finding the closest point to the operative.
++ Determining whether the point meets the obscured or in cover requirements.
 
 Both obscured and in cover are determined by the distance between the attacker / defender and a point at which terrain is within the firing cone. 
 
-To do this we need to determine what terrain, if any, is within the firing cones. It is important to note that we are not just concerned with whether the terrain is within the firing cone, but also how close intersecting points are to operatives. As our terrain is defined as a series of 2D points to construct a polygon we need to rebuild any terrain lines that fall within or accross the firing cones.
+// To do this we need to determine what terrain, if any, is within the firing cones. It is important to note that we are not just concerned with whether the terrain is within the firing cone, but also how close the terrain in the firing cone is to operatives. As our terrain is defined as a series of 2D points to construct a polygon we need to rebuild any terrain lines that fall within or accross the firing cones.
 
 We can determine whether a terrain line is within the firing cone if it satisfies any combination of the following two conditions:
 

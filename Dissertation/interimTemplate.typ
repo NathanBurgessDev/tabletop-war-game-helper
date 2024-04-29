@@ -45,6 +45,7 @@
         #text(size: 14pt)[I hereby declare that I have all necessary rights and consents to publicly distribute this dissertation via the University of Nottingham's e-dissertation archive.\*]\
         
     ]
+    set page(numbering: "i",number-align: center)
     body
 }
 
