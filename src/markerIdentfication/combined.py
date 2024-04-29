@@ -15,20 +15,22 @@ from markerDetection.findPieces import findPieces
 from boardHomogrophy.TopDownView import getTopDownView, calibrateTopDownView
 
 
-# The board is brown - composite colour - very annoying
+# The board is brown - composite colour - makes it hard to segment from other colours
+# As we were originally using red markers this caused issues with segmentation as brown is basically just a dark red
 
 NUM_SEGMENTS = 4
 NUM_ENCODING = 5
+
+'''
+This file handles both the terrain and model identification
+'''
+
 
 class TerrainTag:
     def __init__(self,id,corners,cameraMatrix, dist):
         self.id = id
         self.cornerPoints = corners
         self.cornerPointsAsTupleList = self.convertToTupleList(corners)
-        # Assumes our marker is a perfect square
-        # It never will be but its a close enough approximation to not cause huge issues
-        # self.centerY = self.getCenterY(self.cornerPointsAsTupleList)
-        # self.centerX = self.getCenterX(self.cornerPointsAsTupleList)
         self.rotation = self.getRotation(cameraMatrix, dist)
     
     def convertToTupleList(self,corners):
@@ -55,6 +57,8 @@ class TerrainTag:
     def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
         return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
     
+    
+    # https://stackoverflow.com/questions/75750177/solve-pnp-or-estimate-pose-single-markers-which-is-better
     def my_estimatePoseSingleMarkers(self,corners, marker_size, mtx, distortion):        
         '''
         This will estimate the rvec and tvec for each of the marker corners detected by:
@@ -88,6 +92,11 @@ class ModelEncoding:
         self.encoding = encoding
         self.circleRadius = circleRadius
         
+        
+'''
+Object to find models and terrain
+Contains all the extra information that is needed to do this, such as the camera matrix and distortion coefficients
+'''
 class ModelFinder:
     def __init__(self, calibrateImage):
         self.cornerPoints = calibrateTopDownView(calibrateImage) # top left, top right, bottom left, bottom right
@@ -102,11 +111,16 @@ class ModelFinder:
     def identifyTerrain(self,image):
         return identifyAllTerrain(image,self.cornerPoints,self.arucoDetector,self.cameraMatrix,self.dist)
 
+
+'''
+Performs the identification of all the terrain
+Returns a list of TerrainTag objects
+
+Does our perspective transform to get a top down view
+Then uses the aruco detector to find the markers
+'''
 def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] | None:
     image = getTopDownView(img,pts)
-    
-    # cv.imshow("image", image)
-    # cv.waitKey(25)
     
     marker_corners, marker_ids = detector.detectMarkers(image)[:2]
     if (marker_ids is None):
@@ -122,10 +136,21 @@ def identifyAllTerrain(img,pts,detector,cameraMatrix,dist) -> list[TerrainTag] |
     return terrainList
     
 
+'''
+Performs the locating and identification of all the model markers
+
+Returns a list of ModelEncoding objects
+
+Gets a top downView of the image
+Calls the piece finder to get the circle locations and radii
+Then finds the pink center points
+For each circle it finds the 4 closest pink center points
+Then for each pink center point it finds the encodings to the right and left
+It then groups the encodings by position and checks for errors
+'''
 def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | None, tuple[int,int]]:
     
     
-    # cv.imshow("image", image)
     image = getTopDownView(img,pts)
     
     imageSize = image.shape
@@ -134,21 +159,13 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
     
     if (len(circles) <= 0):
         return (None, imageSize)
-    # print(circles)
-    
-    # For testing please change this later ty ty
-    # center = (circles[0][0], circles[0][1])
-    
-    # radius = circles[0][2] * 2
-    
-    # cropped = image[center[1]-radius:center[1]+radius, center[0]-radius:center[0]+radius]
+ 
     
     
     pinkFrame = findPink(image)
 
     kernal = np.ones((3,3), "uint8")
-    
-    #I have no Idea why dilating makes this work but it does
+  
     dilatedRedFrame = cv.dilate(pinkFrame,kernal)
     try:
         redCenterPoints = findRedContourCentroids(dilatedRedFrame)
@@ -162,16 +179,6 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
     blur = cv.GaussianBlur(image, (7, 7), 0)
     hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
     
-    # For each circle take the 4 closest red center points within a certain radius
-    # For each red center point check the colour of the contours to the right
-    # For each red center point check the colour of the contours to the left
-    # Perform some error checking
-    
-    # We need some kind of error checking to make sure our encodings are correct
-    # We will read to the right of a centroid
-    # If there is a 0 returned in this we will compare the left read and the right read
-    # If we can find a complete encoding by combining the two we will do so
-    # This is done by checking each bit and taking the most common one
     encodingList = []
     for circle in circles:
         try:
@@ -186,23 +193,15 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
        
         quarterEncodingListRight = []
         for quarter in right:
-            # for point in quarter:
-                # cv.circle(image, (point[0], point[1]), 1, (0, 0, 255), 3)
             encodingsInQuarter = getFullEncoding(hsvImage, quarter)
             quarterEncodingListRight.append(encodingsInQuarter)
-        # print(quarterEncodingListRight)
-        
+    
        
         quarterEncodingListLeft = []
         for quarter in left:
            
             encodingsInQuarter = getFullEncoding(hsvImage, quarter)
             quarterEncodingListLeft.append(encodingsInQuarter)
-        # print(quarterEncodingListLeft)
-        
-        # for quarter in left:
-        #     for point in quarter:
-        #         cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
         
         correlatedQuarters = zip(quarterEncodingListRight,quarterEncodingListLeft)
         quartersTuple = tuple(correlatedQuarters)
@@ -220,58 +219,11 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
         
         finalEncoding = ModelEncoding(encoding, (circle[0],circle[1]), circle[2])
        
-        print ("Final Encoding = ", encoding)
+    
         encodingList.append(finalEncoding)
-        print("NEXT CIRCLE")
+    
     
     return (encodingList, imageSize)
-        
-   
-        
-            
-        
-
-        
-    
-    
-    # imageDisplay = image.copy()    
-    
-
-    
-    # for dataPoints in decodedCircles:
-    #     # cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
-    #     print("NEXT ENCODING")
-    #     finalEncodingList= []
-    #     finalEncodingList = getFullEncoding(hsvImage, dataPoints)
-    #     # cv.circle(imageDisplay, (point[0], point[1]), 1, (0, 255, 0), 3)
-    #     print(finalEncodingList)
-    # print(modelIdData)
-        
-    # for dataPoints in decodedCircles:
-    #     for point in dataPoints:
-    #         cv.circle(image, (point[0], point[1]), 1, (0, 255, 0), 3)
-    
-    
-    # Find the red Center point closest to the center of the circle
-    # redCenterPoints.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
-    # print(redCenterPoints)
-    # print(center)
-    
- 
-    
-    
-    
-    # cv.imshow("red",redFrame)
-    # resized = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2)))
-    # cv.imshow("img",resized)
-    # cv.imshow("cropped",cropped)
-    
-    
-    
-    # cv.imshow("rotate",rotate)
-
-
-    # k = cv.waitKey(0)
     
 
 # We need to group the bits together by their positions on the encoding
@@ -281,7 +233,6 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
 # For some reason this took a long time to write
 # I wasted a lot of time on the checkForErrorsInQuarter function which was a bad way of doing this
 # Then ended up with the 2 for loops the wrong way round
-# This was not a good day of development
 def groupEncodingBits(quartersTuple):
     groupedBits = []
     for i in range (0, len(quartersTuple[0][0])):
@@ -295,7 +246,6 @@ def groupEncodingBits(quartersTuple):
         
 # Takes in our grouped bits by position
 # Returns the most common encoding for each position to be used as a final encoding
-# Will need some exceptions to be thrown if there is no clear winner
 def checkForErrorsForBit(groupedBits):
     finalEncoding = []
     for group in groupedBits:
@@ -308,20 +258,15 @@ def checkForErrorsForBit(groupedBits):
     return finalEncoding
 
 
-# This is an unfathomobly stupid way of doing this
-# I should just check the [i] of each bit for each quarter and see if they are the same
-# and pick hte most common one
+''' DEPRECATED FUNCTION
+was originally at a sort of homebrew attempt at hamming distance without really knowing what that was
+'''
 
-# The first bit of error checking we need to do is to see if any of the encoding bits are missing
-
-# Will return a list of potential encodings for the provided quarter
-# more "robust" encodings will be returned twice, as to influence the voting
 # @DeprecationWarning("This methodology was not a good approach, although it is left here for reference")
 def checkForErrorsInQuarter(quarter):
     right = quarter[0]
     left = quarter[1]
     bothFailed = False
-    # I have no idea why .reverse() does not work here
     
     # Check if there is a missing encoding in both
     # Need to see if we can combine encodings to get a full encoding
@@ -417,8 +362,7 @@ def checkForErrorsInQuarter(quarter):
 
 # Takes a center and a radius and a list of red center points
 # Takes the 4 closest red center points 
-# // TODO (make this work for a certain radius as a limit)
-# For each red center point check the colours to the right
+# For each pink center point check the colours to the right
 def getCentersOfCircleBitContours(center, radius, centroids, image):
     
     centroids.sort(key=lambda x: math.sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2))
@@ -462,10 +406,6 @@ def getFullEncoding(hsvImage, data):
 def hsvPointInRange(hsvPoint, lower, upper):
     return (hsvPoint[0] >= lower[0] and hsvPoint[0] <= upper[0] and hsvPoint[1] >= lower[1] and hsvPoint[1] <= upper[1] and hsvPoint[2] >= lower[2] and hsvPoint[2] <= upper[2])
 
-# Doing this constant in range check is very very slow
-# This needs to be re-written
-
-# With print statements
 
 # Before:
 # real    0m2.290s
@@ -478,28 +418,21 @@ def hsvPointInRange(hsvPoint, lower, upper):
 # sys     0m1.293s
 
 def getEncodingAtPoint(hsvImage, point):
-    #TODO this really needs bounds checking
+
     # If a part of the identifcation ring is outside of the image - when calculating the position of the non pink points
-    # THis will cause an error as its trying to look outside of the image
+    # This will cause an error as its trying to look outside of the image
     # Bounds checking is needed
     
     if (point[1] >= hsvImage.shape[0] or point[0] >= hsvImage.shape[1]):
         return 0
         
     hsvPoint = hsvImage[point[1], point[0]]
-    
-    
-    
+
     # Encoding 1 boundaries - currently Black
     # Made a slider program to test values
     lower1 = np.array([0, 0, 80])
     upper1 = np.array([179, 255, 255])
-    
-    
-    # blackMask = cv.inRange(hsvImage, lower1, upper1)
-    # blackMask = cv.bitwise_not(blackMask)
-    # cv.imshow("black",blackMask)
-    
+ 
     # 81 works well
     # 90 is too high
     
@@ -508,23 +441,6 @@ def getEncodingAtPoint(hsvImage, point):
     lower2 = np.array([0,46,0])
     upper2 = np.array([179, 255, 255])
     
-    # whiteMask = cv.inRange(hsvImage, lower2, upper2)
-    
-    # whiteMask = cv.bitwise_not(whiteMask)
-    # cv.imshow("white",whiteMask)
-    # cv.waitKey(0)
-    
-    # lowBit = (blackMask[point[1], point[0]])
-    # highBit = (whiteMask[point[1], point[0]])
-    
-    # whiteMask = cv.resize(whiteMask, (int(whiteMask.shape[1]/2), int(whiteMask.shape[0]/4)))
-    # cv.imshow("black",whiteMask)
-    
-    
-    # if (lowBit == 255):
-    #     return 1
-    # if (highBit == 255):
-    #     return 2
     
     if (not hsvPointInRange(hsvPoint, lower1, upper1)):
         return 1
@@ -534,35 +450,10 @@ def getEncodingAtPoint(hsvImage, point):
     else:
         return 0
     
-    # cv.imshow("black",blackMask)
-    # return (blackMask[point[1], point[0]])
-    
 
-
-# Ty Adrian for the code - I stole it from your semaphore flags
-# def findRed(rgbImage):
-#     blur = cv.GaussianBlur(rgbImage, (7, 7), 0)
-#     hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
-    
-#     # lower boundary RED color range values; Hue (0 - 10)
-#     lower1 = np.array([0, 70, 70])
-#     upper1 = np.array([15, 255, 255])
- 
-#     # upper boundary RED color range values; Hue (160 - 180)
-#     lower2 = np.array([160,70,70])
-#     upper2 = np.array([179,255,255])
-    
-#     # Threshold the HSV image to get only red color
-#     top_mask = cv.inRange(hsvImage, lower1, upper1)
-#     bot_mask = cv.inRange(hsvImage, lower2, upper2)
-
-#     red_mask = top_mask + bot_mask
-    
-#     # cv.imshow("red",red_mask)
-    
-#     return red_mask
-
-
+'''
+Returns the pink mask of the image
+'''
 def findPink(rgbImage):
     blur = cv.GaussianBlur(rgbImage, (7, 7), 0)
     hsvImage = cv.cvtColor(blur, cv.COLOR_BGR2HSV)
@@ -571,12 +462,13 @@ def findPink(rgbImage):
     upper1 = np.array([179,255,255])
     
     pinkMask = cv.inRange(hsvImage,lower1, upper1)
-    # resized = cv.resize(pinkMask, (int(pinkMask.shape[1]/2), int(pinkMask.shape[0]/4)))
-    # cv.imshow('image', resized)
-    # cv.waitKey(0)
     return pinkMask
 
 # An improvement would be to check the rough shape of the contours as to not get the wrong ones
+'''
+Finds the centroids of the provided contours
+Used for finding the pink encoding bits
+'''
 def findRedContourCentroids(img):
     
     cnts = cv.findContours(img, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -592,8 +484,6 @@ def findRedContourCentroids(img):
             M = cv.moments(c)
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
-            # print(f"Red Box {i} : cx={cx}, cy={cy}") 
-            # cv.circle(img, (cx, cy), 1, (0, 255, 0), 3)
             redCenterPoints.append((cx, cy))
             cv.drawContours(img, [c], -1, (255, 255, 255), 5)
     except:
@@ -607,19 +497,19 @@ def findRedContourCentroids(img):
     return redCenterPoints
 
 
-# For each red center point check the colour of the contours to the right
+# For each pink center point check the colour of the contours to the right
 # Returns the positions of these new contours
 def getRightContoursPositions(redCenterPoints, center, radius, image):
     data = []
     for x, y in redCenterPoints:
         quarter = []
-        # print(f"Red Box : x={x}, y={y}")
+      
         x = x - center[0]
         y = y - center[1]
         for i in range(0, int(360 / NUM_SEGMENTS), int(int(360 / NUM_SEGMENTS) / NUM_ENCODING)):
             newPosX =x * math.cos(math.radians(i)) - y * math.sin(math.radians(i))
             newPosY =x * math.sin(math.radians(i)) + y * math.cos(math.radians(i))
-            # cv.circle(image, (int(newPosX) + center[0], int(newPosY)+center[1]), 1, (0, 255, 0), 3)
+           
             quarter.append((int(newPosX) + center[0], int(newPosY)+center[1]))
         data.append(quarter)
     return data
@@ -628,14 +518,13 @@ def getLeftContoursPositions(redCenterPoints, center):
     data = []
     for x, y in redCenterPoints:
         quarter = []
-        # print(f"Red Box : x={x}, y={y}")
         x = x - center[0]
         y = y - center[1]
         for i in range(0,-int(360 / NUM_SEGMENTS), -int(int(360 / NUM_SEGMENTS) / NUM_ENCODING)):
       
             newPosX =x * math.cos(math.radians(i)) - y * math.sin(math.radians(i))
             newPosY =x * math.sin(math.radians(i)) + y * math.cos(math.radians(i))
-            # cv.circle(image, (int(newPosX) + center[0], int(newPosY)+center[1]), 1, (0, 255, 0), 3)
+
             quarter.append((int(newPosX) + center[0], int(newPosY)+center[1]))
         data.append(quarter)
     return data

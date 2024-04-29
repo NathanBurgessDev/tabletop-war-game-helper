@@ -16,7 +16,6 @@ GRAY = (128, 128, 128)
 
 
 # This stores a list of the encodings we are currently using
-
 class Operative:
     def __init__(self,id:int, name:str, radius:int, team:int, alive:bool, position:tuple, concealed:bool, inCover:bool):
         self.id = id
@@ -123,10 +122,9 @@ class OperativeList:
                 operative.concealed = not operative.concealed
                 break
       
-    # Somewhat annoyingly the radius is relative to the DISPLAYED board size
-    # and the position is relative to the ACTUAL board size
-    # This doesnt really cause too many issues as the radius is only used for drawing and we never actually utilise the real radius
-    # But it is something to be aware of
+    '''
+    Use this function to define the operatives in use with their respective encodings
+    '''
     def setupOperatives(self):
         # 0 through 15 are the pieces in use
         

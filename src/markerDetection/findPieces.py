@@ -5,15 +5,7 @@ import numpy as np
 # Returns a list of all yellow circles of the correct radius
 # In the format arr[(center, radius)]
 def findPieces(img):
-    
-    # Old bad way of doing colour finding - not using HSV space
-    # yellowLower = (0, 200, 200)
-    # yellowUpper = (100, 255, 255)
-    
-    # upper = yellowUpper
-    # lower = yellowLower
-    
-    # grayFrame = cv.inRange(img, lower, upper)
+   
     
     
     grayFrame = findYellow(img)
@@ -39,17 +31,6 @@ def findPieces(img):
     for circle in circles[0, :]:
         if circle[2] > 30 and circle[2] < 200:
             circleList.append((circle[0],circle[1],circle[2]))
-            # cv.circle(img,(circle[0],circle[1]),1,(0,100,100),3)
-            # cv.circle(img,(circle[0],circle[1]),circle[2],(255,0,255),3)
-        
-        
-    
-    # print("circle list" + str(circleList))
-    
-    # cv.imshow("circles", img)
-    
-    # cv.waitKey(0)
-    
     return circleList
 
 
@@ -71,5 +52,3 @@ def findYellow(rgbimage):
     # cv.imshow("yellow",yellow_mask)
     return yellow_mask
 
-
-# findPieces(cv.imread("Identification/paperTestPinkCover.jpg"))

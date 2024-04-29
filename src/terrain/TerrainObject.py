@@ -71,6 +71,8 @@ class TerrainLine:
         self.heavy = heavy
         self.line = (start, end)
         
+        
+        
 # 5.6mm Wall Width
 # 78.81 Wall length
 # 24.67 Pillar Width
@@ -84,11 +86,10 @@ class PillarDoubleWall(Terrain):
     def __init__(self, id):
         super().__init__(points=self.buildPolygon(), heavy = True, id = id)
     
-    # I built this upside down :((((((((((((((((((((((((((((((((((((((((((((((
+    # I built this upside down :(
     def buildPolygon(self):
             verts = [(100,100), (109.5,100),(109.5, 178.8),(115.1,178.8), (115.1,100),(124.6,100),(124.6,71.05),(115.1,71.05), (115.1,-7.76), (109.5,-7.76), (109.5,71.05), (100,71.05)]
             polygon = Polygon(verts)
-            # self.scaledPolygon = affinity.scale(polygon, xfact=3, yfact = 3)
             self.scaledPolygon = polygon
             scaledVerts = list(self.scaledPolygon.exterior.coords[:-1])
             print(scaledVerts)

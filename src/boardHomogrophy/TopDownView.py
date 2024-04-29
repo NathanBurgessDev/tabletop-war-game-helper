@@ -9,6 +9,7 @@ sys.path.append(direction.parent.parent)
 
 from boardHomogrophy.HomographyUtils import four_point_transform
 
+
 # import sys
 # path_root = Path(__file__).parents[2]
 # print(path_root)
@@ -24,29 +25,19 @@ from boardHomogrophy.BoardFinding import getFourCornersCoordinates
 # automatically determine the coordinates without pre-supplying them
 
 def calibrateTopDownView(image: ndarray) -> tuple[ndarray,ndarray]:
-    # image = cv.imread("Identification/paperTestCorners.jpg")
     pts = getFourCornersCoordinates(image)
     pts = np.array(pts, dtype = "float32")
 
     return pts
-    # cv.imshow("Original", image)
-
-    
-    # cv.waitKey(0)
+  
 
 def getTopDownView(image: ndarray, pts: ndarray) -> ndarray:
-    # image = cv.imread("Identification/paperTestCorners.jpg")
-    # pts = np.array([(24,230),(1487,239),(15,1422),(1484,1403)], dtype = "float32")
     # # apply the four point tranform to obtain a "birds eye view" of
     # # the image
-    # image = cv.resize(image, (int(image.shape[1]/2), int(image.shape[0]/2.5)))
+
     warped = four_point_transform(image, pts)
-    # show the original and warped images
     
     return warped
-    # cv.imshow("Original", image)
 
-    
-    # cv.waitKey(0)
 
 
