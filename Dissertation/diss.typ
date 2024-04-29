@@ -75,6 +75,8 @@ In this document, there are #total-words words all up.
 
 = Abstract 
 
+This project aims to create a computer vision based tracking system for physical tabletop miniatures for an example wargaming system. As wargaming rules are quite complex, the system will also aim to create a viable representation of certain rules to aid the players. This involves the creation of custom tags to track miniatures aimed to handle occlusion, provide accurate information whilst also not requiring external hardware.
+
 = Introduction and Project Intention
 
 Tabletop war-gaming is a popular hobby which has recently seen a surge in popularity during the COVID-19 pandemic, however, with a high barrier to entry, it remains niche and inaccessible to many. The rules to tabletop war-games can be complex and difficult to learn. This can be daunting for new players, putting them off the hobby as well as causing disagreement between seasoned players over rules interpretations.
@@ -119,11 +121,11 @@ The game is played on a 30" by 22" board, referred to as a "Killzone". The _Gall
 #figure(
   image("images/parallaxDiagram.svg", width:40%),
   caption:[An example of the problem introduced by parallax. The camera is placed above the board offset from the operative. The operative is partially obstructed by terrain. The green triangle represents the parts visible to the camera. The red lines demonstrate the areas blocked by the terrain.]
-)
+)<parallax-diagram>
 
 The further away the camera is from the operative on the x axis, the more the terrain will block the operative. However, as the camera travels away on the y axis, the terrain will block less of the operative. For a camera implementation this would also mean we lose quality in the image. As a result, a camera based system would need to find an ideal distance from the board which provides enough quality in the image, whilst also being able to see enough of an operative if it is obscured by terrain.
 
-#todo("Put an IRL image in here to demostrate")
+
 #pagebreak()
 == Gameplay
 
@@ -148,7 +150,6 @@ Please note that the explanations for these rules are abstracted from the _Kill 
 
 // This is quite a complex set of rules to enforce, making movement a good candidate for the system to assist with.
 
-#todo("Maybe add some images to demonstrate")
 === Shooting and Line of Sight
 
 Operatives can be set to two states: "concealed" or "engaged". These states are used to determine whether an operative is a valid target or whether it is able to make offensive actions, such as shooting. An operatives state is denoted by a small triangle of orange card pointing to the model. The system will need a way to track the state of an operative, whether this be through detecting the orange markers or manually updating the state.
@@ -188,7 +189,11 @@ For a defender to be (visible) the following must be true:
 
 When drawing cover lines the attacker picks one point on their base and draws two cover lines from that point to every point on the defenders base, to create a cone. In practice this means drawing two cover lines to the extremes of the defenders base.
 
-#todo("Going to need to put some examples in - maybe use the pre-existing ones? not sure if this is ok to use: https://www.reddit.com/r/killteam/comments/vukgpz/basic_line_of_sight_rule_slate_i_made_for_our/#lightbox")
+
+#figure(
+  image("images/killTeamCover.png", width:60%),
+  caption: [An example of cover lines @kt-lite-rules.]
+)
 
 For a defender to be *obscured* the following must be true:
 
@@ -305,7 +310,7 @@ A potentially valid method utilizing RFID could be to use the approach outlined 
 // - Problematic when minitures will have similar paint schemes and poses - could be solved by looking at last known positions?
 // - Difficulty in keeping objects "unique"
 
-#todo("This should probably be improved upon - either by reading into deeplearning occlusion methods or recgonition methods of similar but different objects.")
+
 
 Modern object tracking systems are often based on a machine learning or deep learning approach. In this case a classifier model would be used to identify each unique miniature on a team, and then subsequently locate it within the game board. The biggest drawback to this approach is the amount of training data needed for each class in a classifier. According to _Darknet's_ documentation (a framework for neural-networks such as YOLO) @yolo each class should have ~2000 training images.
 
@@ -325,7 +330,7 @@ After some testing utilizing an iPad Pro with a LIDAR scanner, some drawbacks we
 
 As a result I won't be using this approach for the project. Although, for future work, this could be an interesting option to explore allowing you to implement AR features such as highlighting models on your phone or tablet or displaying information above the model.
 
-=== Computer Vision without neural networks
+=== Computer Vision 
 
 After considering all the options above, the best method found was using computer vision techniques.
 
@@ -337,23 +342,14 @@ The computer vision method explored the most was utilizing coloured tags to iden
 
 The use of coloured tags would also mean there would be access to specific measurements allowing for an accurate location to be discerned. However, some external modification to the the game board or miniatures would need to be made. The challenge here is finding a way to do this without obstructing the flow of the game or the models themselves.
 
-#todo("Actually talk about OpenCV")
+== Fiducial Markers and Tag Detection
 
-== Computer Vision
+A promising approach appears to be using fiducial markers. Aruco tags @arucoTags are a type of fiducial marker commonly used in robotics and computer vision. These tags are black and white squares with unique patterns in the center. The tags are designed to be easily segmentable from the background and easily identifiable. The tags allow for pose estimation, which is the process of determining the rotation and translation of the marker in relation to the camera.
 
-#todo("Write up the papers on computer vision that were used.")
-
-=== Fiducial Markers and Tag Detection
-
-=== Occlusion solutions
-
-=== Object Detection
-
-=== Parallax Solutions
-
-=== Calibration Solutions
-
-
+#figure(
+  image("images/arucoExample.jpg", width:80%),
+  caption: [An example of aruco tags @arucoTags.]
+)
 // _STARS_ @STARS
 
 // _TARboard_
@@ -388,7 +384,6 @@ The project can be broken down into two main goals.
 The methodology chosen to achieve these goals must meet the takeaways from the project background section. These requirements are not included here as they are more implementation specific instead of outlining the functionality of the project.
 
 
-#todo("I'm not entirely sure if this meets the aims of setting up the requirements. A large portion of this project was spent on researching the best methodology to actually use, so going in depth here on the specifics of implementation feels wrong.")
 
 
 #pagebreak()
@@ -402,13 +397,9 @@ This approach was chosen for a few key reasons. Firstly, it is the most accessib
 
 Secondly, it is the most flexible option. A tag based system does not care about the shape or colour of the models, only the tags. This requirement meant that machine learning approaches would not be as viable as the potential variation in models used is too high. If we stuck to only supporting specific, unmodified models this may potentially work, but this would place a restriction on the target audience and in a subject such as miniature wargaming where customisation is so heavily valued, this would not be a good approach. As well as this given the unique paint schemes each player may use this would mean an ML model would need to be either trained specifically for each players kill team or be able to use a models silhouette to identify it. Both of these approaches either require users to make their own datasets and train the model themselves, a time consuming and technical task, or require a model that can identify a model from its silhouette, a complex task that would require a lot of training data and wouldn't be that accurate due to potential model customisations.
 
-#todo("Some images demonstrating the same model with different paint schemes")
-
 Building on this, maintaining a unique identification for an object is a key requirement but is difficult to implement using a machine learning approach. Kill Teams can utilise multiple of the same type of operative, as a result the system would need to be able to track each "unique" operative despite having the same appearance. This becomes problematic when occlusion is introduced. If we were to move an operative and at the same time cover or move another operative of the same type, it would be difficult to differentiate which one was which. A potential solution would be to utilise similar technology to facial recognition models, particularly looking at research into identifying the differences between identical twins.
 
 In contrast, a tag based system is ambivalent to the appearance of the model. This means the system is functional with any model, regardless of customisation which meets one of the main requirements of the project.
-
-#todo("Actually put the citation in for this")
 
 Finally, a tag based system will assist with accuracy. Getting the location and rotation of an aurco tag using pose estimation is a well documented process. This methodology can be applied to a tag design that will function well with miniatures and terrain.
 
@@ -418,14 +409,9 @@ A camera will be placed above the center of the gameboard looking downwards prov
 
 Camera distortion is caused by different camera designs having slightly different distortion in the images they produce due to the different lenses. This can be corrected by using a camera calibration method to produce a camera matrix and distortion coefficients which can be used to un-distort resultant images. Radial distortions result in the image having straight lines appear curved. Tangential distortions result in the image appearing tilted along an axis. OpenCV provides a simple method to calibrate a camera using a chessboard pattern. This produces the camera matrix and distortion coefficients which can be saved and used to un-distort images. It is important to note that each different camera will have a different distortion so will need to be calibrated separately.
 
-
-#todo("Image showing camera distortion from the openCV docs")
-
-
-
 Image distortion is caused by the location of the camera relative to the board. To correct this we can perform perspective correction. Taking a top down view of the board will not garuntee that the board will be rectangular in the image. For example, it is likey for the camera to not be perfectly level resulting in parts of the board appearing closer or longer than they actually are. To remedy this we can identify the four corners of the board and perform a perspective correction algorithm to produce a flattened version of the board. At the same time this will give us the boundaries of the board and crop the image.
 
-#todo("Once again put an image in showing how this actually works - at the same time should probably cover aruco markers earlier")
+
 
 #figure(
   grid(
@@ -518,13 +504,10 @@ The high contrasting starting bit (shown here in magenta) is used to determine t
 
 
 
-#todo("Again this should be a flowchart")
 
 == Game Board Representation
 
-The interface is created using _Pygame_. This is a simple to use library that allows for the creation of 2D games. It is relatively lightweight and quick to develop with.
-
-#todo("pygame citation")
+The interface is created using Pygame. This is a simple to use library that allows for the creation of 2D games. It is relatively lightweight and quick to develop with.
 
 The digital game board represents a 22" x 15" board. Which is half the size of a standard board. 
 
@@ -563,7 +546,6 @@ The gameboard will display several things:
   caption: ([An example of what the GUI could look like #footnote("The final GUI can be seen in the video and evaluation section.").])
 )
 
-#todo("Include Image of GUI")
 
 === Line of Sight
 
@@ -639,7 +621,7 @@ Once we have the firing cones we can determine whether an operative is obscured 
 
 // The information for the selected operative is displayed below the game board. A user can select the action they have performed / want to perform on the right hand side.
 
-// The GUI will be built in _PyQt_ @pyqt which is a python wrapper for the _Qt_ framework. One potential stretch goal is for the GUI and the detection system to be separate entities. For example, the detection system should be able to detect and track pieces without input needed from the virtual game board i.e. which model is selected. This would allow for other detection systems to be swapped out in the future or for other applications to be developed using the detection system.
+// The GUI will be built in _PyQt_ @pyqt which is a Python wrapper for the _Qt_ framework. One potential stretch goal is for the GUI and the detection system to be separate entities. For example, the detection system should be able to detect and track pieces without input needed from the virtual game board i.e. which model is selected. This would allow for other detection systems to be swapped out in the future or for other applications to be developed using the detection system.
 
 = Implementation
 
@@ -672,8 +654,6 @@ This introduces three problems:
 + The image distortion will have a greater effect on the image. A small deviation from being level will have a greater effect on the image the further away the camera is.
 
 The solution to this is to utilise two cameras.
-
-#todo("Include a diagram of how this would work.")
 
 One camera would cover the left half of the board and the other the right. This would allow for each camera to be closer to the board, whilst minimising the parallax effect. The two images can then be stitched together to create a single image of the entire board.
 
@@ -724,9 +704,7 @@ OpenCV provides a simple method to calibrate a camera using a chessboard pattern
 
 A chessboard pattern is used as it is easy to find specific points of which the relative positions are known. In this case, the corners between black and white squares are used. As we know the position of these points in the real world and also the points at the image, we can use this to calculate the camera matrix and distortion coefficients.
 
-In the case of the camera matrix the points are used to calculate the focal length and optical centers of the camera. These values are then stored in a camera matrix:
-
-#todo("Include the camera matrix")
+In the case of the camera matrix the points are used to calculate the focal length and optical centers of the camera. These values are then stored in a camera matrix.
 
 The matrix and distortion coefficents are used later as they are required for the perspective-n-point pose computation utilised in the aruco tag detection.
 
@@ -788,11 +766,7 @@ Contour detection appeared promising though the detailing on the board meant con
 
 Before we can attempt to locate the center point of the circle we need to clear the image of noise. This is done by blurring the image#footnote("This is done to help reduce other noise from the image and soften edges."), converting to HSV and then applying a threshold to only show the yellow colour space in the image. This leaves us with a binary image with white pixels representing yellow and black for everything else.
 
-#todo("Include images showing each step in this processing pipeline")
-
 From here, we perform edge detection on the image to find the edges of the circles in the image. This is helps speed up the circle detection. This leaves us with a wireframe of the circles. We can then apply Hough Circle detection to the image to find the center points of the circles and their radii. OpenCV provides a simple function to do this.
-
-#todo("Talk about fine tuning the parameters")
 
 This leaves our processing pipeline as such:
 
@@ -823,12 +797,7 @@ A large portion of this project was spent on finding and testing different appro
 
 === Model Identification
 
-#todo("Include image showing how the encoding is found")
-
 The process to get the encoding is as follows:
-
-#todo("This should be a flowchart")
-#todo("Should also have a figure showing the resultant image at each step.")
 
 + Take the circle centers and radii from the Hough Circle detection.
 + Using the same transformed image as before, but unblurred and unthresholded:
@@ -886,15 +855,13 @@ table(
 caption: ([The time taken for a single detection before and after rotation optimisation.])
 ) <optimisation-rotate>
 
-After chasing down several other instances of entire image operations, the time taken for a single detection was reduced to be mostly unnoticable. Providing the python runtime would unfortunately not provide much information here as at this point, the program was just running the detection so a majority of the time was spent on overhead and image loading.
+After chasing down several other instances of entire image operations, the time taken for a single detection was reduced to be mostly unnoticable. Providing the Python runtime would unfortunately not provide much information here as at this point, the program was just running the detection so a majority of the time was spent on overhead and image loading.
 
 == Terrain Detection
 
 As mentioned previously, terrain detection is done using aruco tags. The aruco tags are placed on top of the pillars of the terrain so that the corners of the pillar align with the black corners of the tag.
 
 OpenCV provides methods for performing pose estimation on aruco tags.
-
-#todo("Explain aruco tags")
 
 #figure(
   image("images/poseEstimation.png",width:60%),
@@ -914,8 +881,6 @@ A terrain's ID is stored when it is detected originally. When that same ID is de
 Terrain detection caused more issues than expected. The main issue came from getting the rotation of the terrain. Converting from a rotation vector to euler angles was a process that ended up taking a long time to get right. However, the main problem came from doing the pose estimation.
 
 Semi recently, OpenCV was updated to include a new method for pose estimation, deprecating the old method. This new method was not as well documented as a result. The new method also added some levels of complexity. Previously, OpenCV had a dedicated function for pose estimation. Now, this functionality was moved into solvePnP. This made the research done prior on implementing pose estimation redundant. Eventually, a workaround was produced that allowed for the correct rotation to be found.
-
-#todo("A description of how HSV space works and why it's used here would be very useful")
 
 == Game Board Representation
 
@@ -972,7 +937,7 @@ Finding the line equation between the two center points is a simple process. Get
 
 // when the gradient was \<0.01 we lose precision when the reciprocal is aken which caused innacuracies down the line#footnote("As an example 0.0333333333 would give a reciprocal of -30.0."). These innacuracies were compounded by some premature rounding of the gradient and other values from floats to ints. A divide by 0 error was also encountered when the gradient was 0. This would occure when an operatives was directly above or next to another operative.
 
-Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to python code which took several days to notice. 
+Finding the intersection points on the bases proved problematic. Quite a few mistakes were made in the process of converting the algebra to Python code which took several days to notice. 
 
 // This was compounded by the base being scaled up to the gameboard size at a later point in the process. As the intersections were found in the image space, when the base was scaled up for the gameboard the intersection points were scaled up as well. The problem with this is that the intersections on a circle do not scale linearly. Increasing the size of a circle by 5 units does not move the intersection 5 units in x and y.
 
@@ -1008,7 +973,6 @@ We can determine whether a terrain line is within the firing cone if it satisfie
 + The start or end of the line falls within the firing cone.
 + The line intersects with the firing cone.
 
-#todo("A figure for this would probably reaaaaaly help")
 Using this we can rebuild a list of terrain lines that fall within the firing cones.
 
 The lines are determined as follows:
@@ -1148,7 +1112,7 @@ The next test will look at how well the system can track operatives with the mod
 
 In @evaluation-tracking-models the system correctly identified the red team model but failed to identify the blue team model. The tracking system determined that the blue team model was ID: 0 or ID: 4.This is likely due to the blue team model being partially cropped out of the image and containing black on the model. As a result when checking for the binary parts of the model are interfering.
 
-However, as seen in @five-frames the system was able to eventually identify the blue team model. This presents a limitation of the current system. As the system does not have a confidence value for the identification, it will simply return any valid identification it can find. This will result in problems when more models are present as the system will be likely to move a model into another when mis-identifications are present. A potential fix for this would be to utilise a system using hemming distance to better identify models with partial data. This will be expanded upon in Section 8.2. A temporary fix was applied that would prevent the system from placing a model in the same position as a model that was already present. Whilst this isn't a particularly robust solution, it does prevent the system from placing two models in the same position. 
+However, as seen in @five-frames the system was able to eventually identify the blue team model. This presents a limitation of the current system. As the system does not have a confidence value for the identification, it will simply return any valid identification it can find. This will result in problems when more models are present as the system will be likely to move a model into another when mis-identifications are present. A potential fix for this would be to utilise a system using hamming distance to better identify models with partial data. This will be expanded upon in Section 8.2. A temporary fix was applied that would prevent the system from placing a model in the same position as a model that was already present. Whilst this isn't a particularly robust solution, it does prevent the system from placing two models in the same position. 
 
 // or to implement a "smart" method based on the previous game state. This method would exploit the fact that only one model can move at a time and that the system can compare the current game state to the previous game state to determine which model has moved. This could utilise image segmentation to remove the terrain and gameboard from the previous image and then compare the remaining data with the current image to help determine which model has moved. This would still require an tag based system to assist but would be a more robust solution.
 
@@ -1235,21 +1199,196 @@ The line of sight visualisation was satisfactory, displaying in cover or obscure
 
 == Project Management
 
-As per the initial Project Proposal the original goal for the first semester was to have ring detection and terrain detection completed. Currently, simple ring detection has been completed. This still needs to be expanded to include identification, though work has begun on this. Terrain detection has been moved backwards to allow for more time to make a good detection system for the miniatures.
+@firstGantt and @secondGantt show the original and interim gannt charts for the project#footnote("These are in the appendix."). @thirdGannt shows the updated gannt chart with the actual timeline of the project.
 
-Choosing to tackle the ring detection first was a good choice. This allowed for me to encounter larger issues and provide solutions to them whilst still in the research stages on the project. This has allowed for me to develop my computer vision skills and take approaches I would not have otherwise considered. For example, using a singular rim of multiple colours and combining the images to create a full circle for identification.
+Previously, I stated that tackling the ring detection first was a good choice. This allowed for me to encounter larger issues and provide solutions to them whilst still in the research stages on the project. However, in hindsight tackling terrain would have been a better decision. As the terrain detection system was using pre-existing methods, it would have taught me about how fiducial marker systems work. This would have been useful when building the model detection system.
+
+On the other hand the model detection system took a long time to get right. Leaving this until later would have likely caused significant stress as it is the main focus of the project. It was a part of the project which was very importnat to get right, so leaving plenty of time was the sensible choice to make.
+
+// As per the initial Project Proposal the original goal for the first semester was to have ring detection and terrain detection completed. Currently, simple ring detection has been completed. This still needs to be expanded to include identification, though work has begun on this. Terrain detection has been moved backwards to allow for more time to make a good detection system for the miniatures.
+
+// Choosing to tackle the ring detection first was a good choice. This allowed for me to encounter larger issues and provide solutions to them whilst still in the research stages on the project. This has allowed for me to develop my computer vision skills and take approaches I would not have otherwise considered. For example, using a singular rim of multiple colours and combining the images to create a full circle for identification.
 
 Supervisor meetings were held every week to check for blockers or advice on reports. Uniquely, our supervisor meetings were conducted as a group with the other two dissertation students my supervisor had. As all three of us were working on tabletop game based projects we were all knowledgeable in the area. This meant we could provide feedback or ideas for each others projects from a student perspective.
 
-I found the Gantt chart to be unhelpful in managing the project. Gantt charts work well in well structured work environments. However, due to the nature of this semester having a large amount of other courseworks and commitments that needed to be balanced. An agile approach was much more effective, doing work when time was available. The nature of development work being much more effective when done in long, uninterrupted sessions meant that, with this semester's courseworks and lectures being very demanding at 70 credits, being able to find long swathes of uninterrupted time was very difficult between lectures, courseworks, tutorials etc. As a result, development was done in smaller, more frequent chunks which were not as effective as longer, less frequent chunks. I expect this to change next semester when the workload decreases down to 50 credits.
 
-A much preferred method, that I will likely go ahead with, is Kanban. I personally found most use from the Gantt chart in that the project is naturally broken up into sub tasks. This approach of sub-tasking when,  combined with a less structured agile approach, is something that Kanban works really well at and have found effective in the past in GRP (COMP2002).
+Previously I mentioned that gannt charts were unhelpful in managing the project and that I would instead take a kanban based approach from my previous successes in the methodology in group project. In reality, past the first week this was left behind. Instead, I opted for leaving myself a comment block about what I had achieved that day and what I needed to do next. This came in useful when writing the report as I had a breakdown of what was completed and the difficulties faced that I would otherwise not have remembered. This was a much more effective method of tracking progress than the gantt chart.
 
-In the interests of being able to show current progress in comparison to previous I have included an updated Gantt chart (@firstGantt) along with the previous one (@secondGantt).
+I also previously mentioned that this project was taken as a 70 / 50 split. This made the second half of the project significantly more manageable. Although this project did make use of extension time, that time fell within the easter break. I find that development work is much more effective when done in long, uninterrupted sessions. being able to have only 50 credits of work to do with a long break at the end of the project was very helpful.
 
-Looking at the time remaining I will focus on getting the main parts of the system functional. These are: model detection and tracking, terrain detection, virtual game board representation, movement preview and line of sight preview. If there is time available then I will aim to also implement the flow of the game (breaking it down into each phase, providing guidance of what to do in each phase, statistics etc). The most technically interesting part of this is the virtual game board and tracking technology. So placing a focus on having them work fluidly is more important to the dissertation.
+I achieved the majority of what I wanted to get done in this project with the only missing part being movement preview. This was not a priority as the technical interest of this project is the development of the tracking system.
+
+// I found the Gantt chart to be unhelpful in managing the project. Gantt charts work well in well structured work environments. However, due to the nature of this semester having a large amount of other courseworks and commitments that needed to be balanced. An agile approach was much more effective, doing work when time was available. The nature of development work being much more effective when done in long, uninterrupted sessions meant that, with this semester's courseworks and lectures being very demanding at 70 credits, being able to find long swathes of uninterrupted time was very difficult between lectures, courseworks, tutorials etc. As a result, development was done in smaller, more frequent chunks which were not as effective as longer, less frequent chunks. I expect this to change next semester when the workload decreases down to 50 credits.
+
+// A much preferred method, that I will likely go ahead with, is Kanban. I personally found most use from the Gantt chart in that the project is naturally broken up into sub tasks. This approach of sub-tasking when,  combined with a less structured agile approach, is something that Kanban works really well at and have found effective in the past in GRP (COMP2002).
+
+// In the interests of being able to show current progress in comparison to previous I have included an updated Gantt chart (@firstGantt) along with the previous one (@secondGantt).
+
+// Looking at the time remaining I will focus on getting the main parts of the system functional. These are: model detection and tracking, terrain detection, virtual game board representation, movement preview and line of sight preview. If there is time available then I will aim to also implement the flow of the game (breaking it down into each phase, providing guidance of what to do in each phase, statistics etc). The most technically interesting part of this is the virtual game board and tracking technology. So placing a focus on having them work fluidly is more important to the dissertation.
+
+
+
+
+
+== Future Work and Reflections
+
+Something I underestimated was the amount of time needed to research and determine which method should be used for model detection. A large amount of time was spent determining the viability of different approaches that may make the system more robust and easier to produce. As a result of this, development started later and took longer than was expected.
+
+The biggest impact on this project was needing to get an extension on other coursework deadlines. This extension had a knock on effect of other courseworks which took priority over this project. The timings allotted in the Gantt chart did not take into account extensions being needed.
+
+The reflection above was written at the time of interim report submission. It has been left in as I believe it is important to evaulate how I handled the project in the past compared to now.
+
+
+I started development by attempting to produce a tag detection system for the operatives and then move onto terrain afterwards. In hindsight, it would have been better to start with terrain detection. I utilised aruco markers to find the position of terrain. The process of implementing aruco markers ended up teaching a lot about fiducial markers that I wish I had known before building the model tags. I'll cover the specifics of this when discussing upgrades to the detection system.
+
+
+=== Order Tokens 
+
+Order tokens are a key part of the game that are not currently implemented. These are usually small pieces of orange triangular card pointing at an operative with an image denoting the state. A future system might be able to segment these tokens out and use the direction of the triangle to determine the state of an operative without needing manual input.
+
+=== Odds to Hit
+
+As Kill Team is mostly based on dice rolls modified by the statistics of the operatives, a future system could implement a way to calculate the odds of hitting a target. A problem with this would be needing to then store and update health values manually. This could be done by moving the dice roll calculation to being digital. Although, I don't think this is a good idea. An important part of tabletop boardgames is actually physically rolling the dice.
+
+There are plently of pre-existing systems to see the values of phyical dice. These typically either utilise computer vision to detect the sides of the dice or use specific dice that are aware of their orientation. A "smart dice" system would prevent the need for manual interaction with the system. This would be a good place to start for a next addition to the system as it opens up a lot more game mechanics to be streamlines.
+
+=== Increasing total number of operatives
+
+The current system only supports 16 operatives total on a half-size board. The colours of the encodings can be changed to allow for more but this requires thresholding for different colour values to be re-done. A better approach may be to use more than 4 bits for the encoding and utilise hamming distance to deal with partial data
+
+=== Server Client Architecture For Game Board and Detection
+
+The current system is run on a single thread. This is fine as it currently is but there are a few problems. One such problem is that the GUI is running on the same thread as the detection meaning responsiveness is likely to be a problem on slower machines. A solution to this would be to have the detection system function as a server that can serve data to the game boards.
+
+This also opens up the avenue for alternative detection systems to be used as a server based architecture would allow for the creation of an API that is agnostic to the type of detection used.
+
+Alternatively this could be expanded to allow two players to play against each other on different game boards by transmitting their model positions to each other.
+
+=== Solo Play
+
+If the system were to recieve more rules integrations it may be possible to make an AI that can play against a human. This would require a huge amount of work to implement the rules of the game but it would be very interesting to see.
+
+=== Detection Upgrades
+
+One of the biggest changes that could be made would be to make the operative tags utilise hamming distance. Hamming distance is a method that lets us maximize the difference between our marker patterns. If we design markers that are maximally different from eachother then when errors are present we can use the information we do have to determine which marker is most likely to be the correct one. For example. if we're using a 4 bit encoding but we only have two tags 0,1,1,1 and 1,0,0,0 we can determine the ID of the tag based on only one bit of information. This method can be applied in a more complex way to develop a a tagset. This is a system that is used by aruco tags.
+
+Another problem is with the positioning of terrain. The terrain is only rotated in the Z axis from the aruco markers which is resulting in the terrain being slightly off. In future a different model library should be used to allow for more complex rotations to increase the accuracy of the terrain.
+
+The same pose estimation approach should also likely be taken to the operative tags. This system would greatly benefit from a more robust method of moving models. Currently everything is done by x,y coordinate movement but it would be much mroe streamlined to use a proper matrix transformation system to move models. This would also make the system much more maintainable as the current system does a lot of calculations between different spaces all over the place and having a streamlined pipeline would make this much easier to manage.
+
+== LSEPI
+
+The main LSEPI issue you could see here is copyright issues as Kill Team is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the Kill Team Lite rule set previously mentioned. This is publicly available published by Games Workshop. One issue is that different Kill Teams will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published Kill Team information. If this proves to be problematic then the game rules will be based off a very similar system Firefight @one-page. This is published by One Page Rules, who produce free to use, public miniature war-game systems. Though as this is based off of the published, free to use Kill Team Lite rules, I don't expect this to be a problem.
+
+=== Accessibility 
+
+A key focus of this project was on accessibility to the average-miniature wargamer. This lead to a focus on not using specialist hardware. I believe the system achieved this goal with the main potential issues being technical setup and camera setup. Being a Python project, Python needs to be installed with the libraries. The process of doing this to a non-technical individual can appear quite daunting. The camera setup is also a potential issue. Droidcam ended up being a harder to use piece of software than I first anticipated. This could be a potential issue for the average user.
+
+=== Open Source
+
+I intend to open source the code for this project using a copyleft license. When performing the background research for this project I found that there were very few closely linked projects. As a result of this I want the code and the takeaways I gathered from this project to be available to the public to assist anyone undertaking a similar project in the future.
+
+= Final Reflections
+
+Overall, I believe this project has met the goals of digitising a physical gameboard. The accuracy of the model tracking is very good and the terrain tracking is satisfactory but needs some improvements. The line of sight system provides enough information to the user to know whether a model is obscured / in cover as well as what is causing the obstruction.
+
+A problem I ran into quite frequently was the OpenCV documentation was quite lacking. Documentation for versions >4.7 tended to only support C++. OpenCV claims to have support for 5 different languages but only provides in-depth documentation on C++. From the work I have done, it appears that a lot of questions that get asked about OpenCV are asked in the context of Python. This is a problem I have ran into in several open source projects. Whilst the functionality is amazing the documentation tends to go out of date quickly as contributions are made. This is a shame as the OpenCV documentation which is of good quality is incredibly well done. It explains the concepts at both a low and high level with examples. A big takeaway from this project will be in contributing to the documentation of open source projects I use if I can. OpenCV does have a documentation repository that I will likely contribute to in the future to provide more Python examples.
+
+= Bibliography
+
+#bibliography(title: none, style: "ieee", "interim.yml")
+
+
+// @article{article,
+// author = {Lee, W. and Woo, Woontack and Lee, Jongweon},
+// year = {2005},
+// month = {01},
+// pages = {0-4},
+// title = {TARBoard: Tangible Augmented Reality System for Table-top Game Environment},
+// volume = {5},
+// journal = {Personal Computing}
+// }
+
+
+= Appendix
 
 #import "@preview/timeliney:0.0.1"
+
+#page(flipped: true)[
+#figure(
+timeliney.timeline(
+  show-grid: true,
+  {
+    import timeliney: *
+      
+    headerline(group(([*January*], 4)),group(([*February*], 4)),group(([*March*], 4)),group(([*April*], 4)),group(([*May*],3)))
+    headerline(
+      group(..range(4).map(n => strong(str(n + 1)))),
+      group(..range(4).map(n => strong(str(n + 1)))),
+      group(..range(4).map(n => strong(str(n + 1)))),
+      group(..range(4).map(n => strong(str(n + 1)))),
+      group(..range(3).map(n => strong(str(n + 1)))),
+    )
+  
+    taskgroup(title: [*Other Commitments*], {
+      task("MDP Coursework",(0,3.5), style: (stroke: 2pt + gray))
+      task("HAI Coursework", (0, 1), style: (stroke: 2pt + gray))
+      task("Ethics Essay",(0,3.5),style: (stroke: 2pt+gray))
+      task("Graphics Coursework 1", (9,11.5), style: (stroke: 2pt + gray))
+      task("Graphics Coursework 2", (11,19), style: (stroke: 2pt + gray))
+    })
+
+    taskgroup(title: [*Initial Write-up*], {
+      task("Interim Report", (0, 0.25), style: (stroke: 2pt + gray))
+    })
+
+    taskgroup(title: [*Computer Vision*], {
+      task("Multi Ring Tracking",(5,6),style: (stroke: 2pt + gray))
+      task("Ring Identification", (8.5,12), style: (stroke: 2pt + gray))
+      task("Terrain Detection", (14, 15), style: (stroke: 2pt + gray))
+    })
+
+    taskgroup(title: [*Game Logic*], {
+      task("Game Board Framework",(11.5,15.5), style: (stroke: 2pt + gray))
+      task("Line of Sight",(13,14.5), style: (stroke: 2pt + gray))
+    })
+
+    taskgroup(title: [*Final Write-up*], {
+      task("Dissertation", (14, 16), style: (stroke: 2pt + gray))
+      task("Presentation Prep", (16, 18.5), style: (stroke: 2pt + gray))
+    })
+
+    milestone(
+      at: 0.25,
+      style: (stroke: (dash: "dashed")),
+      align(center, [
+        *Interim Report Submission*\
+        Jan 2023
+      ])
+    )
+
+    milestone(
+      at: 16,
+      style: (stroke: (dash: "dashed")),
+      align(center, [
+        *Dissertation Submission*\
+        Apr 2024
+      ])
+    )
+
+    milestone(
+      at: 18.5,
+      style: (stroke: (dash: "dashed")),
+      align(center, [
+        *Project Presentation*\
+        May 2024
+      ])
+    )
+  }
+),
+caption: ([The final Gantt chart, showing the work done.])
+) <thirdGannt>
+]
 
 #page(flipped: true)[
 #figure(
@@ -1407,65 +1546,3 @@ caption: ([The Updated Gantt chart])
   caption: ([The original Gantt chart])
 )<secondGantt>
 ] 
-
-== Future Work and Reflections
-
-Something I underestimated was the amount of time needed to research and determine which method should be used for model detection. A large amount of time was spent determining the viability of different approaches that may make the system more robust and easier to produce. As a result of this, development started later and took longer than was expected.
-
-The biggest impact on this project was needing to get an extension on other coursework deadlines. This extension had a knock on effect of other courseworks which took priority over this project. The timings allotted in the Gantt chart did not take into account extensions being needed.
-
-However, I am happy with the progress made so far. Having completed the methodology to find the circular tags even when partially obstructed is very promising to the viability of the chosen approach. As a result, I believe that a solid strategy has been chosen for model detection and identification and the work done so far has successfully laid a good foundation for the project.
-
-=== Order Tokens and Objective Markers
-
-=== Odds to Hit
-
-=== Advanced Terrain
-
-=== Height
-
-=== Larger Game Board
-
-=== Increasing the total number of operatives
-
-=== Server Client Architecture For Game Board and Detection
-
-=== Detection Upgrades
-Hemming Distance
-
-aruco tag roll + pitch
-
-== LSEPI
-
-The main LSEPI issue you could see here is copyright issues as _Kill Team_ is a copyrighted entity owned by _Games Workshop_. The way this project will handle this is by having the system implement the _Kill Team Lite_ rule set previously mentioned. This is publicly available published by _Games Workshop_. One issue is that different "_Kill Teams_" (groups of operatives) will have  different and unique rules as well as their own statistics pages. These are copyrighted and won't be able to be directly implemented. As a result of this, this project will implement basic operatives with fake statistic pages based off of the publicly published _Kill Team_ information. If this proves to be problematic then the game rules will be based off a very similar system _Firefight_ @one-page. This is published by _One Page Rules_, who produce free to use, public miniature war-game systems.
-
-=== Accessibility 
-
-
-== Final Reflections
-
-Official openCV python documentation is somewhat lacking.
-
-=== Design Approach
-
-
-
-
-
-= Bibliography
-
-#bibliography(title: none, style: "ieee", "interim.yml")
-
-
-// @article{article,
-// author = {Lee, W. and Woo, Woontack and Lee, Jongweon},
-// year = {2005},
-// month = {01},
-// pages = {0-4},
-// title = {TARBoard: Tangible Augmented Reality System for Table-top Game Environment},
-// volume = {5},
-// journal = {Personal Computing}
-// }
-
-
-

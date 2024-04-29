@@ -241,7 +241,31 @@ hough-circles-explained:
   url: https://github.com/tkorting/youtube/blob/master/how-circle-hough-transform-works/main.py
   author: Thales Sehn Körting
 
+fiducial-circle:
+  type: article
+  url: https://cvg.cit.tum.de/_media/members/demmeln/loipfuehrer2022ma.pdf
+  title: Efficient and Robust Circle Grids for Fiducial Detection
+  author: Michael Loipführer
 
+aruco-tags:
+  type: article
+  title: "Generation of fiducial marker dictionaries using Mixed Integer Linear Programming"
+  doi: 10.1016/j.patcog.2015.09.023
+  journal: Pattern Recognition
+  volume: 51
+  author: ["Garrido-Jurado, Sergio", "Muñoz-Salinas, Rafael", "Madrid-Cuevas, Francisco", "Medina-Carnicer, Rafael"]
+
+#   @article{article,
+# author = {Garrido-Jurado, Sergio and Muñoz-Salinas, Rafael and Madrid-Cuevas, Francisco and Medina-Carnicer, Rafael},
+# year = {2015},
+# month = {10},
+# pages = {},
+# title = {Generation of fiducial marker dictionaries using Mixed Integer Linear Programming},
+# volume = {51},
+# journal = {Pattern Recognition},
+# doi = {10.1016/j.patcog.2015.09.023}
+# }
+  
 # https://www.researchgate.net/publication/282426080_Generation_of_fiducial_marker_dictionaries_using_Mixed_Integer_Linear_Programming
 
 # https://cvg.cit.tum.de/_media/members/demmeln/loipfuehrer2022ma.pdf
