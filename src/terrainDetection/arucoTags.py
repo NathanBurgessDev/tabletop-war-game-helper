@@ -9,6 +9,7 @@ from scipy.spatial.transform import Rotation
 
 # A lot of this is heavy based off of  https://pyimagesearch.com/2020/12/14/generating-aruco-markers-with-opencv-and-python/
 
+# This is mostly a test file 
 
 # This lists all the ArUco dictionaries that can be used
 # NXN - 2D bit size -> basically the grid size of the marker
