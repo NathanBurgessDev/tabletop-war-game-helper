@@ -242,6 +242,9 @@ class MainGame:
     def setupGameBoardTesting(self):
         self.gameBoard = GameBoard(screen=self.screen)
         
+    def getDistanceBetweenPoints(self, pointOne: tuple[int,int], pointTwo: tuple[int,int]):
+        return sqrt((pointOne[0] - pointTwo[0])**2 + (pointOne[1] - pointTwo[1])**2)
+        
     def updateOperativeData(self):
         gameBoardData = self.modelFinder.identifyModels(self.currentFrame)
         self.gameBoard.imageSize = gameBoardData[1]
@@ -262,12 +265,20 @@ class MainGame:
             terrainData = self.modelFinder.identifyTerrain(self.currentFrame)
             if (terrainData != None):
                 for terrain in terrainData:
+                    # print("TerrainPoints")
+                    # print(terrain.cornerPointsAsTupleList)
+                    # print(terrain.rotation)
                     doesExist = False
                     # If the terrain ID is already in the list we don't want to add it again
                     # Just update the position
                     for i, existingTerrain in enumerate(self.gameBoard.terrainList):
+                        # print("Existing Terrain")
+                        # print(existingTerrain.verticies)
                         if (existingTerrain.id == terrain.id):
-                            if (terrain.rotation == existingTerrain.angle + 3 or terrain.rotation == existingTerrain.angle - 3):
+                            angleDiff = abs(terrain.rotation - existingTerrain.angle)
+                            positionDiff = self.getDistanceBetweenPoints(terrain.cornerPointsAsTupleList[3], existingTerrain.verticies[0])
+                            if (angleDiff < 10 or positionDiff < 15):
+                                doesExist = True
                                 continue
                             if (terrain.id <= 10):
                                 newTerrain = PillarDoubleWall(terrain.id)
@@ -287,7 +298,7 @@ class MainGame:
                                 doesExist = True
                                 continue
                         
-                    if (terrain.id <= 10 and not doesExist):
+                    if (terrain.id == 1 and not doesExist):
                         
                         newTerrain = PillarDoubleWall(terrain.id)
                        
@@ -331,8 +342,12 @@ class MainGame:
             self.updateOperativeData()
             self.updateTerrainData()
        
+        clock = pygame.time.Clock()
         
         while True:
+            
+            dt = clock.tick(60)
+            
             
             # Event handling
             for event in pygame.event.get():
@@ -448,11 +463,15 @@ class MainGame:
                 
                 # For each object
                 # Check if any of the points are within the firing cone
-                
-                if (self.isObscured(chosenOperative,operative,terrainLinesPositive) and self.isObscured(chosenOperative,operative,terrainLinesNegative)):
+                obscuredPositive = self.isObscured(chosenOperative,operative,terrainLinesPositive)
+                obscuredNegative = self.isObscured(chosenOperative,operative,terrainLinesNegative) 
+                if (obscuredPositive or obscuredNegative):
                     self.operativeList.setOperativeToObscured(operative.id)
                 
-                if (self.isInCover(chosenOperative,operative,terrainLinesPositive) and self.isInCover(chosenOperative,operative,terrainLinesNegative)):
+                
+                coverPositive = self.isInCover(chosenOperative,operative,terrainLinesPositive)
+                coverNegative = self.isInCover(chosenOperative,operative,terrainLinesNegative)
+                if (coverPositive or coverNegative ):
                     self.operativeList.setOperativeToInCover(operative.id)
                 
                         
@@ -479,6 +498,7 @@ class MainGame:
             distanceToDefender = distanceToDefender - defender.radius
 
             if (distanceToDefender <= BOARD_INCH):
+                self.gameBoard.drawCircle(closestPointDefender,5)
                 return True
             
         return False
@@ -768,7 +788,7 @@ class MainGame:
 
 if __name__ == "__main__":
     operativeList = OperativeList()
-    game = MainGame(operativeList = operativeList,testing = True)
+    game = MainGame(operativeList = operativeList,testing = False)
 
 
 

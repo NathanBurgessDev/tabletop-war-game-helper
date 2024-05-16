@@ -92,7 +92,7 @@ class PillarDoubleWall(Terrain):
             polygon = Polygon(verts)
             self.scaledPolygon = polygon
             scaledVerts = list(self.scaledPolygon.exterior.coords[:-1])
-            print(scaledVerts)
+            # print(scaledVerts)
             return scaledVerts
     
         

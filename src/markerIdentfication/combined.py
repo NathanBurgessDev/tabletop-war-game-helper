@@ -209,7 +209,7 @@ def identifyAllPieces(img, pts) -> tuple[list[ModelEncoding], tuple[int,int] | N
         # Perform some error checking
         # We have read to the left and right of each red center point
         # To make sure we have the correct encoding we will need to check each quarter for any missing encodings
-        print(quartersTuple)
+        # print(quartersTuple)
         
         if (len(quartersTuple) <= 0):
             print("Encoding Is empty")

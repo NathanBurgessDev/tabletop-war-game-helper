@@ -103,8 +103,8 @@ def detectMarkers(image):
     
     r = Rotation.from_matrix(qz)
     coordinate = r.as_euler('xyz', degrees=True)
-    print(r.as_euler('xyz', degrees=True))
-    print(coordinate[2])
+    # print(r.as_euler('xyz', degrees=True))
+    # print(coordinate[2])
     cv.imshow("ArUCo Tag", imgCopy)
     cv.waitKey(0)
     time.sleep(1000)	
