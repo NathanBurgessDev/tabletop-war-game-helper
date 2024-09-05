@@ -23,4 +23,6 @@ NOTE: The screen size is not scalable - it is designed to run on a monitor that 
 - You can then remove or update an operatives state using the buttons in the bottom left
 
 
-- You can create your own markers using the generateCircle.py 
+- You can create your own markers using the generateCircle.py
+
+# I really need to clean up this repo
