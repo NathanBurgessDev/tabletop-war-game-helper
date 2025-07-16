@@ -18,16 +18,15 @@ Information regarding requirements gathering, software management, testing, user
 NOTE: The screen size is not scalable - it is designed to run on a monitor that is 2560x1440
 
 ## How to play
+1. Setup your camera pointing down at the gameboard
+2. Run src/interface/InterfacePyGame.py
 
-- Setup your camera pointing down at the gameboard
-- Run src/interface/InterfacePyGame.py
-
-- On startup you will be met with a static image of the gameboard
-- This is to calibrate the board position
-- Click the top left, top right, bottom left and bottom right corners of your gameboard in that order
-- The main game should then appear
-- Clicking on an operative will allow you to select it and display the line of sight
-- You can then remove or update an operatives state using the buttons in the bottom left
+3. On startup you will be met with a static image of the gameboard
+4. This is to calibrate the board position
+5. Click the top left, top right, bottom left and bottom right corners of your gameboard in that order
+6. The main game should then appear
+7. Clicking on an operative will allow you to select it and display the line of sight
+8. You can then remove or update an operatives state using the buttons in the bottom left
 
 
 - You can create your own markers using the generateCircle.py
