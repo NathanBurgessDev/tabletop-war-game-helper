@@ -1,5 +1,12 @@
 # Tabletop Wargame Assistant
 
+## Report
+
+The full Dissertation report can be found [here](https://github.com/NathanBurgessDev/tabletop-war-game-helper/blob/486b84c6d3fb91c0c6fbb1c145b8ab680fe0b240/Dissertation/20363169_dissertation.pdf)
+
+Information regarding requirements gathering, software management, testing, user analysis and troubleshooting can be found within the report.
+
+
 ## Requirements
 
 - Python 3.11.6
