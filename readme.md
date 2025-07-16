@@ -28,7 +28,8 @@ NOTE: The screen size is not scalable - it is designed to run on a monitor that 
 7. Clicking on an operative will allow you to select it and display the line of sight
 8. You can then remove or update an operatives state using the buttons in the bottom left
 
+More comprehensive instructions - including physical setup - can be found within the full report.
 
-- You can create your own markers using the generateCircle.py
+## Notes
 
-# I really need to clean up this repo
+If you are embarking on a similar project please do feel free to contact me and use this work to assist you.
